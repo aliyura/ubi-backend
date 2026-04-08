@@ -1,7 +1,9 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, Req, Res } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WebhookService } from './webhook.service';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { webhookResponse } from './webhook.response';
 
 @Controller('v1/webhook')
 export class WebhookController {
@@ -11,6 +13,15 @@ export class WebhookController {
   ) {}
 
   @Post('flutterwave')
+  @ApiOperation({ summary: 'Handle Flutterwave webhook' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: webhookResponse.flutterwaveWebhookHanlder,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    example: webhookResponse.unauthorizedWebhook,
+  })
   async flutterwaveWebhookHanlder(
     @Body() body: any,
     @Req() req: Request,
@@ -31,6 +42,15 @@ export class WebhookController {
   }
 
   @Post('VFD/payment')
+  @ApiOperation({ summary: 'Handle VFD payment webhook' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: webhookResponse.vfdWebhookHanlder,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    example: webhookResponse.unauthorizedWebhook,
+  })
   async VFDWebhookHanlder(
     @Body() body: any,
     @Req() req: Request,
@@ -47,6 +67,11 @@ export class WebhookController {
   }
 
   @Post('safehaven')
+  @ApiOperation({ summary: 'Handle SafeHaven webhook' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: webhookResponse.safeHavenHandler,
+  })
   async safeHavenHandler(
     @Body() body: any,
     @Req() req: Request,
@@ -57,6 +82,11 @@ export class WebhookController {
   }
 
   @Post('bellmfb')
+  @ApiOperation({ summary: 'Handle Bell MFB webhook' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: webhookResponse.bellBankHandler,
+  })
   async bellBankHandler(
     @Body() body: any,
     @Req() req: Request,

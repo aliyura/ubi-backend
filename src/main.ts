@@ -4,6 +4,10 @@ import { resolve, join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './helpers';
+import {
+  ApiDocumentationModule,
+  SWAGGER_DOCS_PATH,
+} from './swagger/swagger.module';
 
 async function bootstrap() {
   // 🔥 Global crash-proof handlers (Node-level)
@@ -33,6 +37,7 @@ async function bootstrap() {
   // Global prefix & validation
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
+  const swaggerEnabled = ApiDocumentationModule.setup(app);
 
   // CORS
   app.enableCors({
@@ -48,7 +53,12 @@ async function bootstrap() {
   });
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-  console.log(`🚀 Server started on port ${process.env.PORT}`);
+  const baseUrl = await app.getUrl();
+
+  console.log(`🚀 Server started at ${baseUrl}`);
+  if (swaggerEnabled) {
+    console.log(`📚 Swagger docs enabled at ${baseUrl}/api/${SWAGGER_DOCS_PATH}`);
+  }
 }
 
 bootstrap();

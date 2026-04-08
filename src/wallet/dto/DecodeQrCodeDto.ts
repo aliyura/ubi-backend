@@ -1,6 +1,8 @@
 import { IsNotEmpty, IsString, Matches, MinLength, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class DecodeQrCodeDto {
+  @ApiProperty({ example: 'upi:john-doe:5000:NGN:wallet' })
   @IsString({ message: 'QR Code must be a string' })
   @IsNotEmpty({ message: 'QR Code is required' })
   @MinLength(10, { message: 'QR Code must be at least 10 characters long' })

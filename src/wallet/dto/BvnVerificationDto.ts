@@ -1,12 +1,12 @@
 import {
-  IsBoolean,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class BvnVerificationDto {
+  @ApiProperty({ example: '22345678901' })
   @IsNotEmpty({ message: 'BVN is required' })
   @IsString({ message: 'BVN must be a string' })
   @Matches(/^[0-9]{11}$/, {
@@ -14,6 +14,9 @@ export class BvnVerificationDto {
   })
   bvn: string;
 
+  @ApiProperty({
+    example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...',
+  })
   @IsNotEmpty({ message: 'BVN face base64 image is required' })
   @IsString({ message: 'Base64 must be a string' })
   selfieImage: string;

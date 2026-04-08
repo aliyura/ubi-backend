@@ -9,20 +9,25 @@ import {
   Length,
   Matches,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
+  @ApiProperty({ example: 'johndoe' })
   @IsNotEmpty()
   @IsString()
   username: string;
 
+  @ApiProperty({ example: 'John Doe' })
   @IsNotEmpty()
   @IsString()
   fullname: string;
 
+  @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ example: '08012345678' })
   @IsString({ message: 'Phone number must be a string' })
   @IsNotEmpty({ message: 'Phone number is required' })
   @Matches(/^[0-9]+$/, { message: 'Phone number must contain only digits' })
@@ -31,6 +36,7 @@ export class RegisterDto {
   })
   phoneNumber: string;
 
+  @ApiProperty({ example: '8-Mar-1995' })
   @IsNotEmpty()
   @IsString()
   @Matches(
@@ -42,27 +48,33 @@ export class RegisterDto {
   )
   dateOfBirth: string;
 
+  @ApiProperty({ example: 'StrongPass123!' })
   @IsNotEmpty()
   @IsString()
   @Length(8, 32, { message: 'Password must be between 8 and 32 characters' })
   password: string;
 
+  @ApiPropertyOptional({ example: 'NG' })
   @IsOptional()
   @IsString()
   countryCode?: string;
 
+  @ApiPropertyOptional({ example: 'UBIREF123' })
   @IsOptional()
   @IsString()
   referralCode?: string;
 
+  @ApiPropertyOptional({ example: CURRENCY.NGN, enum: CURRENCY })
   @IsOptional()
   @IsEnum(CURRENCY)
   currency?: CURRENCY;
 
+  @ApiPropertyOptional({ example: false })
   @IsOptional()
   @IsBoolean()
   isBusinessRegistered?: boolean;
 
+  @ApiPropertyOptional({ example: ACCOUNT_TYPE.PERSONAL, enum: ACCOUNT_TYPE })
   @IsOptional()
   @IsEnum(ACCOUNT_TYPE)
   accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.PERSONAL;

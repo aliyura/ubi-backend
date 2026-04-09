@@ -4,10 +4,10 @@ export const userResponse = {
     message: 'User registered successfully',
     data: { userId: 'usr_12345', email: 'john@example.com' },
   },
-  registerBusinessAccount: {
+  registerFarmerAccount: {
     statusCode: 201,
-    message: 'Business account registered successfully',
-    data: { userId: 'usr_12345', businessName: 'Acme Ltd' },
+    message: 'Farmer account registered successfully',
+    data: { userId: 'usr_12345', farmerName: 'Acme Farms' },
   },
   createPasscode: {
     statusCode: 201,
@@ -34,10 +34,10 @@ export const userResponse = {
     message: 'Wallet account created successfully',
     data: { accountNumber: '0123456789', bankName: 'SafeHaven MFB' },
   },
-  createBusinessAccount: {
+  createFarmerAccount: {
     statusCode: 201,
-    message: 'Business wallet account created successfully',
-    data: { accountNumber: '0123456789', businessName: 'Acme Ltd' },
+    message: 'Farmer wallet account created successfully',
+    data: { accountNumber: '0123456789', farmerName: 'Acme Farms' },
   },
   createForeignAccount: {
     statusCode: 201,

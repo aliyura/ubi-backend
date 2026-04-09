@@ -10,7 +10,7 @@ import { VFDBankService } from './providers/VFDBank.service';
 import { GiftCardPayDto } from 'src/bill/dto/GiftCardPayDto';
 import { VerifyBillerDto } from 'src/bill/dto/VerifyBillerDto';
 import { PayBillDto } from 'src/bill/dto/PayBillDto';
-import { CreateBusinessAccountDto } from 'src/user/dto/CreateBusinessAccountDto';
+import { CreateFarmerAccountDto } from 'src/user/dto/CreateFarmerAccountDto';
 import { KycTier3Dto } from 'src/user/dto/KycTier3Dto';
 import { ConfigService } from '@nestjs/config';
 import { defaultBankName } from 'src/constants';
@@ -140,10 +140,10 @@ export class ApiProviderService {
     }
   }
 
-  async createVirtualBusinessAccount(
+  async createVirtualFarmerAccount(
     bvn: string,
     user: User,
-    body: CreateBusinessAccountDto,
+    body: CreateFarmerAccountDto,
   ) {
     return this.safeHavenService.createBusinessSubAccount({
       phoneNumber: this.addCountryCode(user?.phoneNumber),

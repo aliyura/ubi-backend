@@ -14,8 +14,9 @@ datasource db {
 }
 
 enum ACCOUNT_TYPE {
-  PERSONAL
-  BUSINESS
+  USER
+  ADMIN
+  FARMER
 }
 
 enum GENDER {
@@ -77,6 +78,7 @@ enum NETWORK {
 enum USER_ROLE {
   USER
   ADMIN
+  FARMER
 }
 
 enum BILL_TYPE {
@@ -137,7 +139,7 @@ model User {
   state             String?
   city              String?
   selfieBase64Image String?
-  accountType       ACCOUNT_TYPE @default(PERSONAL)
+  accountType       ACCOUNT_TYPE @default(USER)
 
   walletPin      String?
   isWalletPinSet Boolean @default(false)

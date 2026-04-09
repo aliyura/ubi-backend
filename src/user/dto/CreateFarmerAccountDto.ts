@@ -2,7 +2,7 @@ import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateBusinessAccountDto {
+export class CreateFarmerAccountDto {
   @ApiProperty({ example: 'RC1234567' })
   @IsNotEmpty()
   @IsString()

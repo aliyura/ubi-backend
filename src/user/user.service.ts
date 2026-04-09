@@ -49,7 +49,7 @@ import {
   TIER_TWO_CUMMULATIVE_BALANCE_LIMIT,
   TIER_TWO_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
 } from 'src/constants';
-import { CreateBusinessAccountDto } from './dto/CreateBusinessAccountDto';
+import { CreateFarmerAccountDto } from './dto/CreateFarmerAccountDto';
 import { KycTier3Dto } from './dto/KycTier3Dto';
 import { ValidatePhoneNumberDto } from './dto/validatePhoneNumberDto';
 import { VerifyPhoneNumberDto } from './dto/verifyPhoneNumberDto';
@@ -57,7 +57,7 @@ import * as NodeCache from 'node-cache';
 import { Helpers } from 'src/helpers';
 import {
   PasscodeDto,
-  RegisterBusinessDto,
+  RegisterFarmerDto,
   RegisterDto,
   ResetPasswordDto,
   ValidateEmailDto,
@@ -82,76 +82,92 @@ export class UserService {
     private readonly emailService: EmailService,
   ) {}
 
-  async register(body: RegisterDto | RegisterBusinessDto) {
-    const user = await this.prisma.$transaction(async (tx) => {
-      // check duplicates safely
-      const existingUser = await tx.user.findFirst({
-        where: {
-          OR: [
-            { email: body.email },
-            { username: body.username },
-            { phoneNumber: body.username },
-          ],
-        },
+  async register(body: RegisterDto | RegisterFarmerDto) {
+    let user: User;
+    try {
+      user = await this.prisma.$transaction(async (tx) => {
+        // check duplicates safely
+        const existingUser = await tx.user.findFirst({
+          where: {
+            OR: [
+              { email: body.email },
+              { username: body.username },
+              { phoneNumber: body.phoneNumber },
+            ],
+          },
+        });
+
+        if (existingUser)
+          throw new BadRequestException(
+            'User with email, username, or phone number already exists',
+          );
+
+        const hashedPassword = await bcrypt.hash(
+          String(body.password),
+          this.BCRYPT_SALT_ROUNDS,
+        );
+
+        //check if phone number and  email are verified
+        const emailVerified = this.cache.get(body.email);
+        const phoneNumberVerified = this.cache.get(body.phoneNumber);
+
+        const payload: any = {
+          fullname: body.fullname,
+          username: body.username,
+          phoneNumber: body.phoneNumber,
+          email: body.email,
+          password: hashedPassword,
+          referralCode: await this.generateReferralCode(),
+          dateOfBirth: body.dateOfBirth,
+          accountType: body.accountType,
+          isBusiness: body.accountType === ACCOUNT_TYPE.FARMER,
+          currency: body.currency ?? 'NGN',
+          companyRegistrationNumber:
+            body.accountType === ACCOUNT_TYPE.FARMER
+              ? (body as RegisterFarmerDto)?.companyRegistrationNumber
+              : '',
+          isPhoneVerified: phoneNumberVerified == 'verified',
+          isEmailVerified: emailVerified == 'verified',
+        };
+
+        if (body.referralCode) {
+          const referredUser = await tx.user.findFirst({
+            where: { referralCode: body.referralCode },
+            include: { wallet: true },
+          });
+
+          if (!referredUser)
+            throw new BadRequestException('Invalid referral code');
+
+          const wallet = referredUser.wallet.find(
+            (w) => w.currency === body.currency,
+          );
+          if (!wallet) throw new BadRequestException('Invalid referral code');
+
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { balance: wallet.balance + REFERRAL_BONUS_PRICE },
+          });
+
+          payload.referredBy = referredUser.id;
+        }
+
+        return tx.user.create({ data: payload });
       });
+    } catch (error) {
+      const errorMessage = String((error as any)?.message || '').toLowerCase();
 
-      if (existingUser)
+      if (
+        errorMessage.includes('account_type') ||
+        errorMessage.includes('invalid input value for enum') ||
+        errorMessage.includes('not found in enum')
+      ) {
         throw new BadRequestException(
-          'User with email, username, or phone number already exists',
+          'Account type configuration is out of sync with the database. Run the latest migrations and try again.',
         );
-
-      const hashedPassword = await bcrypt.hash(
-        String(body.password),
-        this.BCRYPT_SALT_ROUNDS,
-      );
-
-      //check if phone number and  email are verified
-      const emailVerified = this.cache.get(body.email);
-      const phoneNumberVerified = this.cache.get(body.phoneNumber);
-
-      const payload: any = {
-        fullname: body.fullname,
-        username: body.username,
-        phoneNumber: body.phoneNumber,
-        email: body.email,
-        password: hashedPassword,
-        referralCode: await this.generateReferralCode(),
-        dateOfBirth: body.dateOfBirth,
-        accountType: body.accountType,
-        isBusiness: body.accountType === ACCOUNT_TYPE.BUSINESS,
-        currency: body.currency ?? 'NGN',
-        companyRegistrationNumber:
-          body.accountType === ACCOUNT_TYPE.BUSINESS
-            ? (body as RegisterBusinessDto)?.companyRegistrationNumber
-            : '',
-        isPhoneVerified: phoneNumberVerified == 'verified',
-        isEmailVerified: emailVerified == 'verified',
-      };
-
-      if (body.referralCode) {
-        const referredUser = await tx.user.findFirst({
-          where: { referralCode: body.referralCode },
-          include: { wallet: true },
-        });
-
-        if (!referredUser)
-          throw new BadRequestException('Invalid referral code');
-
-        const wallet = referredUser.wallet.find(
-          (w) => w.currency === body.currency,
-        );
-        if (!wallet) throw new BadRequestException('Invalid referral code');
-
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: { balance: wallet.balance + REFERRAL_BONUS_PRICE },
-        });
-
-        payload.referredBy = referredUser.id;
       }
-
-      return tx.user.create({ data: payload });
-    });
+      throw error;
+    }
 
     // Send OTP + welcome emails
     const otpCode = this.setOtpForUser(user);
@@ -875,9 +891,9 @@ export class UserService {
     };
   }
 
-  async createBusinessAccount(body: CreateBusinessAccountDto, user: User) {
-    if (user?.accountType !== ACCOUNT_TYPE.BUSINESS)
-      throw new BadRequestException('Account type must be of type business');
+  async createFarmerAccount(body: CreateFarmerAccountDto, user: User) {
+    if (user?.accountType !== ACCOUNT_TYPE.FARMER)
+      throw new BadRequestException('Account type must be of type farmer');
 
     const newWallet = await this.prisma.$transaction(
       async (trx) => {
@@ -891,13 +907,13 @@ export class UserService {
 
         let nairaAccount: any;
         try {
-          nairaAccount = await this.apiProvider.createVirtualBusinessAccount(
+          nairaAccount = await this.apiProvider.createVirtualFarmerAccount(
             body?.bvn,
             user,
             body,
           );
         } catch (error) {
-          this.logger.error('error creating business account', error);
+          this.logger.error('error creating farmer account', error);
           throw error;
         }
 
@@ -925,7 +941,7 @@ export class UserService {
     );
 
     return {
-      message: 'Business wallet created succesfully',
+      message: 'Farmer wallet created succesfully',
       statusCode: HttpStatus.CREATED,
       data: plainToInstance(WalletEntity, newWallet),
     };

@@ -74,8 +74,8 @@ export class RegisterDto {
   @IsBoolean()
   isBusinessRegistered?: boolean;
 
-  @ApiPropertyOptional({ example: ACCOUNT_TYPE.PERSONAL, enum: ACCOUNT_TYPE })
+  @ApiPropertyOptional({ example: ACCOUNT_TYPE.USER, enum: ACCOUNT_TYPE })
   @IsOptional()
   @IsEnum(ACCOUNT_TYPE)
-  accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.PERSONAL;
+  accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.USER;
 }

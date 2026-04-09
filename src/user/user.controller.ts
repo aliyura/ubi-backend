@@ -27,9 +27,9 @@ import {
   VerifyEmailDto,
   ResetPasswordDto,
   PasscodeDto,
-  RegisterBusinessDto,
+  RegisterFarmerDto,
   CreateAccountDto,
-  CreateBusinessAccountDto,
+  CreateFarmerAccountDto,
   CreateForeignAccountDto,
   WalletPinDto,
   NinDto,
@@ -61,11 +61,11 @@ export class UserController {
     return this.userService.register(body);
   }
 
-  @Post('register-business')
+  @Post('register-farmer')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register Business Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.registerBusinessAccount })
-  async registerBusinessAccount(@Body() body: RegisterBusinessDto) {
+  @ApiOperation({ summary: 'Register Farmer Account' })
+  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.registerFarmerAccount })
+  async registerFarmerAccount(@Body() body: RegisterFarmerDto) {
     return this.userService.register(body);
   }
   @Post('create-passcode')
@@ -106,15 +106,15 @@ export class UserController {
     return this.userService.createAccount(body?.bvn, user);
   }
 
-  @Post('create-business-account')
-  @ApiOperation({ summary: 'Create Business Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createBusinessAccount })
-  async createBusinessAccount(
-    @Body() body: CreateBusinessAccountDto,
+  @Post('create-farmer-account')
+  @ApiOperation({ summary: 'Create Farmer Account' })
+  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createFarmerAccount })
+  async createFarmerAccount(
+    @Body() body: CreateFarmerAccountDto,
     @Req() req: Request,
   ) {
     const user = req['user'];
-    return this.userService.createBusinessAccount(body, user);
+    return this.userService.createFarmerAccount(body, user);
   }
 
   @Post('create-foreign-account')

@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class RegisterBusinessDto {
+export class RegisterFarmerDto {
   @ApiProperty({ example: 'acmecorp' })
   @IsNotEmpty()
   @IsString()
@@ -79,8 +79,8 @@ export class RegisterBusinessDto {
   @IsBoolean()
   isBusinessRegistered?: boolean;
 
-  @ApiPropertyOptional({ example: ACCOUNT_TYPE.BUSINESS, enum: ACCOUNT_TYPE })
+  @ApiPropertyOptional({ example: ACCOUNT_TYPE.FARMER, enum: ACCOUNT_TYPE })
   @IsOptional()
   @IsEnum(ACCOUNT_TYPE)
-  accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.BUSINESS;
+  accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.FARMER;
 }

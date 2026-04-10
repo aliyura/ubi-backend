@@ -17,10 +17,9 @@ COPY --from=builder /app/package.json .
 COPY --from=builder /app/package-lock.json .
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
 
 # Prisma client
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
-CMD ["npm", "run", "start:prod"]
-
-CMD sh -c "npx prisma migrate deploy && npm run start:prod"
+CMD sh -c "npx prisma migrate deploy --schema=./prisma/schema.prisma && npm run start:prod"

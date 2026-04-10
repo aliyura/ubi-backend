@@ -4,9 +4,10 @@ import { UserService } from './user.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ApiProvidersModule } from 'src/api-providers/api-providers.module';
 import { EmailModule } from 'src/email/email.module';
+import { FileModule } from 'src/file/file.module';
 
 @Module({
-  imports: [PrismaModule, ApiProvidersModule, EmailModule],
+  imports: [PrismaModule, ApiProvidersModule, EmailModule, FileModule],
   controllers: [UserController],
   providers: [UserService],
 })

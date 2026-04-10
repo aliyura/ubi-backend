@@ -69,6 +69,11 @@ import { ForgotPasswordDto } from './dto/ForgotPasswordDto';
 import { VerifyForgotPasswordDto } from './dto/VerifyForgotPasswordDto';
 import { UserAvailablityCheckDto } from './dto/UserAvailablityCheckDto';
 import { WalletSetupDto } from 'src/wallet/dto/WalletSetupDto';
+import { FileService } from 'src/file/file.service';
+import {
+  REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
+  USER_FILE_UPLOAD_FOLDER_NAME,
+} from 'src/constants';
 
 @Injectable()
 export class UserService {
@@ -80,6 +85,7 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly apiProvider: ApiProviderService,
     private readonly emailService: EmailService,
+    private readonly fileService: FileService,
   ) {}
 
   async register(body: RegisterDto | RegisterFarmerDto) {
@@ -975,13 +981,27 @@ export class UserService {
     user: User,
     file: Express.Multer.File,
   ) {
+    let uploadedFile: { url: string; fileName: string } | null = null;
+    if (file) {
+      const uploadResponse = await this.fileService.uploadFile(file, {
+        folder: USER_FILE_UPLOAD_FOLDER_NAME,
+        prefix: user.id,
+      });
+
+      if (!uploadResponse.success || !uploadResponse.data) {
+        throw new BadRequestException(uploadResponse.message);
+      }
+
+      uploadedFile = uploadResponse.data;
+    }
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         fullname: body.fullName,
         phoneNumber: body.phoneNumber,
-        profileImageUrl: file?.path,
-        profileImageFilename: file?.filename,
+        profileImageUrl: uploadedFile?.url,
+        profileImageFilename: uploadedFile?.fileName,
       },
     });
 
@@ -992,6 +1012,20 @@ export class UserService {
   }
 
   async reportScam(body: ReportScamDto, user: User, file: Express.Multer.File) {
+    let uploadedFile: { url: string; fileName: string } | null = null;
+    if (file) {
+      const uploadResponse = await this.fileService.uploadFile(file, {
+        folder: REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
+        prefix: user.id,
+      });
+
+      if (!uploadResponse.success || !uploadResponse.data) {
+        throw new BadRequestException(uploadResponse.message);
+      }
+
+      uploadedFile = uploadResponse.data;
+    }
+
     const ticketRefNumber = (user?.scamTicketCount ?? 0) + 1;
 
     await this.prisma.$transaction(
@@ -1006,7 +1040,7 @@ export class UserService {
             userId: user?.id,
             ref_number: ticketRefNumber,
             title: body.title,
-            screenshotImageUrl: file?.path,
+            screenshotImageUrl: uploadedFile?.url,
             description: body?.description,
           },
         });

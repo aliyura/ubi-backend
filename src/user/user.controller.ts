@@ -14,7 +14,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -172,6 +172,27 @@ export class UserController {
 
   @Post('report-scam')
   @UseInterceptors(FileInterceptor('screenshot', multerOptions('report-scam')))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'description', 'screenshot'],
+      properties: {
+        title: {
+          type: 'string',
+          example: 'Unauthorized debit alert',
+        },
+        description: {
+          type: 'string',
+          example: 'I was debited but did not authorize this transfer.',
+        },
+        screenshot: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @ApiOperation({ summary: 'Report Scam' })
   @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.reportScam })
   async reportScam(
@@ -243,6 +264,27 @@ export class UserController {
 
   @Put('edit-profile')
   @UseInterceptors(FileInterceptor('profile-image', multerOptions('profile')))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['fullName'],
+      properties: {
+        fullName: {
+          type: 'string',
+          example: 'John Doe',
+        },
+        phoneNumber: {
+          type: 'string',
+          example: '08012345678',
+        },
+        'profile-image': {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @ApiOperation({ summary: 'Edit Profile' })
   @ApiResponse({ status: HttpStatus.OK, example: userResponse.editProfile })
   async editProfile(

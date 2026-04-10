@@ -48,7 +48,6 @@ export class ApiProviderService {
     const sender = (process.env.SMS_SENDER_PROVIDER || 'sendar') as
       | 'dojah'
       | 'termii'
-      | 'aws'
       | 'sendar';
     return this.helperService.sendSms(phoneNumber, message, sender, channel);
   }

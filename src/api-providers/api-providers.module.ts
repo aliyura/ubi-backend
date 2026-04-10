@@ -9,7 +9,6 @@ import { VFDBankService } from './providers/VFDBank.service';
 import { EmailModule } from 'src/email/email.module';
 import { GraphService } from './providers/graph.service';
 import { TermiiService } from './providers/termii.service';
-import { AwsService } from './providers/aws.service';
 import { HelperService } from './providers/helper.service';
 import { SendarSmsService } from './providers/sendar.service';
 import { BellAccountService } from './providers/bellmfb.service';
@@ -27,7 +26,6 @@ import { QoreIdService } from './providers/qoreid.service';
     VFDBankService,
     GraphService,
     TermiiService,
-    AwsService,
     HelperService,
     SendarSmsService,
     BellAccountService,
@@ -43,7 +41,6 @@ import { QoreIdService } from './providers/qoreid.service';
     VFDBankService,
     GraphService,
     TermiiService,
-    AwsService,
     HelperService,
     SendarSmsService,
     BellAccountService,

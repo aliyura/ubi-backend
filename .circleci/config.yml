@@ -21,9 +21,9 @@ jobs:
           command: |
             echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin
 
-      # Build & Push using Dockerfile.aws
+      # Build & Push using Dockerfile
       - run:
           name: Build and push to DockerHub (AWS Dockerfile)
           command: |
-            docker build -f Dockerfile.aws --build-arg DATABASE_URL=$DATABASE_URL -t aliyura/ubi-backend:latest .
+            docker build -f Dockerfile --build-arg DATABASE_URL=$DATABASE_URL -t aliyura/ubi-backend:latest .
             docker push aliyura/ubi-backend:latest

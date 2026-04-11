@@ -299,7 +299,7 @@ export class UserService {
     let result: any;
 
     if (category === BENEFICIARY_TYPE.TRANSFER) {
-      const intraStartsWith = 'VALARPAYGLOBALS';
+      const intraStartsWith = 'UBI';
 
       if (transferType === 'intra') {
         const query = {

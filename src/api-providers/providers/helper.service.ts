@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DojahService } from './dojah.service';
 import { TermiiService } from './termii.service';
 import { SendarSmsService } from './sendar.service';
 
 @Injectable()
 export class HelperService {
+  private readonly logger = new Logger(HelperService.name);
+
   constructor(
     private readonly dojahService: DojahService,
     private readonly termiiService: TermiiService,
@@ -17,31 +19,34 @@ export class HelperService {
     type: 'dojah' | 'termii' |  'sendar',
     channel: 'sms' | 'whatsapp' = 'sms',
   ) {
+    const formattedPhone = this.addCountryCode(phoneNumber);
+    this.logger.debug(`Routing SMS via ${type} to: ${formattedPhone.slice(-4).padStart(formattedPhone.length, '*')}`);
+
     if (type === 'dojah') {
       return this.dojahService.sendSms({
-        phoneNumber: this.addCountryCode(phoneNumber),
+        phoneNumber: formattedPhone,
         message,
         channel,
       });
     } else if (type === 'termii') {
       return this.termiiService.sendSms({
-        phoneNumber: this.addCountryCode(phoneNumber),
+        phoneNumber: formattedPhone,
         message,
       });
     } else if (type === 'sendar') {
       return this.sendarService.sendSMS({
         contact: [{
-          number: this.addCountryCode(phoneNumber),
+          number: formattedPhone,
           body: message,
           sms_type: 'plain',
         }],
       });
+    } else {
+      this.logger.warn(`Unrecognised SMS provider type: ${type}`);
     }
   }
 
   addCountryCode(phoneNumber: string) {
-    console.log('phoneNumber', phoneNumber);
-
     // Check if the phone number already starts with '+234'
     if (phoneNumber?.startsWith('234')) {
       return "+" + phoneNumber;

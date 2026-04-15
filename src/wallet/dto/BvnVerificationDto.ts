@@ -1,5 +1,6 @@
 import {
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
 } from 'class-validator';
@@ -17,9 +18,9 @@ export class BvnVerificationDto {
   @ApiProperty({
     example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...',
   })
-  @IsNotEmpty({ message: 'BVN face base64 image is required' })
+  @IsOptional()
   @IsString({ message: 'Base64 must be a string' })
-  selfieImage: string;
+  selfieImage?: string;
 }
 
 export class BvnFaceVerificationResponseDto {

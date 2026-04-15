@@ -7,6 +7,7 @@ import {
   NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiProviderService } from 'src/api-providers/api-providers.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TransferDto } from './dto/TransferDto';
@@ -50,6 +51,7 @@ export class WalletService {
     private readonly prisma: PrismaService,
     private readonly apiProvider: ApiProviderService,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   // async onModuleInit() {
@@ -537,6 +539,9 @@ export class WalletService {
     //   throw new BadRequestException('Failed to validate BVN');
     // }
 
+    const bypassBvn =
+      this.configService.get<string>('BYPASS_BVN_VERIFICATION') === 'true';
+
     let walletSetupRequest = {} as WalletSetupDto;
     try {
       const existingWallet = await this.prisma.wallet.findFirst({
@@ -546,42 +551,53 @@ export class WalletService {
         throw new BadRequestException('User already have a wallet');
       }
 
-      const bvnVerificationResponse =
-        await this.apiProvider.verifyBvnWithFace(body);
-
-      if (
-        bvnVerificationResponse.statusCode &&
-        bvnVerificationResponse.statusCode != 200 &&
-        bvnVerificationResponse.statusCode != 201 &&
-        bvnVerificationResponse.statusCode != 402
-      ) {
-        throw new BadRequestException(
-          bvnVerificationResponse.statusCode == 404
-            ? 'Invalid BVN'
-            : bvnVerificationResponse.statusCode == 402
-              ? 'Verification unit exussted, Try again after sometime'
-              : bvnVerificationResponse?.message ||
-                'BVN verification failed, Try again',
-        );
-      }
-
-      if (
-        bvnVerificationResponse?.metadata?.match == true &&
-        bvnVerificationResponse?.metadata?.match_score > 0
-      ) {
+      if (bypassBvn) {
         walletSetupRequest = {
-          bvn: bvnVerificationResponse.bvn.bvn,
-          state: bvnVerificationResponse.bvn.state_of_residence,
-          lga: bvnVerificationResponse.bvn.lga_of_residence,
-          houseAddress: bvnVerificationResponse.bvn.residential_address,
+          bvn: body.bvn,
+          state: 'Lagos',
+          lga: 'Ikeja',
+          houseAddress: '1 Test Street',
           isBusiness: false,
-          gender: bvnVerificationResponse.bvn.gender,
+          gender: 'male',
         };
       } else {
-        throw new BadRequestException(
-          bvnVerificationResponse?.message ||
-            "BVN didn't match face provided, Try again",
-        );
+        const bvnVerificationResponse =
+          await this.apiProvider.verifyBvnWithFace(body);
+
+        if (
+          bvnVerificationResponse.statusCode &&
+          bvnVerificationResponse.statusCode != 200 &&
+          bvnVerificationResponse.statusCode != 201 &&
+          bvnVerificationResponse.statusCode != 402
+        ) {
+          throw new BadRequestException(
+            bvnVerificationResponse.statusCode == 404
+              ? 'Invalid BVN'
+              : bvnVerificationResponse.statusCode == 402
+                ? 'Verification unit exussted, Try again after sometime'
+                : bvnVerificationResponse?.message ||
+                  'BVN verification failed, Try again',
+          );
+        }
+
+        if (
+          bvnVerificationResponse?.metadata?.match == true &&
+          bvnVerificationResponse?.metadata?.match_score > 0
+        ) {
+          walletSetupRequest = {
+            bvn: bvnVerificationResponse.bvn.bvn,
+            state: bvnVerificationResponse.bvn.state_of_residence,
+            lga: bvnVerificationResponse.bvn.lga_of_residence,
+            houseAddress: bvnVerificationResponse.bvn.residential_address,
+            isBusiness: false,
+            gender: bvnVerificationResponse.bvn.gender,
+          };
+        } else {
+          throw new BadRequestException(
+            bvnVerificationResponse?.message ||
+              "BVN didn't match face provided, Try again",
+          );
+        }
       }
     } catch (error) {
       console.log('error:', error);

@@ -17,6 +17,7 @@ enum ACCOUNT_TYPE {
   USER
   ADMIN
   FARMER
+  AGENT
 }
 
 enum GENDER {
@@ -79,6 +80,7 @@ enum USER_ROLE {
   USER
   ADMIN
   FARMER
+  AGENT
 }
 
 enum BILL_TYPE {

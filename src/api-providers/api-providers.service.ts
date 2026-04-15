@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { SafeHavenService } from './providers/safe-haven.service';
 import { BILL_TYPE, CURRENCY, User } from '@prisma/client';
 import { DojahService } from './providers/dojah.service';
@@ -25,6 +25,8 @@ import { QoreIdService } from './providers/qoreid.service';
 
 @Injectable()
 export class ApiProviderService {
+  private readonly logger = new Logger(ApiProviderService.name);
+
   constructor(
     private readonly flutterwaveService: FlutterwaveService,
     private readonly dojahService: DojahService,
@@ -44,11 +46,11 @@ export class ApiProviderService {
     message: string,
     channel: 'sms' | 'whatsapp' = 'sms',
   ) {
-    console.log('message:', message);
     const sender = (process.env.SMS_SENDER_PROVIDER || 'sendar') as
       | 'dojah'
       | 'termii'
       | 'sendar';
+    this.logger.log(`Sending SMS via provider: ${sender} to: ${phoneNumber.slice(-4).padStart(phoneNumber.length, '*')}`);
     return this.helperService.sendSms(phoneNumber, message, sender, channel);
   }
 

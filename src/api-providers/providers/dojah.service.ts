@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   Param,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +10,8 @@ import axios from 'axios';
 
 @Injectable()
 export class DojahService {
+  private readonly logger = new Logger(DojahService.name);
+
   constructor(private readonly configService: ConfigService) {}
 
   async sendSms(data: {
@@ -27,16 +30,22 @@ export class DojahService {
       sender_id: 'UBI',
     };
 
-    const response = await axios.post(url, payload, {
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await axios.post(url, payload, {
+        headers: this.getHeaders(),
+      });
 
-    if (response.status !== 200) {
-      console.error(response?.data);
-      throw new InternalServerErrorException('Failed to send sms');
+      if (response.status !== 200) {
+        this.logger.error(`Dojah SMS failed with status ${response.status}`, response?.data);
+        throw new InternalServerErrorException('Failed to send sms');
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      this.logger.error('Dojah SMS request failed', error?.response?.data || error?.message);
+      throw new InternalServerErrorException(error?.response?.data?.message || 'Failed to send sms');
     }
-
-    return response.data;
   }
 
   async bvnLookUp(bvn: string) {

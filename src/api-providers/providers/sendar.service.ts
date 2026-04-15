@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
@@ -39,9 +39,17 @@ interface GetSMSResponse {
 
 @Injectable()
 export class SendarSmsService {
-  SENDAR_API_BASE_URL = 'https://sendar.io/api';
+  private readonly logger = new Logger(SendarSmsService.name);
 
   constructor(private readonly configService: ConfigService) {}
+
+  private get baseUrl(): string {
+    const url = this.configService.get<string>('SENDAR_BASE_URL');
+    if (!url) {
+      this.logger.warn('SENDAR_BASE_URL is not set');
+    }
+    return url;
+  }
 
   private getHeaders() {
     return {
@@ -51,14 +59,14 @@ export class SendarSmsService {
   }
 
   async sendSMS(payload: SendSMSPayload): Promise<SendSMSResponse> {
-    const url = `${this.SENDAR_API_BASE_URL}/sms/send`;
+    const url = `${this.baseUrl}/sms/send`;
     const requestBody = {
       ...payload,
       wallet_type: 'transactional',
       sender_id: 'UBI',
     };
 
-    console.log('url', url, 'payload:', requestBody);
+    this.logger.debug(`Sendar SMS request to: ${url}`);
 
     try {
       const response = await axios.post(url, requestBody, {
@@ -66,23 +74,30 @@ export class SendarSmsService {
       });
 
       if (response?.status !== 200) {
+        this.logger.error(`Sendar SMS failed with status ${response?.status}`, response?.data);
         throw new InternalServerErrorException('Failed to send SMS');
       }
 
       return response.data;
     } catch (error) {
-      console.error(
-        'Error sending SMS:',
-        error.response?.data || error.message,
+      if (error instanceof InternalServerErrorException) throw error;
+      const responseData = error.response?.data;
+      this.logger.error(
+        `Sendar SMS request failed [status=${error.response?.status}]: ${JSON.stringify(responseData) ?? error.message}`,
+        error.stack,
       );
-      throw new InternalServerErrorException(
-        error.response?.data?.message || 'Failed to send SMS',
-      );
+      const reason =
+        responseData?.message ||
+        responseData?.error ||
+        responseData?.errors ||
+        error.message ||
+        'Failed to send SMS';
+      throw new InternalServerErrorException(reason);
     }
   }
 
   async getSMS(uid: string): Promise<GetSMSResponse> {
-    const url = `${this.SENDAR_API_BASE_URL}/get/sms/${uid}`;
+    const url = `${this.baseUrl}/get/sms/${uid}`;
 
     try {
       const response = await axios.get(url, {

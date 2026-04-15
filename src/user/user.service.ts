@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   NotAcceptableException,
   Logger,
 } from '@nestjs/common';
@@ -1076,26 +1077,36 @@ export class UserService {
   }
 
   async validatePhoneNumber(body: ValidatePhoneNumberDto) {
-    if (body.phoneNumber && (await this.getUser(body.phoneNumber)))
+    const maskedPhone = body.phoneNumber?.slice(-4).padStart(body.phoneNumber.length, '*');
+    this.logger.log(`Validating phone number: ${maskedPhone}`);
+
+    let existingUser;
+    try {
+      existingUser = body.phoneNumber ? await this.getUser(body.phoneNumber) : null;
+    } catch (error) {
+      this.logger.error(`DB error checking phone number: ${maskedPhone}`, error?.stack);
+      throw new InternalServerErrorException('Failed to verify phone number');
+    }
+
+    if (existingUser)
       throw new BadRequestException('User with this phoneNumber already exist');
 
     const otpToken = Helpers.getCode();
     this.cache.set(body.phoneNumber, otpToken);
 
     const otpMessage = `Your UBI verification code is ${otpToken}. Valid for 10 minutes. Do not share this code with anyone.`;
-    let res: any;
     try {
-      res = await this.apiProvider.sendSms(body.phoneNumber, otpMessage, 'sms');
+      const res = await this.apiProvider.sendSms(body.phoneNumber, otpMessage, 'sms');
+      this.logger.log(`OTP sent successfully to: ${maskedPhone}`);
+      return {
+        message: 'Otp code sent to your phone number',
+        statusCode: HttpStatus.OK,
+        data: res,
+      };
     } catch (error) {
-      this.logger.error('error sending sms', error);
-      throw error;
+      this.logger.error(`Failed to send OTP SMS to: ${maskedPhone}`, error?.stack);
+      throw new InternalServerErrorException(error?.message || 'Failed to send OTP');
     }
-
-    return {
-      message: 'Otp code sent to your phone number',
-      statusCode: HttpStatus.OK,
-      data: res,
-    };
   }
 
   async verifyPhoneNumber(body: VerifyPhoneNumberDto) {

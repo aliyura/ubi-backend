@@ -47,7 +47,7 @@ async function bootstrap() {
       'https://natty-pay.vercel.app',
       'https://www.ubi.com',
       'https://ubi.com',
-      'https://valar-pay.vercel.app',
+      'https://ubi-pay.vercel.app',
     ],
     credentials: true,
   });

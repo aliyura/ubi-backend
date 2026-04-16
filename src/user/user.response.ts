@@ -2,7 +2,7 @@ export const userResponse = {
   register: {
     statusCode: 201,
     message: 'User registered successfully',
-    data: { userId: 'usr_12345', email: 'john@example.com' },
+    data: { userId: 'usr_12345', email: 'john@example.com', up: true },
   },
   registerFarmerAccount: {
     statusCode: 201,

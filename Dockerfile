@@ -16,6 +16,7 @@ COPY --from=builder /app/package-lock.json .
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/dist/templates ./dist/templates
 
 # Prisma client
 RUN npx prisma generate --schema=./prisma/schema.prisma

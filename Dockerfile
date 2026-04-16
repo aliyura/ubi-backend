@@ -6,8 +6,6 @@ COPY . .
 RUN npm install
 
 RUN npm run build
-RUN mkdir -p dist/email/templates
-RUN cp -R src/templates/* dist/email/templates/
 RUN npm prune --production
 
 FROM node:22-alpine AS production

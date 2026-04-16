@@ -71,6 +71,7 @@ import { VerifyForgotPasswordDto } from './dto/VerifyForgotPasswordDto';
 import { UserAvailablityCheckDto } from './dto/UserAvailablityCheckDto';
 import { WalletSetupDto } from 'src/wallet/dto/WalletSetupDto';
 import { FileService } from 'src/file/file.service';
+import { ConfigService } from '@nestjs/config';
 import {
   REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
   USER_FILE_UPLOAD_FOLDER_NAME,
@@ -87,6 +88,7 @@ export class UserService {
     private readonly apiProvider: ApiProviderService,
     private readonly emailService: EmailService,
     private readonly fileService: FileService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(body: RegisterDto | RegisterFarmerDto) {
@@ -224,7 +226,7 @@ export class UserService {
 
   async verifyEmail(body: VerifyEmailDto) {
     const savedOtp = this.cache.get(body.email);
-    if (savedOtp != body.otpCode)
+    if (savedOtp != body.otpCode && !this.isOtpBypassed(body.otpCode))
       throw new BadRequestException('Invalid or expired verification code');
 
     this.cache.set(body.email, 'verified');
@@ -267,8 +269,9 @@ export class UserService {
 
   async verifyForgotPassword(body: VerifyForgotPasswordDto) {
     const user = await this.getUser(body.username);
+    if (!user) throw new BadRequestException('User does not exist');
     const savedOtp = this.getOtpForUser(user);
-    if (savedOtp != body.otpCode)
+    if (savedOtp != body.otpCode && !this.isOtpBypassed(body.otpCode))
       throw new BadRequestException('Invalid verification code');
     this.deleteOtpForUser(user);
     return { message: 'OTP verified successfully', statusCode: HttpStatus.OK };
@@ -727,7 +730,7 @@ export class UserService {
   async changePassword(request: ChangePasswordDto, user: User) {
     if (request.otpCode) {
       const savedOtp = this.getOtpForUser(user);
-      if (savedOtp != request.otpCode) {
+      if (savedOtp != request.otpCode && !this.isOtpBypassed(request.otpCode)) {
         throw new BadRequestException('Invalid otp or expired');
       }
       // optional: delete once used for password change
@@ -784,7 +787,7 @@ export class UserService {
   async resetPin(body: ResetWalletPinDto, user: User) {
     if (body.otpCode) {
       const savedOtp = this.getOtpForUser(user);
-      if (savedOtp != body.otpCode) {
+      if (savedOtp != body.otpCode && !this.isOtpBypassed(body.otpCode)) {
         throw new BadRequestException('Invalid otp or expired');
       }
       this.deleteOtpForUser(user);
@@ -1111,7 +1114,7 @@ export class UserService {
 
   async verifyPhoneNumber(body: VerifyPhoneNumberDto) {
     const savedOtp = this.cache.get<string>(body.phoneNumber);
-    if (savedOtp != body.otpCode) {
+    if (savedOtp != body.otpCode && !this.isOtpBypassed(body.otpCode)) {
       throw new BadRequestException('Invalid otp or expired');
     }
     this.cache.set(body.phoneNumber, 'verified');
@@ -1120,6 +1123,11 @@ export class UserService {
       message: 'Phone number verified successfully',
       statusCode: HttpStatus.OK,
     };
+  }
+
+  private isOtpBypassed(otpCode: string): boolean {
+    const bypass = this.configService.get<string>('OTP_BYPASS_CODE');
+    return !!bypass && otpCode === bypass;
   }
 
   private setOtpForUser(user: User): string {

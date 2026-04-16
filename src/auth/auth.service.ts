@@ -113,7 +113,7 @@ export class AuthService {
     if (!user) throw new BadRequestException('User does not exist');
 
     const savedOtp = this.getOtpForUser(user);
-    if (savedOtp != body.otpCode && body.otpCode!="654321")
+    if (savedOtp != body.otpCode && !this.isOtpBypassed(body.otpCode))
       throw new BadRequestException('Invalid otp or expired');
 
     this.deleteOtpForUser(user);
@@ -130,6 +130,11 @@ export class AuthService {
   /* =====================
      PRIVATE HELPERS
      ===================== */
+  private isOtpBypassed(otpCode: string): boolean {
+    const bypass = this.configService.get<string>('OTP_BYPASS_CODE');
+    return !!bypass && otpCode === bypass;
+  }
+
   private setOtpForUser(user: User): string {
     const otp = Helpers.getCode();
     this.cache.set(user.email, otp, this.OTP_EXPIRES_IN);

@@ -61,6 +61,7 @@ import { HealthModule } from './health/health.module';
         GRAPH_BASE_URL: Joi.string().required(),
         TERMII_API_KEY: Joi.string().required(),
         TERMII_BASE_URL: Joi.string().required(),
+        OTP_BYPASS_CODE: Joi.string().optional(),
       }),
     }),
     HealthModule,

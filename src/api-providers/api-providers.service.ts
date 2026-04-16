@@ -46,11 +46,18 @@ export class ApiProviderService {
     message: string,
     channel: 'sms' | 'whatsapp' = 'sms',
   ) {
+    const maskedPhone = phoneNumber.slice(-4).padStart(phoneNumber.length, '*');
+
+    if (this.configService.get<string>('BYPASS_SMS') === 'true') {
+      this.logger.warn(`[SMS BYPASS] Simulated SMS to: ${maskedPhone} — no real message sent`);
+      return { status: 'simulated', message: 'SMS delivery simulated (BYPASS_SMS=true)' };
+    }
+
     const sender = (process.env.SMS_SENDER_PROVIDER || 'sendar') as
       | 'dojah'
       | 'termii'
       | 'sendar';
-    this.logger.log(`Sending SMS via provider: ${sender} to: ${phoneNumber.slice(-4).padStart(phoneNumber.length, '*')}`);
+    this.logger.log(`Sending SMS via provider: ${sender} to: ${maskedPhone}`);
     return this.helperService.sendSms(phoneNumber, message, sender, channel);
   }
 

@@ -161,12 +161,11 @@ export class ApiProviderService {
     user: User,
     body: CreateFarmerAccountDto,
   ) {
-    return this.safeHavenService.createBusinessSubAccount({
-      phoneNumber: this.addCountryCode(user?.phoneNumber),
-      emailAddress: user?.email,
-      externalReference: user?.id,
+    return this.flutterwaveService.createVirtualAccount({
+      email: user?.email,
       bvn,
-      companyRegistrationNumber: body?.companyRegistrationNumber,
+      narration: 'Farmer Account',
+      is_permanent: true,
     });
   }
 

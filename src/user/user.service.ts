@@ -130,9 +130,12 @@ export class UserService {
           referralCode: await this.generateReferralCode(),
           dateOfBirth: body.dateOfBirth,
           accountType: body.accountType,
-          role: body.accountType === ACCOUNT_TYPE.AGENT ? USER_ROLE.AGENT
-              : body.accountType === ACCOUNT_TYPE.FARMER ? USER_ROLE.FARMER
-              : USER_ROLE.USER,
+          role:
+            body.accountType === ACCOUNT_TYPE.AGENT
+              ? USER_ROLE.AGENT
+              : body.accountType === ACCOUNT_TYPE.FARMER
+                ? USER_ROLE.FARMER
+                : USER_ROLE.USER,
           isBusiness: body.accountType === ACCOUNT_TYPE.FARMER,
           currency: body.currency ?? 'NGN',
           companyRegistrationNumber:
@@ -1036,10 +1039,10 @@ export class UserService {
         return trx.wallet.create({
           data: {
             userId: user.id,
-            accountName: nairaAccount?.account_name,
-            bankName: nairaAccount?.bank_name,
-            accountNumber: nairaAccount?.account_number,
-            accountRef: nairaAccount?.order_ref,
+            accountName: nairaAccount?.data?.account_name,
+            bankName: nairaAccount?.data?.bank_name,
+            accountNumber: nairaAccount?.data?.account_number,
+            accountRef: nairaAccount?.data?.order_ref,
           },
         });
       },

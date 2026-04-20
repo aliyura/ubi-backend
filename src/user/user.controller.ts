@@ -15,7 +15,13 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -65,51 +71,72 @@ export class UserController {
   @Post('register-farmer')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register Farmer Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.registerFarmerAccount })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.registerFarmerAccount,
+  })
   async registerFarmerAccount(@Body() body: RegisterFarmerDto) {
     return this.userService.register(body);
   }
   @Post('create-passcode')
   @ApiOperation({ summary: 'Create Passcode' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createPasscode })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.createPasscode,
+  })
   async createPasscode(@Body() body: PasscodeDto, @Req() req: Request) {
     const user = req['user'];
     return this.userService.createPasscode(body, user);
   }
 
-
   @Post('forgot-password')
   @ApiOperation({ summary: 'Forgot Password' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.forgotPassword })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.forgotPassword,
+  })
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     return this.userService.forgotPassword(body);
   }
 
   @Post('verify-forgot-password')
   @ApiOperation({ summary: 'Verify Forgot Password' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.verifyForgotPassword })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.verifyForgotPassword,
+  })
   async verifyForgotPassword(@Body() body: VerifyForgotPasswordDto) {
     return this.userService.verifyForgotPassword(body);
   }
 
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset Password' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.resetPassword })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.resetPassword,
+  })
   async resetPassword(@Body() body: ResetPasswordDto) {
     return this.userService.resetPassword(body);
   }
 
   @Post('create-account')
   @ApiOperation({ summary: 'Create Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createAccount })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.createAccount,
+  })
   async createAccount(@Body() body: CreateAccountDto, @Req() req: Request) {
     const user = req['user'];
     return this.userService.createAccount(body?.bvn, user);
   }
 
+  @ApiExcludeEndpoint()
   @Post('create-farmer-account')
   @ApiOperation({ summary: 'Create Farmer Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createFarmerAccount })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.createFarmerAccount,
+  })
   async createFarmerAccount(
     @Body() body: CreateFarmerAccountDto,
     @Req() req: Request,
@@ -120,7 +147,10 @@ export class UserController {
 
   @Post('create-foreign-account')
   @ApiOperation({ summary: 'Create Foreign Account' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.createForeignAccount })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.createForeignAccount,
+  })
   async createForeignAccount(
     @Body() body: CreateForeignAccountDto,
     @Req() req: Request,
@@ -131,7 +161,10 @@ export class UserController {
 
   @Post('set-wallet-pin')
   @ApiOperation({ summary: 'Set Wallet Pin' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.setWalletPin })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.setWalletPin,
+  })
   async setWalletPin(@Body() body: WalletPinDto, @Req() req: Request) {
     const user = req['user'];
     return this.userService.setWalletPin(body, user);
@@ -226,7 +259,10 @@ export class UserController {
   @Post('existance-check')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Check User Existance' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.checkUserExistance })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.checkUserExistance,
+  })
   async checkUserExistance(@Body() body: UserAvailablityCheckDto) {
     return this.userService.checkUserExistance(body);
   }
@@ -234,7 +270,10 @@ export class UserController {
   @Post('validate-phonenumber')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Validate Phone Number' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.validatePhoneNumber })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.validatePhoneNumber,
+  })
   async validatePhoneNumber(@Body() body: ValidatePhoneNumberDto) {
     return this.userService.validatePhoneNumber(body);
   }
@@ -242,7 +281,10 @@ export class UserController {
   @Post('verify-phonenumber')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify Phone Number' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.verifyPhoneNumber })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.verifyPhoneNumber,
+  })
   async verifyPhoneNumber(@Body() body: VerifyPhoneNumberDto) {
     return this.userService.verifyPhoneNumber(body);
   }
@@ -339,7 +381,10 @@ export class UserController {
 
   @Get('get-beneficiaries')
   @ApiOperation({ summary: 'Get Beneficiary By Category' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.getBeneficiaryByCategory })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.getBeneficiaryByCategory,
+  })
   async getBeneficiaryByCategory(
     @Req() req: Request,
     @Query('category') category: BENEFICIARY_TYPE,
@@ -357,7 +402,10 @@ export class UserController {
 
   @Get('statistics-line-chart')
   @ApiOperation({ summary: 'Get Statistics Line Chart' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.getStatisticsLineChart })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.getStatisticsLineChart,
+  })
   async getStatisticsLineChart(@Req() req: Request) {
     const user = req['user'];
     return this.userService.getStatisticsLineChart(user);
@@ -365,7 +413,10 @@ export class UserController {
 
   @Get('statistics-pie-chart')
   @ApiOperation({ summary: 'Get Statistics Pie Chart' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.getStatisticsPieChart })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.getStatisticsPieChart,
+  })
   async getStatisticsPieChart(
     @Req() req: Request,
     @Query('sort') sort: 'all' | 'today' | 'week' | 'month' | 'year',
@@ -376,7 +427,10 @@ export class UserController {
 
   @Get('request-change-password')
   @ApiOperation({ summary: 'Request Change Password' })
-  @ApiResponse({ status: HttpStatus.OK, example: userResponse.requestChangePassword })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: userResponse.requestChangePassword,
+  })
   async requestChangePassword(@Req() req: Request) {
     const user = req['user'];
     return this.userService.requestChangePassword(user);

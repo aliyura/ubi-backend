@@ -1,0 +1,68 @@
+export const repaymentResponse = {
+  adminList: {
+    statusCode: 200,
+    message: 'Repayments retrieved',
+    data: [
+      {
+        id: 'plan-uuid-001',
+        applicationId: 'app-uuid-001',
+        principalEquivalent: 61500,
+        serviceCharge: 3075,
+        totalRepaymentAmount: 64575,
+        repaymentFrequency: 'monthly',
+        numberOfInstallments: 6,
+        installmentAmount: 10762.5,
+        amountRepaid: 10762.5,
+        outstandingBalance: 53812.5,
+        status: 'partial',
+        application: { applicationRef: 'UBI-2026-AB3CD7E', userId: 'user-uuid-001' },
+        repayments: [
+          { installmentNumber: 1, dueDate: '2026-10-01', amount: 10762.5, amountPaid: 10762.5, status: 'completed' },
+          { installmentNumber: 2, dueDate: '2026-11-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        ],
+      },
+    ],
+    meta: { total: 1, page: 1, limit: 20, pages: 1 },
+  },
+  record: {
+    statusCode: 200,
+    message: 'Repayment recorded',
+    data: { amountPaid: 10762.5, outstandingBalance: 53812.5 },
+  },
+  processOverdue: {
+    statusCode: 200,
+    message: 'Processed 3 overdue repayments',
+    data: null,
+  },
+  sendReminders: {
+    statusCode: 200,
+    message: 'Sent 8 reminders',
+    data: null,
+  },
+  getSchedule: {
+    statusCode: 200,
+    message: 'Repayment schedule retrieved',
+    data: {
+      id: 'plan-uuid-001',
+      applicationId: 'app-uuid-001',
+      principalEquivalent: 61500,
+      serviceCharge: 3075,
+      totalRepaymentAmount: 64575,
+      repaymentFrequency: 'monthly',
+      numberOfInstallments: 6,
+      installmentAmount: 10762.5,
+      firstDueDate: '2026-10-01',
+      amountRepaid: 0,
+      outstandingBalance: 64575,
+      status: 'pending',
+      repayments: [
+        { installmentNumber: 1, dueDate: '2026-10-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        { installmentNumber: 2, dueDate: '2026-11-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        { installmentNumber: 3, dueDate: '2026-12-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        { installmentNumber: 4, dueDate: '2027-01-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        { installmentNumber: 5, dueDate: '2027-02-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+        { installmentNumber: 6, dueDate: '2027-03-01', amount: 10762.5, amountPaid: 0, status: 'pending' },
+      ],
+    },
+  },
+} as const;

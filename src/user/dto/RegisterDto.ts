@@ -8,8 +8,11 @@ import {
   IsString,
   Length,
   Matches,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { RegisterFarmDto } from './RegisterFarmDto';
 
 export class RegisterDto {
   @ApiProperty({ example: 'johndoe' })
@@ -78,4 +81,13 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(ACCOUNT_TYPE)
   accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.USER;
+
+  @ApiPropertyOptional({
+    description: 'Farm details — all required farm fields must be provided if this object is included',
+    type: () => RegisterFarmDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RegisterFarmDto)
+  farm?: RegisterFarmDto;
 }

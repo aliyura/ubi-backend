@@ -116,6 +116,10 @@ export class Helpers {
     return `${year}-${month}-${nextDay}`;
   }
 
+  static round2(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
   static capitalize(value: string): string {
     const words = value.toLowerCase().split(' ');
     return words

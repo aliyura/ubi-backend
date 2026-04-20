@@ -19,6 +19,7 @@ import {
   TRANSACTION_STATUS,
   TRANSACTION_TYPE,
   User,
+  USER_ROLE,
   Wallet,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -129,6 +130,9 @@ export class UserService {
           referralCode: await this.generateReferralCode(),
           dateOfBirth: body.dateOfBirth,
           accountType: body.accountType,
+          role: body.accountType === ACCOUNT_TYPE.AGENT ? USER_ROLE.AGENT
+              : body.accountType === ACCOUNT_TYPE.FARMER ? USER_ROLE.FARMER
+              : USER_ROLE.USER,
           isBusiness: body.accountType === ACCOUNT_TYPE.FARMER,
           currency: body.currency ?? 'NGN',
           companyRegistrationNumber:
@@ -161,7 +165,38 @@ export class UserService {
           payload.referredBy = referredUser.id;
         }
 
-        return tx.user.create({ data: payload });
+        const newUser = await tx.user.create({ data: payload });
+
+        const farmData = (body as RegisterDto).farm;
+        if (farmData) {
+          await tx.farm.create({
+            data: {
+              userId: newUser.id,
+              name: farmData.name,
+              address: farmData.address,
+              state: farmData.state,
+              lga: farmData.lga,
+              ownershipType: farmData.ownershipType,
+              mainCropType: farmData.mainCropType,
+              ward: farmData.ward,
+              latitude: farmData.latitude,
+              longitude: farmData.longitude,
+              sizeValue: farmData.sizeValue,
+              sizeUnit: farmData.sizeUnit,
+              secondaryCropType: farmData.secondaryCropType,
+              farmingSeason: farmData.farmingSeason,
+              expectedPlantingDate: farmData.expectedPlantingDate
+                ? new Date(farmData.expectedPlantingDate)
+                : undefined,
+              expectedHarvestDate: farmData.expectedHarvestDate
+                ? new Date(farmData.expectedHarvestDate)
+                : undefined,
+              hasIrrigation: farmData.hasIrrigation ?? false,
+            },
+          });
+        }
+
+        return newUser;
       });
     } catch (error) {
       const errorMessage = String((error as any)?.message || '').toLowerCase();
@@ -554,6 +589,21 @@ export class UserService {
   }
 
   async verifyNinDetails(nin: string, user: User) {
+    const bypassKyc =
+      this.configService.get<string>('BYPASS_KYC_VERIFICATION') === 'true';
+
+    if (bypassKyc) {
+      await this.prisma.user.update({
+        where: { id: user?.id },
+        data: { nin, isNinVerified: true },
+      });
+
+      return {
+        message: 'Nin verified successfully',
+        statusCode: HttpStatus.OK,
+      };
+    }
+
     let res: any;
     try {
       res = await this.apiProvider.verifyNin(nin);
@@ -578,6 +628,28 @@ export class UserService {
   }
 
   async verifyTier2Kyc(body: KycTier2Dto, user: User) {
+    const bypassKyc =
+      this.configService.get<string>('BYPASS_KYC_VERIFICATION') === 'true';
+
+    if (bypassKyc) {
+      await this.prisma.user.update({
+        where: { id: user?.id },
+        data: {
+          nin: body.nin,
+          isNinVerified: true,
+          tierLevel: TIER_LEVEL.two,
+          dailyCummulativeTransactionLimit:
+            TIER_TWO_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+          cummulativeBalanceLimit: TIER_TWO_CUMMULATIVE_BALANCE_LIMIT,
+        },
+      });
+
+      return {
+        message: 'Tier2 kyc verification successful',
+        statusCode: HttpStatus.OK,
+      };
+    }
+
     let res: any;
     res = await this.apiProvider.verifyNin(body.nin);
 
@@ -606,6 +678,30 @@ export class UserService {
   }
 
   async verifyTier3Kyc(body: KycTier3Dto, user: User) {
+    const bypassKyc =
+      this.configService.get<string>('BYPASS_KYC_VERIFICATION') === 'true';
+
+    if (bypassKyc) {
+      await this.prisma.user.update({
+        where: { id: user?.id },
+        data: {
+          address: body?.address,
+          state: body?.state,
+          city: body?.city,
+          isAddressVerified: true,
+          tierLevel: TIER_LEVEL.three,
+          dailyCummulativeTransactionLimit:
+            TIER_THREE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+          cummulativeBalanceLimit: TIER_THREE_CUMMULATIVE_BALANCE_LIMIT,
+        },
+      });
+
+      return {
+        message: 'Tier3 kyc verification successful',
+        statusCode: HttpStatus.OK,
+      };
+    }
+
     let res: any;
     try {
       res = await this.apiProvider.dojahTier3Upgrade(body, user);
@@ -1080,14 +1176,21 @@ export class UserService {
   }
 
   async validatePhoneNumber(body: ValidatePhoneNumberDto) {
-    const maskedPhone = body.phoneNumber?.slice(-4).padStart(body.phoneNumber.length, '*');
+    const maskedPhone = body.phoneNumber
+      ?.slice(-4)
+      .padStart(body.phoneNumber.length, '*');
     this.logger.log(`Validating phone number: ${maskedPhone}`);
 
     let existingUser;
     try {
-      existingUser = body.phoneNumber ? await this.getUser(body.phoneNumber) : null;
+      existingUser = body.phoneNumber
+        ? await this.getUser(body.phoneNumber)
+        : null;
     } catch (error) {
-      this.logger.error(`DB error checking phone number: ${maskedPhone}`, error?.stack);
+      this.logger.error(
+        `DB error checking phone number: ${maskedPhone}`,
+        error?.stack,
+      );
       throw new InternalServerErrorException('Failed to verify phone number');
     }
 
@@ -1099,7 +1202,11 @@ export class UserService {
 
     const otpMessage = `Your UBI verification code is ${otpToken}. Valid for 10 minutes. Do not share this code with anyone.`;
     try {
-      const res = await this.apiProvider.sendSms(body.phoneNumber, otpMessage, 'sms');
+      const res = await this.apiProvider.sendSms(
+        body.phoneNumber,
+        otpMessage,
+        'sms',
+      );
       this.logger.log(`OTP sent successfully to: ${maskedPhone}`);
       return {
         message: 'Otp code sent to your phone number',
@@ -1107,8 +1214,13 @@ export class UserService {
         data: res,
       };
     } catch (error) {
-      this.logger.error(`Failed to send OTP SMS to: ${maskedPhone}`, error?.stack);
-      throw new InternalServerErrorException(error?.message || 'Failed to send OTP');
+      this.logger.error(
+        `Failed to send OTP SMS to: ${maskedPhone}`,
+        error?.stack,
+      );
+      throw new InternalServerErrorException(
+        error?.message || 'Failed to send OTP',
+      );
     }
   }
 

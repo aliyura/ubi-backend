@@ -418,3 +418,591 @@ model BankNameCache {
   @@index([bankCode])
   @@index([bankName])
 }
+
+// ─── Loan Module Enums ───────────────────────────────────────────────────────
+
+enum LOAN_APPLICATION_STATUS {
+  Draft
+  Submitted
+  EligibilityReview
+  PendingFieldVerification
+  UnderReview
+  MoreInfoRequired
+  Approved
+  Rejected
+  FulfillmentInProgress
+  ReadyForPickup
+  OutForDelivery
+  Delivered
+  Active
+  PartiallyRepaid
+  Completed
+  Overdue
+  Cancelled
+}
+
+enum ELIGIBILITY_CHECK_RESULT {
+  pass
+  fail
+  conditional
+}
+
+enum AGENT_RECOMMENDATION_TYPE {
+  recommended
+  not_recommended
+  conditional
+}
+
+enum LOAN_DECISION_TYPE {
+  approved
+  rejected
+  more_info_required
+  hold
+  send_for_verification
+}
+
+enum FULFILLMENT_STATUS {
+  pending
+  stock_confirmed
+  packed
+  dispatched
+  delivered
+}
+
+enum REPAYMENT_STATUS {
+  pending
+  partial
+  completed
+  overdue
+}
+
+enum FARM_OWNERSHIP_TYPE {
+  owned
+  leased
+  family_land
+  cooperative_land
+}
+
+enum FULFILLMENT_METHOD {
+  pickup
+  delivery
+}
+
+enum MARKETPLACE_ORDER_STATUS {
+  pending
+  confirmed
+  packed
+  dispatched
+  delivered
+  cancelled
+}
+
+// ─── Loan Module Models ──────────────────────────────────────────────────────
+
+model LoanResourceCategory {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  resources LoanResource[]
+
+  @@map("loan_resource_category")
+}
+
+model LoanResource {
+  id          String  @id @default(uuid()) @db.Uuid
+  categoryId  String  @db.Uuid
+  name        String
+  description String?
+  imageUrl    String?
+
+  unitPrice    Float
+  unitOfMeasure String
+  stockQuantity Float  @default(0)
+  minQuantity   Float  @default(1)
+
+  supplier    String?
+  suitableCrops String?
+  isEligibleForLoan Boolean @default(true)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category  LoanResourceCategory @relation(fields: [categoryId], references: [id])
+  cartItems CartItem[]
+  applicationItems LoanApplicationItem[]
+  marketplaceOrderItems MarketplaceOrderItem[]
+
+  @@index([categoryId])
+  @@map("loan_resource")
+}
+
+model Farm {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+
+  name     String
+  address  String
+  state    String
+  lga      String
+  ward     String?
+
+  latitude  Float?
+  longitude Float?
+
+  sizeValue Float?
+  sizeUnit  String?
+
+  ownershipType FARM_OWNERSHIP_TYPE
+
+  mainCropType      String
+  secondaryCropType String?
+  farmingSeason     String?
+  expectedPlantingDate DateTime?
+  expectedHarvestDate  DateTime?
+
+  hasIrrigation Boolean @default(false)
+
+  isVerified Boolean @default(false)
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos       FarmPhoto[]
+  applications LoanApplication[]
+
+  @@index([userId])
+  @@map("farm")
+}
+
+model FarmPhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  farmId    String   @db.Uuid
+  url       String
+  filename  String?
+  createdAt DateTime @default(now())
+
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@map("farm_photo")
+}
+
+model Supplier {
+  id            String  @id @default(uuid()) @db.Uuid
+  name          String
+  location      String?
+  contactPerson String?
+  contactPhone  String?
+  contactEmail  String?
+  stockCapacity String?
+  deliveryCoverage String?
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fulfillments      Fulfillment[]
+  marketplaceOrders MarketplaceOrder[]
+
+  @@map("supplier")
+}
+
+model Cart {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items CartItem[]
+
+  @@map("cart")
+}
+
+model CartItem {
+  id         String @id @default(uuid()) @db.Uuid
+  cartId     String @db.Uuid
+  resourceId String @db.Uuid
+  quantity   Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart     Cart         @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  resource LoanResource @relation(fields: [resourceId], references: [id])
+
+  @@unique([cartId, resourceId])
+  @@map("cart_item")
+}
+
+model LoanApplication {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  farmId String @db.Uuid
+
+  applicationRef String @unique
+
+  status LOAN_APPLICATION_STATUS @default(Draft)
+
+  purpose            String?
+  season             String?
+  expectedPlantingDate DateTime?
+  expectedHarvestDate  DateTime?
+
+  fulfillmentMethod  FULFILLMENT_METHOD?
+  deliveryAddress    String?
+  deliveryContact    String?
+
+  agentId String? @db.Uuid
+
+  totalEstimatedValue Float @default(0)
+  currency            String @default("NGN")
+
+  farmerNotes String?
+
+  submittedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farm             Farm                  @relation(fields: [farmId], references: [id])
+  items            LoanApplicationItem[]
+  eligibilityChecks EligibilityCheck[]
+  agentRecommendation AgentRecommendation?
+  fieldVerification   FieldVerification?
+  decisions        LoanDecision[]
+  statusHistory    LoanStatusHistory[]
+  fulfillment      Fulfillment?
+  repaymentPlan    RepaymentPlan?
+  auditLogs        LoanAuditLog[]
+  marketplaceOrders MarketplaceOrder[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([applicationRef])
+  @@map("loan_application")
+}
+
+model LoanApplicationItem {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+  resourceId    String @db.Uuid
+
+  itemName      String
+  category      String?
+  unitPrice     Float
+  quantity      Float
+  unitOfMeasure String
+  totalAmount   Float
+  supplier      String?
+
+  approvedQuantity Float?
+  approvedAmount   Float?
+
+  createdAt DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  resource    LoanResource    @relation(fields: [resourceId], references: [id])
+
+  @@map("loan_application_item")
+}
+
+model EligibilityCheck {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+
+  checkName  String
+  result     ELIGIBILITY_CHECK_RESULT
+  score      Float?
+  note       String?
+  source     String?
+  isManual   Boolean  @default(false)
+  checkedAt  DateTime @default(now())
+  checkedBy  String?
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("eligibility_check")
+}
+
+model AgentRecommendation {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @unique @db.Uuid
+  agentId       String @db.Uuid
+
+  agentName       String?
+  farmerKnown     Boolean @default(false)
+  farmVisited     Boolean @default(false)
+  visitDate       DateTime?
+  farmExists      Boolean?
+  cropConfirmed   Boolean?
+  estimatedFarmSize Float?
+
+  recommendation AGENT_RECOMMENDATION_TYPE
+  note           String?
+  photosUploaded String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("agent_recommendation")
+}
+
+model FieldVerification {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @unique @db.Uuid
+  agentId       String @db.Uuid
+
+  farmExists        Boolean?
+  visitedAt         DateTime?
+  cropConfirmed     Boolean?
+  estimatedFarmSize Float?
+  recommendation    AGENT_RECOMMENDATION_TYPE?
+  note              String?
+  photos            String[]
+
+  createdAt DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("field_verification")
+}
+
+model LoanDecision {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+  decidedBy     String @db.Uuid
+
+  decision LOAN_DECISION_TYPE
+  reason   String?
+  note     String?
+
+  approvedTotalValue Float?
+  repaymentTerms     Json?
+  supplierId         String? @db.Uuid
+
+  decidedAt DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("loan_decision")
+}
+
+model LoanStatusHistory {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+
+  fromStatus LOAN_APPLICATION_STATUS?
+  toStatus   LOAN_APPLICATION_STATUS
+  changedBy  String?
+  reason     String?
+  note       String?
+
+  createdAt DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("loan_status_history")
+}
+
+model LoanAuditLog {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+
+  action        String
+  performedById String?
+  performedByRole String?
+  details       Json?
+
+  createdAt DateTime @default(now())
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("loan_audit_log")
+}
+
+model Fulfillment {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @unique @db.Uuid
+  supplierId    String? @db.Uuid
+
+  fulfillmentRef    String?
+  stockConfirmed    Boolean @default(false)
+  deliveryMethod    FULFILLMENT_METHOD?
+  pickupAddress     String?
+  deliveryAddress   String?
+  deliveryOfficer   String?
+  deliveryPhone     String?
+  receivedBy        String?
+  deliveryProofUrl  String?
+  deliveryNote      String?
+  dispatchedAt      DateTime?
+  deliveredAt       DateTime?
+
+  status FULFILLMENT_STATUS @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  items       FulfillmentItem[]
+
+  @@map("fulfillment")
+}
+
+model FulfillmentItem {
+  id            String @id @default(uuid()) @db.Uuid
+  fulfillmentId String @db.Uuid
+
+  itemName       String
+  quantity       Float
+  unitOfMeasure  String
+  stockAvailable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  fulfillment Fulfillment @relation(fields: [fulfillmentId], references: [id], onDelete: Cascade)
+
+  @@map("fulfillment_item")
+}
+
+model RepaymentPlan {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @unique @db.Uuid
+
+  principalEquivalent Float
+  serviceCharge       Float  @default(0)
+  totalRepaymentAmount Float
+  repaymentFrequency  String
+  numberOfInstallments Int
+  installmentAmount   Float
+  firstDueDate        DateTime
+  lastDueDate         DateTime?
+
+  amountRepaid     Float @default(0)
+  outstandingBalance Float
+
+  status REPAYMENT_STATUS @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  repayments  Repayment[]
+
+  @@map("repayment_plan")
+}
+
+model Repayment {
+  id              String @id @default(uuid()) @db.Uuid
+  repaymentPlanId String @db.Uuid
+
+  installmentNumber Int
+  dueDate           DateTime
+  amount            Float
+  amountPaid        Float   @default(0)
+  paidAt            DateTime?
+  reference         String?
+  note              String?
+
+  status REPAYMENT_STATUS @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan RepaymentPlan @relation(fields: [repaymentPlanId], references: [id], onDelete: Cascade)
+
+  @@index([repaymentPlanId])
+  @@index([dueDate])
+  @@map("repayment")
+}
+
+model LoanPolicy {
+  id  String @id @default(uuid()) @db.Uuid
+
+  maxLoanAmount        Float  @default(500000)
+  maxItemQuantity      Float  @default(100)
+  requireAgentReco     Boolean @default(false)
+  allowResubmission    Boolean @default(true)
+  repaymentFrequency   String  @default("monthly")
+  defaultInstallments  Int     @default(6)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("loan_policy")
+}
+
+// ─── Marketplace Order Models ─────────────────────────────────────────────────
+
+model MarketplaceOrder {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @db.Uuid
+  userId        String @db.Uuid
+  orderRef      String @unique
+
+  totalAmount Float
+  status      MARKETPLACE_ORDER_STATUS @default(pending)
+
+  deliveryMethod  FULFILLMENT_METHOD?
+  deliveryAddress String?
+  deliveryContact String?
+  pickupAddress   String?
+
+  supplierId       String?   @db.Uuid
+  dispatchedAt     DateTime?
+  deliveredAt      DateTime?
+  receivedBy       String?
+  deliveryProofUrl String?
+  deliveryNote     String?
+  adminNote        String?
+
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application LoanApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    Supplier?            @relation(fields: [supplierId], references: [id])
+  items       MarketplaceOrderItem[]
+
+  @@index([applicationId])
+  @@index([userId])
+  @@map("marketplace_order")
+}
+
+model MarketplaceOrderItem {
+  id         String @id @default(uuid()) @db.Uuid
+  orderId    String @db.Uuid
+  resourceId String @db.Uuid
+
+  itemName      String
+  category      String?
+  unitPrice     Float
+  quantity      Float
+  unitOfMeasure String
+  totalAmount   Float
+  supplier      String?
+
+  createdAt DateTime @default(now())
+
+  order    MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  resource LoanResource     @relation(fields: [resourceId], references: [id])
+
+  @@index([orderId])
+  @@map("marketplace_order_item")
+}

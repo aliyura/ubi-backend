@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "farm" ALTER COLUMN "sizeValue" DROP NOT NULL,
+ALTER COLUMN "sizeUnit" DROP NOT NULL;

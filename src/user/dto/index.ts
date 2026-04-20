@@ -11,6 +11,7 @@ export * from './NinDto';
 export * from './PasscodeDto';
 export * from './RegisterDto';
 export * from './RegisterFarmerDto';
+export * from './RegisterFarmDto';
 export * from './ReportScamDto';
 export * from './ResetPasswordDto';
 export * from './ResetWalletPinDto';

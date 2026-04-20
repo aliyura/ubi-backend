@@ -49,8 +49,13 @@ export class ApiProviderService {
     const maskedPhone = phoneNumber.slice(-4).padStart(phoneNumber.length, '*');
 
     if (this.configService.get<string>('BYPASS_SMS') === 'true') {
-      this.logger.warn(`[SMS BYPASS] Simulated SMS to: ${maskedPhone} — no real message sent`);
-      return { status: 'simulated', message: 'SMS delivery simulated (BYPASS_SMS=true)' };
+      this.logger.warn(
+        `[SMS BYPASS] Simulated SMS to: ${maskedPhone} — no real message sent`,
+      );
+      return {
+        status: 'simulated',
+        message: 'SMS delivery simulated (BYPASS_SMS=true)',
+      };
     }
 
     const sender = (process.env.SMS_SENDER_PROVIDER || 'sendar') as
@@ -81,67 +86,70 @@ export class ApiProviderService {
     bank_name?: string;
     order_ref?: string;
   }> {
-    // flutterwave bank
-    // const res = await this.flutterwaveService.createVirtualAccount({
-    //   bvn,
-    //   email: user?.email,
-    //   narration: `UBI/${user?.fullname}`,
-    //   is_permanent: true,
-    // });
-    // return {
-    //   account_name: `UBI/${user?.fullname}`,
-    //   account_number: res?.account_number,
-    //   order_ref: res?.order_ref,
-    //   bank_name: res?.bank_name,
-    // };
-
-    // // vfd bank
-    // const res = await this.VFDBankService.createNoConsentVirtualAccount({
-    //   bvn: bvn,
-    //   dateOfBirth: user?.dateOfBirth,
-    // });
-
-    // console.log('res', res);
-    // return {
-    //   account_name: `${res?.firstname} ${res?.lastname}`,
-    //   account_number: res?.accountNo,
-    //   bank_name: 'VFD MFB',
-    // };
-
-    //safe haven bank
-
-    // const res = await this.safeHavenService.createSubAccount(
-    //   {
-    //     phoneNumber: this.addCountryCode(user?.phoneNumber),
-    //     emailAddress: user?.email,
-    //     externalReference: user?.id,
-    //     bvn,
-    //     verificationId,
-    //     otpCode,
-    //     companyRegistrationNumber: user?.companyRegistrationNumber,
-    //   },
-    //   type ? type : 'personal',
-    // );
     try {
-      const res = await this.bellAccountService.createIndividualClient({
-        firstname: user?.fullname.split(' ')[0],
-        lastname: user?.fullname.split(' ')[1],
-        phoneNumber: this.addCountryCode(user?.phoneNumber),
-        address: user?.address,
-        bvn: String(request.bvn),
-        gender: request.gender
-          ? (request.gender.toString().toLowerCase() as 'male' | 'female')
-          : 'male',
-        dateOfBirth: user?.dateOfBirth,
-        emailAddress: user?.email,
+      // flutterwave bank
+      const res = await this.flutterwaveService.createVirtualAccount({
+        bvn: request.bvn,
+        email: user?.email,
+        narration: `UBI/${user?.fullname}`,
+        is_permanent: true,
       });
 
-      console.log('create account res', res);
+      this.logger.log('Flutterwave response:', res);
       return {
-        account_name: res?.data?.accountName,
-        account_number: res?.data?.accountNumber,
-        bank_name: defaultBankName,
+        account_name: `UBI/${user?.fullname}`,
+        account_number: res?.data?.account_number,
+        order_ref: res?.data?.order_ref,
+        bank_name: res?.data?.bank_name,
       };
+
+      // // vfd bank
+      // const res = await this.VFDBankService.createNoConsentVirtualAccount({
+      //   bvn: bvn,
+      //   dateOfBirth: user?.dateOfBirth,
+      // });
+
+      // console.log('res', res);
+      // return {
+      //   account_name: `${res?.firstname} ${res?.lastname}`,
+      //   account_number: res?.accountNo,
+      //   bank_name: 'VFD MFB',
+      // };
+
+      //safe haven bank
+
+      // const res = await this.safeHavenService.createSubAccount(
+      //   {
+      //     phoneNumber: this.addCountryCode(user?.phoneNumber),
+      //     emailAddress: user?.email,
+      //     externalReference: user?.id,
+      //     bvn,
+      //     verificationId,
+      //     otpCode,
+      //     companyRegistrationNumber: user?.companyRegistrationNumber,
+      //   },
+      //   type ? type : 'personal',
+      // );
+
+      // const res = await this.bellAccountService.createIndividualClient({
+      //   firstname: user?.fullname.split(' ')[0],
+      //   lastname: user?.fullname.split(' ')[1],
+      //   phoneNumber: this.addCountryCode(user?.phoneNumber),
+      //   address: user?.address,
+      //   bvn: String(request.bvn),
+      //   gender: request.gender
+      //     ? (request.gender.toString().toLowerCase() as 'male' | 'female')
+      //     : 'male',
+      //   dateOfBirth: user?.dateOfBirth,
+      //   emailAddress: user?.email,
+      // });
+
+      // console.log('create account res', res);
+      // return {
+      //   account_name: res?.data?.accountName,
+      //   account_number: res?.data?.accountNumber,
+      //   bank_name: defaultBankName,
+      // };
     } catch (error) {
       console.log('error', error);
       throw new BadRequestException('Failed to create virtual account');
@@ -170,6 +178,18 @@ export class ApiProviderService {
   }
 
   async dojahTier3Upgrade(body: KycTier3Dto, user: User) {
+    if (this.configService.get<string>('BYPASS_KYC_VERIFICATION') === 'true') {
+      this.logger.warn(
+        '[KYC BYPASS] Simulated tier3 address verification (no external provider called)',
+      );
+      return {
+        entity: {
+          state_of_residence: body?.state,
+          residential_address: body?.address,
+          lga_of_residence: body?.city,
+        },
+      };
+    }
     return this.dojahService.verifyAddressDetails(
       {
         address: body?.address,
@@ -246,6 +266,17 @@ export class ApiProviderService {
   }
 
   async verifyNin(nin: string) {
+    if (this.configService.get<string>('BYPASS_KYC_VERIFICATION') === 'true') {
+      this.logger.warn(
+        '[KYC BYPASS] Simulated NIN verification (no external provider called)',
+      );
+      return {
+        entity: {
+          first_name: 'bypass',
+          last_name: 'bypass',
+        },
+      };
+    }
     return this.dojahService.verifyNin({ nin });
   }
 

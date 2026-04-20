@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -323,7 +324,7 @@ export class UserController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete Account' })
   @ApiResponse({ status: HttpStatus.OK, example: userResponse.deleteAccount })
-  async deleteAccount(@Param('id') userId: string) {
+  async deleteAccount(@Param('id', ParseUUIDPipe) userId: string) {
     return this.userService.deleteUserAccount(userId);
   }
 

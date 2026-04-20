@@ -21,6 +21,16 @@ import { WalletModule } from './wallet/wallet.module';
 import { BillModule } from './bill/bill.module';
 import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
+import { LoanResourceModule } from './loan-resource/loan-resource.module';
+import { FarmModule } from './farm/farm.module';
+import { LoanCartModule } from './loan-cart/loan-cart.module';
+import { LoanEligibilityModule } from './loan-eligibility/loan-eligibility.module';
+import { LoanApplicationModule } from './loan-application/loan-application.module';
+import { AdminLoanModule } from './admin/loan/admin-loan.module';
+import { AgentModule } from './agent/agent.module';
+import { FulfillmentModule } from './fulfillment/fulfillment.module';
+import { RepaymentModule } from './repayment/repayment.module';
+import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.module';
 
 @Module({
   imports: [
@@ -74,6 +84,16 @@ import { HealthModule } from './health/health.module';
     WalletModule,
     BillModule,
     AdminModule,
+    LoanResourceModule,
+    FarmModule,
+    LoanCartModule,
+    LoanEligibilityModule,
+    LoanApplicationModule,
+    AdminLoanModule,
+    AgentModule,
+    FulfillmentModule,
+    RepaymentModule,
+    MarketplaceOrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -104,6 +124,7 @@ export class AppModule implements NestModule {
         { path: 'v1/auth/resend-2fa', method: RequestMethod.POST },
         { path: 'v1/auth/verify-2fa', method: RequestMethod.POST },
         { path: 'v1/user/register', method: RequestMethod.POST },
+        { path: 'v1/user/register-farmer', method: RequestMethod.POST },
         { path: 'v1/user/validate-email', method: RequestMethod.POST },
         { path: 'v1/user/verify-email', method: RequestMethod.POST },
         { path: 'v1/user/validate-phonenumber', method: RequestMethod.POST },

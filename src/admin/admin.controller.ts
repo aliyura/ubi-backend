@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -90,7 +91,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Delete a bill plan' })
   @ApiResponse({ status: HttpStatus.OK, example: adminResponse.deletePlan })
   async deletePlan(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Param('bill_type') bill_type: string,
   ) {
     return this.adminService.deletePlan(id, bill_type.toLowerCase());

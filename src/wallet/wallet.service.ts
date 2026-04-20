@@ -116,22 +116,22 @@ export class WalletService {
         cached.bankCode,
       );
 
-      let bankNameRecord = verified.bankName;
-      if (!verified.bankName) {
-        bankNameRecord = await this.prisma.bankNameCache.findUnique({
+      let bankNameRecord = verified.bankName?.trim();
+      if (!bankNameRecord) {
+        const cachedBankNameRecord = await this.prisma.bankNameCache.findUnique({
           where: { bankCode: cached.bankCode },
         });
+        bankNameRecord = cachedBankNameRecord?.bankName?.trim();
 
         if (!bankNameRecord) {
           const responseData = await this.apiProvider.getAllBanks(currency);
           const banks = responseData || [];
-          const bank = banks.find((b) => (b.bankCode = cached.bankCode));
-          bankNameRecord=bank.name;
+          const bank = banks.find((b) => b.bankCode === cached.bankCode);
+          bankNameRecord = bank?.name?.trim() || bank?.bankName?.trim();
         }
       }
 
-      const finalBankName =
-        bankNameRecord?.bankName || cached.bankName || 'Unknown Bank';
+      const finalBankName = bankNameRecord || cached.bankName || 'Unknown Bank';
 
       const accountData = {
         bankName: finalBankName,
@@ -161,15 +161,16 @@ export class WalletService {
 
     if (banks.length === 0) {
       const responseData = await this.apiProvider.getAllBanks(currency);
-      banks = responseData || [];
+      const fetchedBanks: any[] = responseData || [];
+      banks = fetchedBanks as any;
 
-      const ops = banks.map((b) =>
+      const ops = fetchedBanks.map((b) =>
         this.prisma.bankNameCache.upsert({
           where: { bankCode: String(b.bankCode).trim() },
-          update: { bankName: b.bankName?.trim() || '' },
+          update: { bankName: b.bankName?.trim() || b.name?.trim() || '' },
           create: {
             bankCode: String(b.bankCode).trim(),
-            bankName: b.bankName?.trim() || '',
+            bankName: b.bankName?.trim() || b.name?.trim() || '',
           },
         }),
       );
@@ -269,23 +270,24 @@ export class WalletService {
 
     const { bank, data } = match;
 
-    let bankNameRecord = data.bankName;
-    if (!data.bankName) {
-      bankNameRecord = await this.prisma.bankNameCache.findUnique({
+    let bankNameRecord = data.bankName?.trim();
+    if (!bankNameRecord) {
+      const cachedBankNameRecord = await this.prisma.bankNameCache.findUnique({
         where: { bankCode: data.bankCode },
       });
+      bankNameRecord = cachedBankNameRecord?.bankName?.trim();
     }
 
     const finalBankName =
-      bankNameRecord?.bankName || bank.bankName || 'Unknown Bank';
+      bankNameRecord || bank.bankName || bank.name || 'Unknown Bank';
 
     await this.prisma.bankAccountCache.upsert({
       where: { accountNumber },
       update: {
         accountName: data.accountName,
         bankName: finalBankName,
-        routingKey: bank.routingKey,
-        categoryId: bank.categoryId,
+        routingKey: bank.routingKey || data.bankCode,
+        categoryId: bank.categoryId || data.bankCode,
         bankCode: data.bankCode,
         verifiedAt: new Date(),
       },
@@ -293,8 +295,8 @@ export class WalletService {
         accountNumber,
         accountName: data.accountName,
         bankName: finalBankName,
-        routingKey: bank.routingKey,
-        categoryId: bank.categoryId,
+        routingKey: bank.routingKey || data.bankCode,
+        categoryId: bank.categoryId || data.bankCode,
         bankCode: data.bankCode,
       },
     });

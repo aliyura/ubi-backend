@@ -250,7 +250,7 @@ export class ApiProviderService {
   }
 
   async getAllBanks(currency: string) {
-    return this.safeHavenService.getAllBanks();
+    return this.flutterwaveService.getAllBanks();
   }
 
   async verifyAccount(accountNumber: string, bankCode: string) {

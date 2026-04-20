@@ -9,7 +9,12 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiExcludeController,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
 import { Request } from 'express';
 import { TransferDto } from './dto/TransferDto';
@@ -35,6 +40,7 @@ export class WalletController {
     return this.walletService.getAllBanks(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('get-matched-banks/:accountNumber')
   @ApiOperation({ summary: 'Get matched banks by account number' })
   @ApiResponse({

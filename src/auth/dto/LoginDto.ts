@@ -1,7 +1,7 @@
 import {
   IsNotEmpty,
-  IsString,
   IsOptional,
+  IsString,
   MaxLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -10,10 +10,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class LoginDto {
   @ApiProperty({ example: 'johndoe' })
   @IsNotEmpty({ message: 'Username is required' })
+  @IsString()
   username: string;
 
   @ApiProperty({ example: 'StrongPass123!' })
   @IsNotEmpty({ message: 'Password is required' })
+  @IsString()
   password: string;
 
   @ApiPropertyOptional({ example: '102.89.1.22' })

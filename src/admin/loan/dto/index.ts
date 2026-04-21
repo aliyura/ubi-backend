@@ -124,6 +124,27 @@ export class ManualStatusDto {
   note?: string;
 }
 
+export class AdminQueryAgentsDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  limit?: number = 20;
+}
+
 export class AdminQueryLoanDto {
   @ApiPropertyOptional({ enum: LOAN_APPLICATION_STATUS })
   @IsOptional()

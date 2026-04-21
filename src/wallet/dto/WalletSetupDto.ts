@@ -1,7 +1,6 @@
 import {
   IsBoolean,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
 } from 'class-validator';
@@ -31,6 +30,6 @@ export class WalletSetupDto {
   isBusiness: boolean;
 
   @IsNotEmpty()
-  @IsBoolean()
+  @IsString()
   gender: string;
 }

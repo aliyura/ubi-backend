@@ -1,5 +1,4 @@
 import {
-  IsEmail,
   IsNotEmpty,
   IsString,
   Length,
@@ -10,6 +9,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class VerifyForgotPasswordDto {
   @ApiProperty({ example: 'johndoe' })
   @IsNotEmpty()
+  @IsString()
   username: string;
 
   @ApiProperty({ example: '123456' })

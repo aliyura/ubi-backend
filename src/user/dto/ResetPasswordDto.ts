@@ -9,6 +9,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ResetPasswordDto {
   @ApiProperty({ example: 'johndoe' })
   @IsNotEmpty()
+  @IsString()
   username: string;
 
   @ApiProperty({ example: 'NewPass123!' })

@@ -1,10 +1,12 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ResetWalletPinDto {
   @ApiProperty({ example: '123456' })
   @IsString()
   @IsNotEmpty()
+  @Length(6, 6, { message: 'OTP must be exactly 6 digits' })
+  @Matches(/^[0-9]+$/, { message: 'OTP must contain only numbers' })
   otpCode: string;
 
   @ApiProperty({ example: '1234' })

@@ -16,6 +16,7 @@ import { Request } from 'express';
 import { AdminLoanService } from './admin-loan.service';
 import {
   AdminDecisionDto,
+  AdminQueryAgentsDto,
   AdminQueryLoanDto,
   AssignAgentDto,
   ManualStatusDto,
@@ -31,6 +32,13 @@ import { adminLoanResponse } from './admin-loan.response';
 @Roles(USER_ROLE.ADMIN)
 export class AdminLoanController {
   constructor(private readonly service: AdminLoanService) {}
+
+  @Get('agents')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List all agents with their assigned farmers' })
+  async listAgents(@Query() query: AdminQueryAgentsDto) {
+    return this.service.listAgentsWithFarmers(query);
+  }
 
   @Get('loan-applications')
   @HttpCode(HttpStatus.OK)

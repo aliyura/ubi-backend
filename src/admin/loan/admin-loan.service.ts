@@ -7,11 +7,12 @@ import { LoanApplicationService } from 'src/loan-application/loan-application.se
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
 import {
   AdminDecisionDto,
+  AdminQueryAgentsDto,
   AdminQueryLoanDto,
   AssignAgentDto,
   ManualStatusDto,
 } from './dto';
-import { LOAN_APPLICATION_STATUS, LOAN_DECISION_TYPE, User } from '@prisma/client';
+import { LOAN_APPLICATION_STATUS, LOAN_DECISION_TYPE, USER_ROLE, User } from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
 @Injectable()
@@ -21,6 +22,52 @@ export class AdminLoanService {
     private readonly loanAppService: LoanApplicationService,
     private readonly notifications: LoanNotificationService,
   ) {}
+
+  async listAgentsWithFarmers(query: AdminQueryAgentsDto) {
+    const { search, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = { role: USER_ROLE.AGENT };
+    if (search) {
+      where.OR = [
+        { fullname: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const agentSelect = {
+      id: true, fullname: true, email: true, phoneNumber: true,
+      status: true, createdAt: true,
+    };
+
+    const [agents, total] = await Promise.all([
+      this.prisma.user.findMany({ where, select: agentSelect, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    const data = await Promise.all(agents.map(async (agent) => {
+      const applications = await this.prisma.loanApplication.findMany({
+        where: { agentId: agent.id },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      const farmerIds = applications.map((a) => a.userId);
+      const farmers = farmerIds.length > 0
+        ? await this.prisma.user.findMany({
+            where: { id: { in: farmerIds } },
+            select: { id: true, fullname: true, email: true, phoneNumber: true, status: true },
+          })
+        : [];
+      return { ...agent, farmers };
+    }));
+
+    return {
+      status: true,
+      message: 'Agents retrieved',
+      data,
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+    };
+  }
 
   async listApplications(query: AdminQueryLoanDto) {
     const { status, search, state, agentId, page = 1, limit = 20 } = query;

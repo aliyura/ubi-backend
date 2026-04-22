@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -72,8 +74,8 @@ export class WalletController {
     example: walletResponse.getTransactions,
   })
   async getTransactions(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('type') type: TRANSACTION_TYPE,
     @Query('category') category: TRANSACTION_CATEGORY,
     @Query('status') status: TRANSACTION_STATUS,

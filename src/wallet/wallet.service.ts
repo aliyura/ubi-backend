@@ -677,7 +677,7 @@ export class WalletService {
     };
 
     if (page && limit) {
-      const skip = (page - 1) * limit;
+      const skip = (Number(page) - 1) * Number(limit);
 
       const [transactions, totalCount] = await Promise.all([
         this.prisma.transaction.findMany({

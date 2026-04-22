@@ -25,7 +25,7 @@ export class AdminLoanService {
 
   async listAgentsWithFarmers(query: AdminQueryAgentsDto) {
     const { search, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { role: USER_ROLE.AGENT };
     if (search) {
@@ -41,7 +41,7 @@ export class AdminLoanService {
     };
 
     const [agents, total] = await Promise.all([
-      this.prisma.user.findMany({ where, select: agentSelect, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.user.findMany({ where, select: agentSelect, skip, take: Number(limit), orderBy: { createdAt: 'desc' } }),
       this.prisma.user.count({ where }),
     ]);
 
@@ -71,7 +71,7 @@ export class AdminLoanService {
 
   async listApplications(query: AdminQueryLoanDto) {
     const { status, search, state, agentId, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
     const where: any = {};
     if (status) where.status = status;
     if (agentId) where.agentId = agentId;
@@ -89,7 +89,7 @@ export class AdminLoanService {
         where,
         include: { farm: true, items: true, agentRecommendation: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.loanApplication.count({ where }),
@@ -325,14 +325,14 @@ export class AdminLoanService {
 
   async getVerificationQueue(query: AdminQueryLoanDto) {
     const { page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const [items, total] = await Promise.all([
       this.prisma.loanApplication.findMany({
         where: { status: LOAN_APPLICATION_STATUS.PendingFieldVerification },
         include: { farm: true, fieldVerification: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.loanApplication.count({
@@ -381,14 +381,14 @@ export class AdminLoanService {
 
   async getOverdueReport(query: AdminQueryLoanDto) {
     const { page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const [items, total] = await Promise.all([
       this.prisma.loanApplication.findMany({
         where: { status: LOAN_APPLICATION_STATUS.Overdue },
         include: { farm: true, repaymentPlan: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { updatedAt: 'asc' },
       }),
       this.prisma.loanApplication.count({ where: { status: LOAN_APPLICATION_STATUS.Overdue } }),

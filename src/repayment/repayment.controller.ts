@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Query,
@@ -30,11 +32,11 @@ export class RepaymentController {
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async adminList(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('overdueOnly') overdueOnly?: string,
   ) {
-    return this.service.adminListRepayments(+page, +limit, overdueOnly === 'true');
+    return this.service.adminListRepayments(page, limit, overdueOnly === 'true');
   }
 
   @Post('admin/repayments/:applicationId/record')

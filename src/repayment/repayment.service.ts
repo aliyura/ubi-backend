@@ -24,7 +24,7 @@ export class RepaymentService {
   }
 
   async adminListRepayments(page = 1, limit = 20, overdueOnly = false) {
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
     const where: any = {};
     if (overdueOnly) where.status = REPAYMENT_STATUS.overdue;
 
@@ -36,7 +36,7 @@ export class RepaymentService {
           repayments: { orderBy: { dueDate: 'asc' } },
         },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.repaymentPlan.count({ where }),

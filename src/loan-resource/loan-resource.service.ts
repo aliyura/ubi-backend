@@ -37,7 +37,7 @@ export class LoanResourceService {
 
   async getResources(query: QueryLoanResourceDto) {
     const { categoryId, search, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { isActive: true };
     if (categoryId) where.categoryId = categoryId;
@@ -53,7 +53,7 @@ export class LoanResourceService {
         where,
         include: { category: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { name: 'asc' },
       }),
       this.prisma.loanResource.count({ where }),

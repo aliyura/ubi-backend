@@ -4,6 +4,7 @@ import {
   IsArray,
   IsEnum,
   IsNumber,
+  IsInt,
   IsUUID,
   IsNotEmpty,
   IsDateString,
@@ -133,14 +134,14 @@ export class AdminQueryAgentsDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   limit?: number = 20;
 }
@@ -169,14 +170,14 @@ export class AdminQueryLoanDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   limit?: number = 20;
 }

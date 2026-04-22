@@ -8,6 +8,7 @@ import {
   ArrayMinSize,
   ValidateNested,
   IsNumber,
+  IsInt,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -74,14 +75,14 @@ export class QueryMarketplaceOrderDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   page?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   limit?: number;
 }

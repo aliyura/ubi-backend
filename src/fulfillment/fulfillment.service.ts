@@ -228,12 +228,12 @@ export class FulfillmentService {
   }
 
   async listFulfillments(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
     const [items, total] = await Promise.all([
       this.prisma.fulfillment.findMany({
         include: { application: true, supplier: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.fulfillment.count(),

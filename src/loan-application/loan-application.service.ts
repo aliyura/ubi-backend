@@ -201,7 +201,7 @@ export class LoanApplicationService {
 
   async getMyApplications(user: User, query: QueryLoanApplicationDto) {
     const { status, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
     const where: any = { userId: user.id };
     if (status) where.status = status;
 
@@ -210,7 +210,7 @@ export class LoanApplicationService {
         where,
         include: { farm: true, items: true },
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.loanApplication.count({ where }),

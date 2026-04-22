@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   IsNumber,
+  IsInt,
   IsBoolean,
   IsUUID,
   IsNotEmpty,
@@ -169,12 +170,14 @@ export class QueryLoanResourceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   page?: number = 1;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   limit?: number = 20;
 }

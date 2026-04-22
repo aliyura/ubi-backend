@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Query,
@@ -35,8 +37,11 @@ export class FulfillmentController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all fulfillments' })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.listFulfillments })
-  async list(@Query('page') page = 1, @Query('limit') limit = 20) {
-    return this.service.listFulfillments(+page, +limit);
+  async list(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.service.listFulfillments(page, limit);
   }
 
   @Post('loan-applications/:id/fulfillment')

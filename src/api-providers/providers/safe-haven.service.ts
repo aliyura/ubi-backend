@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -19,6 +20,8 @@ import { Helpers } from 'src/helpers';
 
 @Injectable()
 export class SafeHavenService {
+  private readonly logger = new Logger(SafeHavenService.name);
+
   // private accessTokenCache: {
   //   accessToken: string;
   //   ibsClientId: string;
@@ -310,16 +313,20 @@ export class SafeHavenService {
 
   async handleTransferWebhook(body: any) {
     const eventData = body?.data;
-    // console.log('eventData', eventData);
 
-    if (eventData?.type === 'Outwards') return;
+    this.logger.log(`[SafeHaven] handleTransferWebhook — ref: ${body?.reference}, type: ${eventData?.type}`);
+
+    if (eventData?.type === 'Outwards') {
+      this.logger.log(`[SafeHaven] outward transfer skipped — ref: ${body?.reference}`);
+      return;
+    }
 
     try {
       const { isVerified } = await this.verifyTransferTransaction(
         body?.reference,
       );
 
-      console.log('isVerified', isVerified);
+      this.logger.log(`[SafeHaven] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`);
 
       if (!isVerified)
         throw new InternalServerErrorException('Error verifying transaction');
@@ -330,7 +337,10 @@ export class SafeHavenService {
         },
       });
 
-      if (existimgPaymentEvent) return;
+      if (existimgPaymentEvent) {
+        this.logger.log(`[SafeHaven] duplicate payment event skipped — ref: ${eventData?.paymentReference}`);
+        return;
+      }
 
       // get wallet
       const wallet = await this.prisma.wallet.findFirst({
@@ -346,9 +356,9 @@ export class SafeHavenService {
       if (!wallet) throw new InternalServerErrorException('Wallet not found');
 
       const oldBalance = wallet?.balance;
-      // const newBalance =
-      //   oldBalance + (Number(eventData?.amount) - Number(eventData?.fee));
       const newBalance = oldBalance + Number(eventData?.amount);
+
+      this.logger.log(`[SafeHaven] wallet found — account: ${eventData?.creditAccountNumber}, balance: ${oldBalance} → ${newBalance}`);
 
       const senderBankCode = eventData?.sessionId?.substring(0, 6);
 
@@ -471,12 +481,12 @@ export class SafeHavenService {
           'dojah',
         );
       } catch (error) {
-        console.log('Error sending deposit alert', error);
+        this.logger.error(`[SafeHaven] error sending credit alert — ref: ${eventData?.paymentReference}`, error?.message);
       }
 
-      console.log('finish');
+      this.logger.log(`[SafeHaven] handleTransferWebhook complete — ref: ${eventData?.paymentReference}, amount: ${eventData?.amount}`);
     } catch (error) {
-      console.log('error funding account', error);
+      this.logger.error(`[SafeHaven] error processing transfer webhook — ref: ${body?.reference}`, error?.message);
       throw error;
     }
   }

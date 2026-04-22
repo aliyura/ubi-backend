@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Logger, Post, Req, Res } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WebhookService } from './webhook.service';
 import { Request, Response } from 'express';
@@ -7,6 +7,8 @@ import { webhookResponse } from './webhook.response';
 
 @Controller('v1/webhook')
 export class WebhookController {
+  private readonly logger = new Logger(WebhookController.name);
+
   constructor(
     private readonly webhookService: WebhookService,
     private readonly configService: ConfigService,
@@ -27,6 +29,8 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    this.logger.log(`Flutterwave webhook received — event: ${body?.event}, ref: ${body?.data?.id}`);
+
     const secretHash = this.configService.get<string>(
       'FLUTTERWAVE_SECRET_HASH',
     );
@@ -34,6 +38,7 @@ export class WebhookController {
     const signature = req.headers['verif-hash'];
 
     if (!signature || signature !== secretHash) {
+      this.logger.warn('Flutterwave webhook rejected — invalid signature');
       return res.status(401).end();
     }
 
@@ -56,11 +61,16 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    this.logger.log(`VFD webhook received — ref: ${body?.reference}, account: ${body?.account_number}`);
+
     const secretHash = this.configService.get<string>('VFD_SECRET_HASH');
 
     const secretHashFromRequest = req.headers['secret-hash'];
 
-    if (secretHashFromRequest !== secretHash) return res.status(401).end();
+    if (secretHashFromRequest !== secretHash) {
+      this.logger.warn('VFD webhook rejected — invalid secret hash');
+      return res.status(401).end();
+    }
 
     await this.webhookService.resolveVFDWebhook(body);
     return res.status(200).end();
@@ -77,6 +87,7 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    this.logger.log(`SafeHaven webhook received — type: ${body?.type}, ref: ${body?.reference}`);
     await this.webhookService.resolveSafeHavenWebhook(body);
     return res.status(200).end();
   }
@@ -92,6 +103,7 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    this.logger.log(`BellMFB webhook received — event: ${body?.event}, ref: ${body?.reference}`);
     await this.webhookService.resolveBellBankWebhook(body);
     return res.status(200).end();
   }

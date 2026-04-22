@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   TRANSACTION_CATEGORY,
@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class VFDBankService {
+  private readonly logger = new Logger(VFDBankService.name);
   private BASE_URL: string;
 
   private accessTokenCache: {
@@ -355,12 +356,15 @@ export class VFDBankService {
 
   // handle payment success webhok;
   async handlePaymentSuccess(body: any) {
-    console.log('body from webhook', body);
+    this.logger.log(`[VFD] handlePaymentSuccess — ref: ${body?.reference}, account: ${body?.account_number}`);
+
     return await this.prisma.$transaction(
       async (trx) => {
         const { isVerified, data } = await this.verifyTransaction(
           body?.reference,
         );
+
+        this.logger.log(`[VFD] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`);
 
         if (!isVerified)
           throw new InternalServerErrorException('Error verifying transaction');
@@ -371,7 +375,10 @@ export class VFDBankService {
           },
         });
 
-        if (existimgPaymentEvent) return;
+        if (existimgPaymentEvent) {
+          this.logger.log(`[VFD] duplicate payment event skipped — ref: ${body?.reference}`);
+          return;
+        }
 
         // get wallet
         const wallet = await trx.wallet.findFirst({
@@ -383,6 +390,8 @@ export class VFDBankService {
 
         const oldBalance = wallet?.balance;
         const newBalance = oldBalance + Number(data?.amount);
+
+        this.logger.log(`[VFD] wallet found — account: ${body?.account_number}, balance: ${oldBalance} → ${newBalance}`);
 
         // get user object
         const user = await trx.user.findFirst({
@@ -432,7 +441,7 @@ export class VFDBankService {
           },
         });
 
-        console.log('finish');
+        this.logger.log(`[VFD] handlePaymentSuccess complete — ref: ${body?.reference}, amount: ${data?.amount}`);
       },
       {
         isolationLevel: 'Serializable',

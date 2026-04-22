@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { EmailService } from 'src/email/email.service';
@@ -52,6 +52,7 @@ interface IndividualClientResponse {
 
 @Injectable()
 export class BellAccountService {
+  private readonly logger = new Logger(BellAccountService.name);
   BASE_URL =
     process.env.BELL_CONSUMER_BASEURL || 'https://sandbox-baas-api.bellmfb.com';
   private readonly cache = new NodeCache({
@@ -142,26 +143,8 @@ export class BellAccountService {
   }
 
   async handleFundingWebhook(eventData: any) {
-    console.log('eventData', eventData);
+    this.logger.log(`[BellMFB] handleFundingWebhook — ref: ${eventData?.reference}, account: ${eventData?.virtualAccount}, amount: ${eventData?.netAmount}`);
     try {
-      // const { isVerified } = await this.verifyTransferTransaction(
-      //   body?.reference,
-      // );
-      // console.log('isVerified', isVerified);
-      // if (!isVerified)
-      //   throw new InternalServerErrorException('Error verifying transaction');
-
-      // const existimgPaymentEvent = await this.prisma.paymentEvent.findFirst({
-      //   where: {
-      //     refId: eventData?.paymentReference,
-      //   },
-      // });
-
-      // if (existimgPaymentEvent) return;
-
-      // get wallet
-
-      console.log('eventData:', eventData);
       const wallet = await this.prisma.wallet.findFirst({
         where: {
           accountNumber: eventData?.virtualAccount,
@@ -176,6 +159,8 @@ export class BellAccountService {
 
       const oldBalance = wallet?.balance;
       const newBalance = oldBalance + Number(eventData?.netAmount);
+
+      this.logger.log(`[BellMFB] wallet found — account: ${eventData?.virtualAccount}, balance: ${oldBalance} → ${newBalance}`);
 
       await Promise.all([
         // update the user wallet balance
@@ -291,12 +276,12 @@ export class BellAccountService {
           'sendar',
         );
       } catch (error) {
-        console.log('Error sending funding alert', error);
+        this.logger.error(`[BellMFB] error sending credit alert — ref: ${eventData?.reference}`, error?.message);
       }
 
-      console.log('Depost completed successfully');
+      this.logger.log(`[BellMFB] handleFundingWebhook complete — ref: ${eventData?.reference}, amount: ${eventData?.netAmount}`);
     } catch (error) {
-      console.log('error funding account', error);
+      this.logger.error(`[BellMFB] error processing funding webhook — ref: ${eventData?.reference}`, error?.message);
       throw error;
     }
   }

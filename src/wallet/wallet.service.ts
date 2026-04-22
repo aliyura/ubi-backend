@@ -1876,7 +1876,7 @@ export class WalletService {
 
           [fromWalletNewBalance, beneficiaryBankName] = await Promise.all([
             this.deductBalance(lockfromWallet[0], amountPaid, trx),
-            this.apiProvider.getBellBankName(body?.bankCode),
+            this.apiProvider.verifyAccount(body?.accountNumber, body?.bankCode),
           ]);
 
           //create a pending transaction
@@ -1920,7 +1920,7 @@ export class WalletService {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const res = await this.apiProvider.transferSafeHavenFund(
+        const res = await this.apiProvider.transferFlutterwaveFund(
           { ...body, amount: amountPaid },
           fromWallet.accountNumber,
           fromWallet.accountName,

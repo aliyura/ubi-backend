@@ -16,9 +16,13 @@ COPY --from=builder /app/package-lock.json .
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json .
+COPY --from=builder /app/tsconfig.build.json .
 COPY --from=builder /app/dist/templates ./dist/templates
 
-# Prisma client
+# Prisma client + ts-node for seed
 RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npm install ts-node tsconfig-paths --no-save
 
-CMD sh -c "npx prisma migrate deploy --schema=./prisma/schema.prisma && npm run start:prod"
+CMD sh -c "npx prisma migrate deploy --schema=./prisma/schema.prisma && npx prisma db seed && npm run start:prod"

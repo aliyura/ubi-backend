@@ -13,8 +13,12 @@ import {
   Query,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/guards/roles.decorator';
+import { USER_ROLE } from '@prisma/client';
 import {
   ApiBody,
   ApiConsumes,
@@ -377,6 +381,17 @@ export class UserController {
   async getDetails(@Req() req: Request) {
     const user = req['user'];
     return new UserEntity(user);
+  }
+
+  @Get('tier')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.USER, USER_ROLE.FARMER)
+  @ApiOperation({ summary: 'Get Tier Info' })
+  @ApiResponse({ status: HttpStatus.OK, example: userResponse.getTier })
+  async getTierInfo(@Req() req: Request) {
+    const user = req['user'];
+    return this.userService.getTierInfo(user);
   }
 
   @Get('get-beneficiaries')

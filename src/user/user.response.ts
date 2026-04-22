@@ -167,4 +167,13 @@ export const userResponse = {
     message: 'Password change request OTP sent',
     data: { expiresIn: 300 },
   },
+  getTier: {
+    statusCode: 200,
+    message: 'Tier info retrieved',
+    data: {
+      tier: 'Tier 2',
+      kycLevel: 2,
+      limits: { dailyLimit: 5000000, perTransactionLimit: 200000, walletLimit: 10000000 },
+    },
+  },
 } as const;

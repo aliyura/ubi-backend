@@ -1006,3 +1006,18 @@ model MarketplaceOrderItem {
   @@index([orderId])
   @@map("marketplace_order_item")
 }
+
+
+model Tier {
+  id                  String     @id @default(uuid()) @db.Uuid
+  level               TIER_LEVEL @unique
+  name                String
+  kycLevel            Int
+  dailyLimit          Float
+  perTransactionLimit Float
+  walletLimit         Float
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@map("tier")
+}

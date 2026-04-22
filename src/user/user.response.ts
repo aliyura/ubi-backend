@@ -170,10 +170,10 @@ export const userResponse = {
   getTier: {
     statusCode: 200,
     message: 'Tier info retrieved',
-    data: {
-      tier: 'Tier 2',
-      kycLevel: 2,
-      limits: { dailyLimit: 5000000, perTransactionLimit: 200000, walletLimit: 10000000 },
-    },
+    data: [
+      { tier: 'Tier 1', kycLevel: 1, active: false, limits: { dailyLimit: 1000000, perTransactionLimit: 50000, walletLimit: 5000000 } },
+      { tier: 'Tier 2', kycLevel: 2, active: true, limits: { dailyLimit: 5000000, perTransactionLimit: 200000, walletLimit: 10000000 } },
+      { tier: 'Tier 3', kycLevel: 3, active: false, limits: { dailyLimit: 9999999999999, perTransactionLimit: 9999999999999, walletLimit: 9999999999999 } },
+    ],
   },
 } as const;

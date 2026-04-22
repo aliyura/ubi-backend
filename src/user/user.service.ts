@@ -4,7 +4,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotAcceptableException,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -1319,28 +1318,24 @@ export class UserService {
   }
 
   async getTierInfo(user: User) {
-    const tier = await this.prisma.tier.findUnique({
-      where: { level: user.tierLevel },
+    const tiers = await this.prisma.tier.findMany({
+      where: { NOT: { level: 'notSet' } },
+      orderBy: { kycLevel: 'asc' },
     });
-
-    if (!tier) {
-      throw new NotFoundException(
-        'Tier configuration not found. Please contact support.',
-      );
-    }
 
     return {
       status: true,
       message: 'Tier info retrieved',
-      data: {
+      data: tiers.map((tier) => ({
         tier: tier.name,
         kycLevel: tier.kycLevel,
+        active: tier.level === user.tierLevel,
         limits: {
           dailyLimit: tier.dailyLimit,
           perTransactionLimit: tier.perTransactionLimit,
           walletLimit: tier.walletLimit,
         },
-      },
+      })),
     };
   }
 

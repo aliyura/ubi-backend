@@ -118,9 +118,11 @@ export class WalletService {
 
       let bankNameRecord = verified.bankName?.trim();
       if (!bankNameRecord) {
-        const cachedBankNameRecord = await this.prisma.bankNameCache.findUnique({
-          where: { bankCode: cached.bankCode },
-        });
+        const cachedBankNameRecord = await this.prisma.bankNameCache.findUnique(
+          {
+            where: { bankCode: cached.bankCode },
+          },
+        );
         bankNameRecord = cachedBankNameRecord?.bankName?.trim();
 
         if (!bankNameRecord) {
@@ -2222,7 +2224,7 @@ export class WalletService {
       );
     }
 
-    return await this.transferFundSafeHaven(
+    return await this.transferFundFlutterwave(
       fromWallet,
       amountPaid,
       body,

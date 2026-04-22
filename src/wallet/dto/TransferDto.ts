@@ -10,6 +10,7 @@ import {
   Length,
   Matches,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -56,7 +57,7 @@ export class TransferDto {
   @ApiPropertyOptional({ example: 25 })
   @IsOptional()
   @IsNumber({}, { message: 'Fee must be a valid number' })
-  @IsPositive({ message: 'Fee must be greater than 0' })
+  @Min(0, { message: 'Fee must be 0 or greater' })
   fee: number;
 
   @ApiPropertyOptional({ example: '000123456789' })

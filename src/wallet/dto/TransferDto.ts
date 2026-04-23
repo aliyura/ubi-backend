@@ -57,7 +57,7 @@ export class TransferDto {
   @ApiPropertyOptional({ example: 25 })
   @IsOptional()
   @IsNumber({}, { message: 'Fee must be a valid number' })
-  @Min(0, { message: 'Fee must be 0 or greater' })
+  @Min(100, { message: 'Fee must be 100 or greater' })
   fee: number;
 
   @ApiPropertyOptional({ example: '000123456789' })

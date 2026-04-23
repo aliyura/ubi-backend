@@ -44,6 +44,7 @@ import { EmailService } from 'src/email/email.service';
 import { getSMSAlertMessage } from 'src/utils';
 import { BvnVerificationDto } from './dto/BvnVerificationDto';
 import { WalletSetupDto } from './dto/WalletSetupDto';
+import { FlutterwaveTransferResponse } from './wallet.types';
 
 @Injectable()
 export class WalletService {
@@ -1856,8 +1857,8 @@ export class WalletService {
     const BASE_DELAY = CONCURRENT_BASE_DELAY;
 
     const trxRef = this.generateTransactionRef('DEBIT');
-    let beneficiaryBankName: any;
-    let transferData: any;
+    let beneficiaryBankName: unknown;
+    let transferData: FlutterwaveTransferResponse['data'];
     let pendingTransactionId: string;
     let fromWalletNewBalance: number;
 
@@ -1894,9 +1895,9 @@ export class WalletService {
                 senderName: fromWallet?.accountName,
                 senderAccountNumber: fromWallet?.accountNumber,
                 senderBankName: fromWallet?.bankName,
-                beneficiaryName: transferData?.creditAccountName,
-                beneficiaryAccountNumber: transferData?.creditAccountNumber,
-                beneficiaryBankName,
+                beneficiaryName: transferData?.full_name,
+                beneficiaryAccountNumber: transferData?.account_number,
+                beneficiaryBankName: transferData.bank_name,
                 amount: body.amount,
                 amountPaid,
                 fee,
@@ -1920,20 +1921,21 @@ export class WalletService {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const res = await this.apiProvider.transferFlutterwaveFund(
-          { ...body, amount: amountPaid },
-          fromWallet.accountNumber,
-          fromWallet.accountName,
-          trxRef,
-        );
+        const res: FlutterwaveTransferResponse =
+          await this.apiProvider.transferFlutterwaveFund(
+            { ...body, amount: amountPaid },
+            fromWallet.accountNumber,
+            fromWallet.accountName,
+            trxRef,
+          );
 
         console.log('Flutterwave transfer response: ', res);
 
-        if (res?.success !== true) {
+        if (res?.data?.status !== 'NEW') {
           throw new InternalServerErrorException('Transfer processing failed');
         }
 
-        transferData = res?.data;
+        transferData = res.data;
         // check if beneficiary is to be added
         if (body?.saveBeneficiary) {
           // check if that account number has been added before
@@ -1950,10 +1952,10 @@ export class WalletService {
               data: {
                 userId: user?.id,
                 type: BENEFICIARY_TYPE.TRANSFER,
-                bankCode: transferData?.destinationBankCode,
-                accountNumber: transferData?.destinationAccountNumber,
-                bankName: transferData?.destinationBankName,
-                accountName: transferData?.destinationAccountName,
+                bankCode: transferData?.bank_code,
+                accountNumber: transferData?.account_number,
+                bankName: transferData?.bank_name,
+                accountName: transferData?.full_name,
               },
             });
           }
@@ -1970,9 +1972,9 @@ export class WalletService {
               senderName: fromWallet?.accountName,
               senderAccountNumber: fromWallet?.accountNumber,
               senderBankName: fromWallet?.bankName,
-              beneficiaryName: transferData?.destinationAccountName,
-              beneficiaryAccountNumber: transferData?.destinationAccountNumber,
-              beneficiaryBankName: transferData?.destinationBankName,
+              beneficiaryName: transferData?.full_name,
+              beneficiaryAccountNumber: transferData?.account_number,
+              beneficiaryBankName: transferData?.bank_name,
               amount: body.amount,
               amountPaid,
               fee,
@@ -1982,7 +1984,7 @@ export class WalletService {
 
         try {
           //send debit alert email
-          const RAccountNumber = transferData?.destinationAccountNumber;
+          const RAccountNumber = transferData?.account_number;
           const SAccountNumber = fromWallet.accountNumber;
           const maskedRAccountNumber = `${RAccountNumber.substring(0, 2)}xxx..${RAccountNumber.substring(RAccountNumber.length - 4, RAccountNumber.length - 1)}x`;
           const maskedSAccountNumber = `${SAccountNumber.substring(0, 2)}xxx..${SAccountNumber.substring(SAccountNumber.length - 4, SAccountNumber.length - 1)}x`;
@@ -2031,7 +2033,7 @@ export class WalletService {
               accountName: maskedAccountName,
               accountNumber: maskedRAccountNumber,
               dateAndTime: formattedDate,
-              receipientName: transferData?.destinationAccountName,
+              receipientName: transferData?.account_number,
               narration: body.description || '',
               reference: trxRef,
               availableBalance: new Intl.NumberFormat('en-US', {
@@ -2047,7 +2049,7 @@ export class WalletService {
             user.phoneNumber,
             getSMSAlertMessage(
               amount,
-              transferData?.destinationAccountName,
+              transferData?.account_number,
               fromWallet?.accountName,
               trxRef,
               formattedDate,
@@ -2058,7 +2060,7 @@ export class WalletService {
               },
               maskedSAccountNumber,
               maskedRAccountNumber,
-              beneficiaryBankName,
+              res?.data?.bank_name,
               // .toUpperCase(),
             ),
           );

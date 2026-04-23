@@ -33,11 +33,25 @@ import { adminLoanResponse } from './admin-loan.response';
 export class AdminLoanController {
   constructor(private readonly service: AdminLoanService) {}
 
+  @Get('overview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Admin dashboard overview stats' })
+  async overview() {
+    return this.service.getOverview();
+  }
+
   @Get('agents')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all agents with their assigned farmers' })
   async listAgents(@Query() query: AdminQueryAgentsDto) {
     return this.service.listAgentsWithFarmers(query);
+  }
+
+  @Get('agents/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get agent profile with performance metrics' })
+  async getAgent(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getAgentById(id);
   }
 
   @Get('loan-applications')

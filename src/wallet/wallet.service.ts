@@ -1856,7 +1856,7 @@ export class WalletService {
     const MAX_RETRIES = CONCURRENT_MAX_RETRIES;
     const BASE_DELAY = CONCURRENT_BASE_DELAY;
 
-    const trxRef = this.generateTransactionRef('DEBIT');
+    // const trxRef = this.generateTransactionRef('DEBIT');
     let beneficiaryBankName: unknown;
     let transferData: FlutterwaveTransferResponse['data'];
     let pendingTransactionId: string;
@@ -1884,7 +1884,7 @@ export class WalletService {
           const pendingTrx = await trx.transaction.create({
             data: {
               walletId: fromWallet.id,
-              transactionRef: trxRef,
+              transactionRef: transferData?.reference,
               type: TRANSACTION_TYPE.DEBIT,
               currency: body.currency,
               status: TRANSACTION_STATUS.pending,
@@ -1926,7 +1926,7 @@ export class WalletService {
             { ...body, amount: amountPaid },
             fromWallet.accountNumber,
             fromWallet.accountName,
-            trxRef,
+            transferData?.reference,
           );
 
         console.log('Flutterwave transfer response: ', res);
@@ -2035,7 +2035,7 @@ export class WalletService {
               dateAndTime: formattedDate,
               receipientName: transferData?.account_number,
               narration: body.description || '',
-              reference: trxRef,
+              reference: transferData?.reference,
               availableBalance: new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -2051,7 +2051,7 @@ export class WalletService {
               amount,
               transferData?.account_number,
               fromWallet?.accountName,
-              trxRef,
+              transferData?.reference,
               formattedDate,
               Number(fromWalletNewBalance.toFixed(2)),
               'transfer',

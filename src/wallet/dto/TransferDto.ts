@@ -38,7 +38,7 @@ export class TransferDto {
   @ApiProperty({ example: 5000 })
   @IsNotEmpty({ message: 'Amount is required' })
   @IsNumber({}, { message: 'Amount must be a valid number' })
-  @IsPositive({ message: 'Amount must be greater than 0' })
+  @Min(100, { message: 'Amount must be 100 or greater' })
   amount: number;
 
   @ApiProperty({ example: CURRENCY.NGN, enum: CURRENCY })
@@ -57,7 +57,7 @@ export class TransferDto {
   @ApiPropertyOptional({ example: 25 })
   @IsOptional()
   @IsNumber({}, { message: 'Fee must be a valid number' })
-  @Min(100, { message: 'Fee must be 100 or greater' })
+  @Min(0, { message: 'Fee must be 0 or greater' })
   fee: number;
 
   @ApiPropertyOptional({ example: '000123456789' })

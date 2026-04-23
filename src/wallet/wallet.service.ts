@@ -1897,7 +1897,7 @@ export class WalletService {
                 senderBankName: fromWallet?.bankName,
                 beneficiaryName: transferData?.full_name,
                 beneficiaryAccountNumber: transferData?.account_number,
-                beneficiaryBankName: transferData.bank_name,
+                beneficiaryBankName: transferData?.bank_name ?? '',
                 amount: body.amount,
                 amountPaid,
                 fee,

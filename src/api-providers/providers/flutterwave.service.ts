@@ -576,7 +576,8 @@ export class FlutterwaveService {
               equals: data?.account_number,
             },
             status: TRANSACTION_STATUS.pending,
-            reference: data?.reference,
+            // reference: data?.reference,
+            transactionRef: data?.reference,
           },
         });
 
@@ -647,7 +648,8 @@ export class FlutterwaveService {
               equals: data?.account_number,
             },
             status: TRANSACTION_STATUS.pending,
-            reference: data?.reference,
+            // reference: data?.reference,
+            transactionRef: data?.reference,
           },
         });
 

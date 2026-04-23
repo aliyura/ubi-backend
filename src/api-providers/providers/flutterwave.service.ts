@@ -122,6 +122,23 @@ export class FlutterwaveService {
     return response?.data;
   }
 
+  async getBillers(category: string) {
+    const url =
+      this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
+      `/v3/bills/${category}/billers?country=NG`;
+
+    const response = await axios.get(url, {
+      headers: this.getHeaders(),
+    });
+
+    if (response.status !== 200) {
+      console.error(response?.data);
+      throw new InternalServerErrorException('Failed to get bill information');
+    }
+
+    return response?.data?.data;
+  }
+
   async getBillInfo(billerCode: string) {
     const url =
       this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
@@ -283,7 +300,9 @@ export class FlutterwaveService {
     const data = body?.data;
     const metaData = body?.meta_data;
 
-    this.logger.log(`[Flutterwave] handlePaymentSuccess — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`);
+    this.logger.log(
+      `[Flutterwave] handlePaymentSuccess — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,
+    );
 
     return this.prisma.$transaction(
       async (trx) => {
@@ -293,7 +312,9 @@ export class FlutterwaveService {
           data?.currency,
         );
 
-        this.logger.log(`[Flutterwave] transaction verification — ref: ${data?.id}, isVerified: ${isVerified}`);
+        this.logger.log(
+          `[Flutterwave] transaction verification — ref: ${data?.id}, isVerified: ${isVerified}`,
+        );
 
         if (!isVerified)
           throw new InternalServerErrorException('Error verifying transaction');
@@ -305,7 +326,9 @@ export class FlutterwaveService {
         });
 
         if (existimgPaymentEvent?.status === data?.status) {
-          this.logger.log(`[Flutterwave] duplicate payment event skipped — ref: ${data?.id}`);
+          this.logger.log(
+            `[Flutterwave] duplicate payment event skipped — ref: ${data?.id}`,
+          );
           return;
         }
 
@@ -333,11 +356,15 @@ export class FlutterwaveService {
         const oldBalance = wallet?.balance;
         const newBalance = oldBalance + trxData?.amount_settled;
 
-        this.logger.log(`[Flutterwave] wallet found — account: ${wallet.accountNumber}, balance: ${oldBalance} → ${newBalance}`);
+        this.logger.log(
+          `[Flutterwave] wallet found — account: ${wallet.accountNumber}, balance: ${oldBalance} → ${newBalance}`,
+        );
 
         //check if the amount credited is above the singleCreditLimit
         if (Number(data?.amount) > user?.dailyCummulativeTransactionLimit) {
-          this.logger.warn(`[Flutterwave] single credit limit exceeded — userId: ${user.id}, amount: ${data?.amount}, restricting account`);
+          this.logger.warn(
+            `[Flutterwave] single credit limit exceeded — userId: ${user.id}, amount: ${data?.amount}, restricting account`,
+          );
           await trx.user.update({
             where: {
               id: user?.id,
@@ -363,9 +390,13 @@ export class FlutterwaveService {
 
         const totalAmount = totalCreditDepositAmount[0]?.total || 0;
 
-        this.logger.log(`[Flutterwave] daily deposit total — userId: ${user.id}, total: ${totalAmount}, limit: ${user?.dailyCummulativeTransactionLimit}`);
+        this.logger.log(
+          `[Flutterwave] daily deposit total — userId: ${user.id}, total: ${totalAmount}, limit: ${user?.dailyCummulativeTransactionLimit}`,
+        );
         if (totalAmount > user?.dailyCummulativeTransactionLimit) {
-          this.logger.warn(`[Flutterwave] daily cumulative limit exceeded — userId: ${user.id}, restricting account`);
+          this.logger.warn(
+            `[Flutterwave] daily cumulative limit exceeded — userId: ${user.id}, restricting account`,
+          );
           await trx.user.update({
             where: {
               id: user?.id,
@@ -418,7 +449,9 @@ export class FlutterwaveService {
           },
         });
 
-        this.logger.log(`[Flutterwave] handlePaymentSuccess complete — ref: ${data?.id}, settled: ${trxData?.amount_settled}`);
+        this.logger.log(
+          `[Flutterwave] handlePaymentSuccess complete — ref: ${data?.id}, settled: ${trxData?.amount_settled}`,
+        );
       },
       {
         isolationLevel: 'Serializable',
@@ -430,7 +463,9 @@ export class FlutterwaveService {
     const data = body?.data;
     const metaData = body?.meta_data;
 
-    this.logger.log(`[Flutterwave] handlePaymentFailure — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`);
+    this.logger.log(
+      `[Flutterwave] handlePaymentFailure — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,
+    );
 
     return this.prisma.$transaction(
       async (trx) => {
@@ -441,7 +476,9 @@ export class FlutterwaveService {
         });
 
         if (existimgPaymentEvent?.status === data?.status) {
-          this.logger.log(`[Flutterwave] duplicate failure event skipped — ref: ${data?.id}`);
+          this.logger.log(
+            `[Flutterwave] duplicate failure event skipped — ref: ${data?.id}`,
+          );
           return;
         }
 
@@ -500,7 +537,9 @@ export class FlutterwaveService {
           },
         });
 
-        this.logger.log(`[Flutterwave] handlePaymentFailure complete — ref: ${data?.id}, failed transaction recorded`);
+        this.logger.log(
+          `[Flutterwave] handlePaymentFailure complete — ref: ${data?.id}, failed transaction recorded`,
+        );
       },
       {
         isolationLevel: 'Serializable',
@@ -511,7 +550,9 @@ export class FlutterwaveService {
   async handleTransferSuccess(body: any) {
     const data = body?.data;
 
-    this.logger.log(`[Flutterwave] handleTransferSuccess — ref: ${data?.reference}, amount: ${data?.amount} ${data?.currency}`);
+    this.logger.log(
+      `[Flutterwave] handleTransferSuccess — ref: ${data?.reference}, amount: ${data?.amount} ${data?.currency}`,
+    );
 
     return await this.prisma.$transaction(
       async (trx) => {
@@ -522,7 +563,9 @@ export class FlutterwaveService {
         });
 
         if (existimgPaymentEvent?.status === data?.status) {
-          this.logger.log(`[Flutterwave] duplicate transfer success event skipped — ref: ${data?.reference}`);
+          this.logger.log(
+            `[Flutterwave] duplicate transfer success event skipped — ref: ${data?.reference}`,
+          );
           return;
         }
 
@@ -540,7 +583,9 @@ export class FlutterwaveService {
         if (!existingTrx)
           throw new InternalServerErrorException('Transaction not found');
 
-        this.logger.log(`[Flutterwave] pending transaction found — txnId: ${existingTrx.id}, updating to success`);
+        this.logger.log(
+          `[Flutterwave] pending transaction found — txnId: ${existingTrx.id}, updating to success`,
+        );
 
         await trx.transaction.update({
           where: {
@@ -562,7 +607,9 @@ export class FlutterwaveService {
           },
         });
 
-        this.logger.log(`[Flutterwave] handleTransferSuccess complete — ref: ${data?.reference}`);
+        this.logger.log(
+          `[Flutterwave] handleTransferSuccess complete — ref: ${data?.reference}`,
+        );
       },
 
       {
@@ -574,7 +621,9 @@ export class FlutterwaveService {
   async handleTransferFailure(body: any) {
     const data = body?.data;
 
-    this.logger.log(`[Flutterwave] handleTransferFailure — ref: ${data?.reference}, amount: ${data?.amount} ${data?.currency}`);
+    this.logger.log(
+      `[Flutterwave] handleTransferFailure — ref: ${data?.reference}, amount: ${data?.amount} ${data?.currency}`,
+    );
 
     return await this.prisma.$transaction(
       async (trx) => {
@@ -585,7 +634,9 @@ export class FlutterwaveService {
         });
 
         if (existimgPaymentEvent?.status === data?.status) {
-          this.logger.log(`[Flutterwave] duplicate transfer failure event skipped — ref: ${data?.reference}`);
+          this.logger.log(
+            `[Flutterwave] duplicate transfer failure event skipped — ref: ${data?.reference}`,
+          );
           return;
         }
 
@@ -603,7 +654,9 @@ export class FlutterwaveService {
         if (!existingTrx)
           throw new InternalServerErrorException('Transaction not found');
 
-        this.logger.log(`[Flutterwave] reversing wallet balance — txnId: ${existingTrx.id}, restoring to ${existingTrx?.previousBalance}`);
+        this.logger.log(
+          `[Flutterwave] reversing wallet balance — txnId: ${existingTrx.id}, restoring to ${existingTrx?.previousBalance}`,
+        );
 
         // add the amount back
         await trx.wallet.update({
@@ -636,7 +689,9 @@ export class FlutterwaveService {
           },
         });
 
-        this.logger.log(`[Flutterwave] handleTransferFailure complete — ref: ${data?.reference}, balance reversed`);
+        this.logger.log(
+          `[Flutterwave] handleTransferFailure complete — ref: ${data?.reference}, balance reversed`,
+        );
       },
 
       {

@@ -22,6 +22,7 @@ export class PayDto {
   @ApiProperty({ example: 123 })
   @IsNotEmpty()
   @IsNumber()
+  @IsOptional()
   operatorId: number;
 
   @ApiProperty({ example: '08012345678' })
@@ -36,6 +37,16 @@ export class PayDto {
   @IsNotEmpty()
   @IsEnum(CURRENCY, { message: 'Invalid currency code' })
   currency: CURRENCY;
+
+  @ApiProperty({ example: 'IKEDC' })
+  @IsNotEmpty()
+  @IsString()
+  billerCode: string;
+
+  @ApiProperty({ example: 'IKEDC_PREPAID' })
+  @IsNotEmpty()
+  @IsString()
+  itemCode: string;
 
   @ApiProperty({ example: '1234' })
   @IsNotEmpty()

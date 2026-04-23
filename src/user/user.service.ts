@@ -61,6 +61,7 @@ import {
   PasscodeDto,
   RegisterFarmerDto,
   RegisterDto,
+  RegisterAgentDto,
   ResetPasswordDto,
   ValidateEmailDto,
   VerifyEmailDto,
@@ -230,6 +231,74 @@ export class UserService {
       message: 'User created successfully',
       user: plainToInstance(UserEntity, user),
       statusCode: HttpStatus.OK,
+    };
+  }
+
+  async registerAgent(body: RegisterAgentDto) {
+    const invitation = await this.prisma.agentInvitation.findUnique({
+      where: { token: body.invitationToken },
+    });
+
+    if (!invitation) throw new BadRequestException('Invalid invitation token');
+    if (invitation.status === 'ACCEPTED')
+      throw new BadRequestException('This invitation has already been used');
+    if (invitation.status === 'EXPIRED' || invitation.expiresAt < new Date())
+      throw new BadRequestException('This invitation has expired');
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: invitation.email },
+          { username: body.username },
+          { phoneNumber: body.phoneNumber },
+        ],
+      },
+    });
+
+    if (existingUser)
+      throw new BadRequestException(
+        'User with this email, username, or phone number already exists',
+      );
+
+    const hashedPassword = await bcrypt.hash(
+      String(body.password),
+      this.BCRYPT_SALT_ROUNDS,
+    );
+
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          fullname: body.fullname,
+          username: body.username,
+          phoneNumber: body.phoneNumber,
+          email: invitation.email,
+          password: hashedPassword,
+          dateOfBirth: body.dateOfBirth,
+          accountType: ACCOUNT_TYPE.AGENT,
+          role: USER_ROLE.AGENT,
+          referralCode: await this.generateReferralCode(),
+        },
+      });
+
+      await tx.agentInvitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED', usedAt: new Date() },
+      });
+
+      return user;
+    });
+
+    this.sendEmailSafe({
+      to: newUser.email,
+      subject: 'Welcome to UBI',
+      template: 'auth/welcome-email.hbs',
+      context: { firstName: newUser.fullname.split(' ')[0] },
+    });
+
+    return {
+      message: 'Agent registered successfully',
+      user: plainToInstance(UserEntity, newUser),
+      statusCode: HttpStatus.CREATED,
     };
   }
 

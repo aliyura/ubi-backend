@@ -5,9 +5,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from 'src/guards/role.guard';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ApiProvidersModule } from 'src/api-providers/api-providers.module';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
-  imports: [PrismaModule, ApiProvidersModule],
+  imports: [PrismaModule, ApiProvidersModule, EmailModule],
   controllers: [AdminController],
   providers: [
     AdminService,

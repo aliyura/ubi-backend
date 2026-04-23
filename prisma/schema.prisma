@@ -83,6 +83,12 @@ enum USER_ROLE {
   AGENT
 }
 
+enum INVITATION_STATUS {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
 enum BILL_TYPE {
   data
   airtime
@@ -168,9 +174,12 @@ model User {
   tierLevel TIER_LEVEL @default(notSet)
 
   // relationships
-  wallet        Wallet[]
-  beneficiaries Beneficiary[]
-  scamTicket    ScamTicket[]
+  wallet            Wallet[]
+  beneficiaries     Beneficiary[]
+  scamTicket        ScamTicket[]
+  agentInvitations  AgentInvitation[]
+  loanApplications  LoanApplication[] @relation("UserLoanApplications")
+  agentApplications LoanApplication[] @relation("AgentLoanApplications")
 
   isBusinessRegistered Boolean @default(false)
 
@@ -670,6 +679,8 @@ model LoanApplication {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  user             User                  @relation("UserLoanApplications", fields: [userId], references: [id])
+  agent            User?                 @relation("AgentLoanApplications", fields: [agentId], references: [id])
   farm             Farm                  @relation(fields: [farmId], references: [id])
   items            LoanApplicationItem[]
   eligibilityChecks EligibilityCheck[]
@@ -1007,6 +1018,22 @@ model MarketplaceOrderItem {
   @@map("marketplace_order_item")
 }
 
+
+model AgentInvitation {
+  id          String            @id @default(uuid()) @db.Uuid
+  email       String
+  token       String            @unique
+  status      INVITATION_STATUS @default(PENDING)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  invitedById String            @db.Uuid
+
+  invitedBy User @relation(fields: [invitedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("agent_invitations")
+}
 
 model Tier {
   id                  String     @id @default(uuid()) @db.Uuid

@@ -9,6 +9,7 @@ export * from './KycTier2Dto';
 export * from './KycTier3Dto';
 export * from './NinDto';
 export * from './PasscodeDto';
+export * from './RegisterAgentDto';
 export * from './RegisterDto';
 export * from './RegisterFarmerDto';
 export * from './RegisterFarmDto';

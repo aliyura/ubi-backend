@@ -54,12 +54,13 @@ export class BillService {
      Public plan / lookup APIs
      ------------------------- */
   async getAirtimeNetworkProviders() {
-    const networks = await this.prisma.airtimePlan.findMany();
+    // const networks = await this.prisma.airtimePlan.findMany();
+    const res = await this.apiProvider.getOperator('AIRTIME');
 
     return {
       message: 'Airtime network providers retrieve successfully',
       statusCode: HttpStatus.OK,
-      data: networks,
+      data: res,
     };
   }
 
@@ -82,18 +83,44 @@ export class BillService {
       throw new BadRequestException('Invalid phone number');
 
     const network = this.getNetworkProvider(String(phone));
+    console.log('network', network);
     if (!network) throw new NotFoundException('Enter a valid phone number');
 
-    const countryISOCode =
-      this.apiProvider.getCountryCodeFromCurrency(currency);
+    const plans: {
+      id: number;
+      name: string;
+      logo: string | null;
+      description: string | null;
+      short_name: string | null;
+      biller_code: string;
+      country: string;
+    }[] = await this.apiProvider.getOperator('AIRTIME');
 
-    const airtimePlan = await this.prisma.airtimePlan.findFirst({
-      where: { network, countryISOCode },
-    });
+    let plan: any;
+    if (network.toLowerCase() === 'etisalat') {
+      plan = plans.find(
+        (plan) =>
+          plan.name.toLowerCase().includes('9mobile') ||
+          plan.name.toLowerCase().includes('etisalat'),
+      );
+    } else {
+      plan = plans.find((plan) =>
+        plan.name.toLowerCase().includes(network.toLowerCase()),
+      );
+    }
+    if (!plan) throw new NotFoundException('Plan not found');
+
+    // const countryISOCode =
+    //   this.apiProvider.getCountryCodeFromCurrency(currency);
+
+    // const airtimePlan = await this.prisma.airtimePlan.findFirst({
+    //   where: { network, countryISOCode },
+    // });
 
     let res: any;
     try {
-      res = await this.apiProvider.getOperator(airtimePlan?.operatorId);
+      res = await this.apiProvider.getBillInfo(plan.biller_code);
+      // res = await this.apiProvider.getOperator(airtimePlan?.operatorId);
     } catch (error) {
       console.log('error getting variation amount', error);
       throw error;
@@ -239,7 +266,7 @@ export class BillService {
 
   async getVariation(operatorId: number) {
     try {
-      const res = await this.apiProvider.getOperator(operatorId);
+      const res = await this.apiProvider.getOperator(operatorId.toString());
       return {
         message: 'Variation retrieve successfully',
         statusCode: HttpStatus.OK,

@@ -33,6 +33,7 @@ import { multerOptions } from 'src/config/multer.config';
 import { UserEntity } from 'src/user/serializer/user.serializer';
 import { BENEFICIARY_TYPE, BILL_TYPE } from '@prisma/client';
 import {
+  RegisterAgentDto,
   RegisterDto,
   ValidateEmailDto,
   VerifyEmailDto,
@@ -70,6 +71,14 @@ export class UserController {
   @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.register })
   async register(@Body() body: RegisterDto) {
     return this.userService.register(body);
+  }
+
+  @Post('register-agent')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register as an agent using an invitation token' })
+  @ApiResponse({ status: HttpStatus.CREATED })
+  async registerAgent(@Body() body: RegisterAgentDto) {
+    return this.userService.registerAgent(body);
   }
 
   @Post('register-farmer')

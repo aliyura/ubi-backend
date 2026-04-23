@@ -1,20 +1,74 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { AddPlanDto } from './dto/AddDataPlanDto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiProviderService } from 'src/api-providers/api-providers.service';
 import { AddCablPlanDto } from './dto/AddCablPlanDto';
+import { InviteAgentDto } from './dto/InviteAgentDto';
+import { EmailService } from 'src/email/email.service';
+import { User } from '@prisma/client';
+import * as crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly apiProvider: ApiProviderService,
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
+
+  async inviteAgent(body: InviteAgentDto, admin: User) {
+    const pending = await this.prisma.agentInvitation.findFirst({
+      where: { email: body.email, status: 'PENDING' },
+    });
+
+    if (pending) {
+      throw new ConflictException(
+        'An active invitation has already been sent to this email address',
+      );
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await this.prisma.agentInvitation.create({
+      data: {
+        email: body.email,
+        token,
+        expiresAt,
+        invitedById: admin.id,
+      },
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? 'https://ubi.com';
+    const registrationUrl = `${frontendUrl}/register?token=${token}`;
+
+    try {
+      await this.emailService.sendEmail({
+        to: body.email,
+        subject: "You've Been Invited to Join UBI as an Agent",
+        template: 'admin/agent-invitation.hbs',
+        context: { registrationUrl },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send agent invitation email to ${body.email}`, error);
+    }
+
+    return {
+      message: 'Agent invitation sent successfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
 
   async addDataPlan(body: AddPlanDto) {
     const dataPlan = await this.prisma.dataPlan.findFirst({

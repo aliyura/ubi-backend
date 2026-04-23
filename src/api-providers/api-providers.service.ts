@@ -22,6 +22,7 @@ import { SmileIdService } from './providers/smile-id.service';
 import { WalletSetupDto } from 'src/wallet/dto/WalletSetupDto';
 import { BvnVerificationDto } from 'src/wallet/dto/BvnVerificationDto';
 import { QoreIdService } from './providers/qoreid.service';
+import { String } from 'aws-sdk/clients/acm';
 
 @Injectable()
 export class ApiProviderService {
@@ -361,8 +362,8 @@ export class ApiProviderService {
     });
   }
 
-  async getOperator(operatorId: number) {
-    return this.reloadlyService.getOperator(operatorId);
+  async getOperator(operatorId: string) {
+    return this.flutterwaveService.getBillers(operatorId);
   }
 
   async getAutoDetectOperator(phone: number, countryisoCode: string) {
@@ -388,17 +389,27 @@ export class ApiProviderService {
       amountToUse = this.getClosestValidTopupAmount(body.amount, validAmounts);
     }
 
-    return this.reloadlyService.payTopup({
-      amount: amountToUse ?? body.amount,
-      useLocalAmount: false,
-      operatorId: body.operatorId,
-      recipientEmail: email,
-      customIdentifier: trx_ref,
-      recipientPhone: {
-        countryCode: this.getCountryCodeFromCurrency(body.currency),
-        number: body.phone,
+    return this.flutterwaveService.purchaseBill(
+      body.itemCode,
+      body.billerCode,
+      {
+        customer_id: '+234' + body.phone.substring(1),
+        country: 'NG',
+        amount: amountToUse ?? body.amount,
+        reference: trx_ref,
       },
-    });
+    );
+    // return this.reloadlyService.payTopup({
+    //   amount: amountToUse ?? body.amount,
+    //   useLocalAmount: false,
+    //   operatorId: body.operatorId,
+    //   recipientEmail: email,
+    //   customIdentifier: trx_ref,
+    //   recipientPhone: {
+    //     countryCode: this.getCountryCodeFromCurrency(body.currency),
+    //     number: body.phone,
+    //   },
+    // });
   }
 
   async getAirtimeFxRate(amount: number, operatorId: number) {

@@ -7,17 +7,35 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AddPlanDto } from './dto/AddDataPlanDto';
 import { AdminService } from './admin.service';
 import { AddCablPlanDto } from './dto/AddCablPlanDto';
+import { InviteAgentDto } from './dto/InviteAgentDto';
 import { adminResponse } from './admin.response';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/guards/roles.decorator';
+import { USER_ROLE } from '@prisma/client';
+import { Request } from 'express';
 
 @Controller('/v1/admin')
-// @Roles(USER_ROLE.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Post('agents/invite')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invite an agent by email (super admin only)' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async inviteAgent(@Body() body: InviteAgentDto, @Req() req: Request) {
+    return this.adminService.inviteAgent(body, (req as any).user);
+  }
 
   @Post('data/add-plan')
   @HttpCode(HttpStatus.OK)

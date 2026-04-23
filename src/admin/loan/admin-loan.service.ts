@@ -87,7 +87,13 @@ export class AdminLoanService {
     const [items, total] = await Promise.all([
       this.prisma.loanApplication.findMany({
         where,
-        include: { farm: true, items: true, agentRecommendation: true },
+        include: {
+          farm: true,
+          items: true,
+          agentRecommendation: true,
+          user: { select: { id: true, fullname: true, email: true, phoneNumber: true } },
+          agent: { select: { id: true, fullname: true, email: true, phoneNumber: true } },
+        },
         skip,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },

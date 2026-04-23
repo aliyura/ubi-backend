@@ -573,9 +573,10 @@ export class FlutterwaveService {
           where: {
             transferDetails: {
               path: ['beneficiaryAccountNumber'],
-              equals: data?.account_number,
+              equals: data?.bank?.account_number,
             },
             status: TRANSACTION_STATUS.pending,
+
             // reference: data?.reference,
             transactionRef: data?.reference,
           },
@@ -645,7 +646,7 @@ export class FlutterwaveService {
           where: {
             transferDetails: {
               path: ['beneficiaryAccountNumber'],
-              equals: data?.account_number,
+              equals: data?.bank?.account_number,
             },
             status: TRANSACTION_STATUS.pending,
             // reference: data?.reference,

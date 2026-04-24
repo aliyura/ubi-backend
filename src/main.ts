@@ -44,10 +44,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://natty-pay.vercel.app',
-      'https://www.ubi.com',
-      'https://ubi.com',
-      'https://ubi-pay.vercel.app',
+      process.env.FRONTEND_URL,
     ],
     credentials: true,
   });
@@ -57,7 +54,9 @@ async function bootstrap() {
 
   console.log(`🚀 Server started at ${baseUrl}`);
   if (swaggerEnabled) {
-    console.log(`📚 Swagger docs enabled at ${baseUrl}/api/${SWAGGER_DOCS_PATH}`);
+    console.log(
+      `📚 Swagger docs enabled at ${baseUrl}/api/${SWAGGER_DOCS_PATH}`,
+    );
   }
 }
 

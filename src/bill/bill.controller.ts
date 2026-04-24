@@ -9,7 +9,12 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BillService } from './bill.service';
 import { PayDto } from './dto/PayDto';
 import { GiftCardPayDto } from './dto/GiftCardPayDto';
@@ -35,6 +40,7 @@ export class BillController {
     return this.billService.getAirtimePlan(phone, currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('airtime/network-providers')
   @ApiOperation({ summary: 'Get Airtime Network Providers' })
   @ApiResponse({
@@ -45,6 +51,7 @@ export class BillController {
     return this.billService.getAirtimeNetworkProviders();
   }
 
+  @ApiExcludeEndpoint()
   @Get('data/get-plan/:network')
   @ApiOperation({ summary: 'Get Data Network Providers' })
   @ApiResponse({
@@ -56,6 +63,7 @@ export class BillController {
   }
 
   // international airtime
+  @ApiExcludeEndpoint()
   @Get('airtime/international/get-plan')
   @ApiOperation({ summary: 'Get International Airtime Plan' })
   @ApiResponse({
@@ -66,6 +74,7 @@ export class BillController {
     return this.billService.getInternationalAirtimePlan(phone);
   }
 
+  @ApiExcludeEndpoint()
   @Get('airtime/international/get-fx-rate')
   @ApiOperation({ summary: 'Get Airtime Fx Rate' })
   @ApiResponse({
@@ -89,6 +98,7 @@ export class BillController {
     return this.billService.getDataPlan(phone, currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('cable/get-plan')
   @ApiOperation({ summary: 'Get Cabel Plan' })
   @ApiResponse({ status: HttpStatus.OK, example: billResponse.getCabelPlan })
@@ -96,6 +106,7 @@ export class BillController {
     return this.billService.getCablePlan(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('electricity/get-plan')
   @ApiOperation({ summary: 'Get Electricity Plan' })
   @ApiResponse({
@@ -106,6 +117,7 @@ export class BillController {
     return this.billService.getElectricityPlan(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('internet/get-plan')
   @ApiOperation({ summary: 'Get Internet Plan' })
   @ApiResponse({ status: HttpStatus.OK, example: billResponse.getInternetPlan })
@@ -113,6 +125,7 @@ export class BillController {
     return this.billService.getInternetPlan(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('transport/get-plan')
   @ApiOperation({ summary: 'Get Transport Plan' })
   @ApiResponse({
@@ -123,6 +136,7 @@ export class BillController {
     return this.billService.getTransportPlan(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('school/get-plan')
   @ApiOperation({ summary: 'Get Schoolfee Plan' })
   @ApiResponse({
@@ -133,6 +147,7 @@ export class BillController {
     return this.billService.getSchoolfeePlan(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('airtime/get-variation')
   @ApiOperation({ summary: 'Get Airtime Variation' })
   @ApiResponse({
@@ -143,6 +158,7 @@ export class BillController {
     return this.billService.getVariation(operatorId);
   }
 
+  @ApiExcludeEndpoint()
   @Get('data/get-variation')
   @ApiOperation({ summary: 'Get Data Variation' })
   @ApiResponse({
@@ -171,6 +187,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.airtime);
   }
 
+  @ApiExcludeEndpoint()
   @Post('airtime/international/pay')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'International Airtime Pay' })
@@ -183,6 +200,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.internationalAirtime);
   }
 
+  @ApiExcludeEndpoint()
   @Get('giftcard/get-categories')
   @ApiOperation({ summary: 'Get Gift Card Categories' })
   @ApiResponse({
@@ -193,6 +211,7 @@ export class BillController {
     return this.billService.getGiftCardCategories();
   }
 
+  @ApiExcludeEndpoint()
   @Get('giftcard/get-product')
   @ApiOperation({ summary: 'Get Product By ISOCode' })
   @ApiResponse({
@@ -203,6 +222,7 @@ export class BillController {
     return this.billService.getProductByISOCode(currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('giftcard/get-fx-rate')
   @ApiOperation({ summary: 'Get Gift Card Fx Rate' })
   @ApiResponse({
@@ -216,6 +236,7 @@ export class BillController {
     return this.billService.getGiftCardFxRate(amount, currency);
   }
 
+  @ApiExcludeEndpoint()
   @Get('cable/get-bill-info')
   @ApiOperation({ summary: 'Get Cable Bill Info' })
   @ApiResponse({
@@ -226,6 +247,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'cable');
   }
 
+  @ApiExcludeEndpoint()
   @Get('electricity/get-bill-info')
   @ApiOperation({ summary: 'Get Electricity Bill Info' })
   @ApiResponse({
@@ -236,6 +258,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'electricity');
   }
 
+  @ApiExcludeEndpoint()
   @Get('internet/get-bill-info')
   @ApiOperation({ summary: 'Get Internet Bill Info' })
   @ApiResponse({
@@ -246,6 +269,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'internet');
   }
 
+  @ApiExcludeEndpoint()
   @Get('transport/get-bill-info')
   @ApiOperation({ summary: 'Get Transport Bill Info' })
   @ApiResponse({
@@ -256,6 +280,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'transport');
   }
 
+  @ApiExcludeEndpoint()
   @Get('school/get-bill-info')
   @ApiOperation({ summary: 'Get Schoolfee Bill Info' })
   @ApiResponse({
@@ -266,6 +291,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'schoolfee');
   }
 
+  @ApiExcludeEndpoint()
   @Post('cable/verify-cable-number')
   @ApiOperation({ summary: 'Verify Cable Number' })
   @ApiResponse({
@@ -276,6 +302,7 @@ export class BillController {
     return this.billService.verifyBillerNumber(body, 'cable');
   }
 
+  @ApiExcludeEndpoint()
   @Post('electricity/verify-meter-number')
   @ApiOperation({ summary: 'Verify Meter Number' })
   @ApiResponse({
@@ -286,6 +313,7 @@ export class BillController {
     return this.billService.verifyBillerNumber(body, 'electricity');
   }
 
+  @ApiExcludeEndpoint()
   @Post('cable/pay')
   @ApiOperation({ summary: 'Cable Pay' })
   @ApiResponse({ status: HttpStatus.CREATED, example: billResponse.cablePay })
@@ -294,6 +322,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.cable);
   }
 
+  @ApiExcludeEndpoint()
   @Post('electricity/pay')
   @ApiOperation({ summary: 'Electricity Pay' })
   @ApiResponse({
@@ -305,6 +334,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.electricity);
   }
 
+  @ApiExcludeEndpoint()
   @Post('giftcard/pay')
   @ApiOperation({ summary: 'Giftcard Pay' })
   @ApiResponse({
@@ -316,6 +346,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.giftcard);
   }
 
+  @ApiExcludeEndpoint()
   @Get('giftcard/get-redeem-code')
   @ApiOperation({ summary: 'Get Gift Card Redeem Code' })
   @ApiResponse({
@@ -340,6 +371,7 @@ export class BillController {
     return this.billService.getBenafiaries(user, query.billType);
   }
 
+  @ApiExcludeEndpoint()
   @Post('internet/pay')
   @ApiOperation({ summary: 'Internet Pay' })
   @ApiResponse({
@@ -351,6 +383,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.internet);
   }
 
+  @ApiExcludeEndpoint()
   @Post('transport/pay')
   @ApiOperation({ summary: 'Transport Pay' })
   @ApiResponse({
@@ -362,6 +395,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.transport);
   }
 
+  @ApiExcludeEndpoint()
   @Post('school/pay')
   @ApiOperation({ summary: 'Schoolfee Pay' })
   @ApiResponse({

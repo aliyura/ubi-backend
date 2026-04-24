@@ -32,7 +32,7 @@ export class AdminController {
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Invite an agent by email (super admin only)' })
-  @ApiResponse({ status: HttpStatus.OK })
+  @ApiResponse({ status: HttpStatus.OK, example: adminResponse.inviteAgent })
   async inviteAgent(@Body() body: InviteAgentDto, @Req() req: Request) {
     return this.adminService.inviteAgent(body, (req as any).user);
   }

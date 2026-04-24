@@ -176,4 +176,17 @@ export const userResponse = {
       { tier: 'Tier 3', kycLevel: 3, active: false, limits: { dailyLimit: 9999999999999, perTransactionLimit: 9999999999999, walletLimit: 9999999999999 } },
     ],
   },
+  registerAgent: {
+    statusCode: 201,
+    message: 'Agent registered successfully',
+    data: {
+      id: 'agent-uuid-001',
+      fullname: 'Ibrahim Musa',
+      email: 'ibrahim.musa@ubi.com',
+      username: 'ibrahimmusa',
+      role: 'AGENT',
+      status: 'active',
+      createdAt: '2026-04-24T09:00:00.000Z',
+    },
+  },
 } as const;

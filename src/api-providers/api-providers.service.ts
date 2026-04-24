@@ -377,26 +377,26 @@ export class ApiProviderService {
     trx_ref?: string,
   ) {
     let amountToUse = body.amount;
-    if (bill_type === 'data') {
-      const operator = await this.flutterwaveService.purchaseBill(
-        body.itemCode,
-        body.billerCode,
-        {
-          customer_id: '+234' + body.phone.substring(1),
-          country: 'NG',
-          amount: body.amount,
-          reference: trx_ref,
-        },
-      );
+    // if (bill_type === 'data') {
+    // const operator = await this.flutterwaveService.purchaseBill(
+    //   body.itemCode,
+    //   body.billerCode,
+    //   {
+    //     customer_id: '+234' + body.phone.substring(1),
+    //     country: 'NG',
+    //     amount: body.amount,
+    //     reference: trx_ref,
+    //   },
+    // );
 
-      const validAmounts = operator?.fixedAmounts || [];
-      if (!validAmounts.length) {
-        throw new BadRequestException(
-          'No valid amounts found for this operator',
-        );
-      }
-      amountToUse = this.getClosestValidTopupAmount(body.amount, validAmounts);
-    }
+    // const validAmounts = operator?.fixedAmounts || [];
+    // if (!validAmounts.length) {
+    //   throw new BadRequestException(
+    //     'No valid amounts found for this operator',
+    //   );
+    // }
+    // amountToUse = this.getClosestValidTopupAmount(body.amount, validAmounts);
+    // }
 
     return this.flutterwaveService.purchaseBill(
       body.itemCode,

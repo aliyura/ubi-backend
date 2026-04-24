@@ -10,7 +10,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { MarketplaceOrderAdminService } from './marketplace-order-admin.service';
 import {
@@ -20,6 +20,7 @@ import {
   AdminDispatchOrderDto,
   QueryMarketplaceOrderDto,
 } from './dto';
+import { marketplaceOrderAdminResponse } from './marketplace-order-admin.response';
 
 @ApiTags('Admin — Marketplace Orders')
 @Controller('v1/admin/marketplace-orders')
@@ -29,6 +30,7 @@ export class MarketplaceOrderAdminController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all marketplace orders' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.listOrders })
   listOrders(@Query() query: QueryMarketplaceOrderDto) {
     return this.service.listOrders(query);
   }
@@ -36,6 +38,7 @@ export class MarketplaceOrderAdminController {
   @Get(':orderId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get full marketplace order detail' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.getOrderDetail })
   getOrderDetail(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.service.getOrderDetail(orderId);
   }
@@ -43,6 +46,7 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm order and deduct stock from inventory' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.confirmOrder })
   confirmOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminConfirmOrderDto,
@@ -54,6 +58,7 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/pack')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as packed' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.packOrder })
   packOrder(@Param('orderId', ParseUUIDPipe) orderId: string, @Req() req: Request) {
     return this.service.packOrder(orderId, (req as any).user);
   }
@@ -61,6 +66,7 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/dispatch')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as dispatched' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.dispatchOrder })
   dispatchOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminDispatchOrderDto,
@@ -72,6 +78,7 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/deliver')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Record delivery and upload proof' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.deliverOrder })
   deliverOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminDeliverOrderDto,
@@ -83,6 +90,7 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin cancel order (re-credits stock if confirmed)' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.cancelOrder })
   cancelOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminCancelOrderDto,

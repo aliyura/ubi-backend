@@ -70,4 +70,9 @@ export const adminResponse = {
       billType: 'data',
     },
   },
+  inviteAgent: {
+    statusCode: 200,
+    message: 'Agent invited successfully',
+    data: null,
+  },
 } as const;

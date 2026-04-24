@@ -41,6 +41,7 @@ export class AdminLoanController {
   @Get('overview')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin dashboard overview stats' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.overview })
   async overview() {
     return this.service.getOverview();
   }
@@ -48,6 +49,7 @@ export class AdminLoanController {
   @Get('agents')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all agents with their assigned farmers' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.listAgents })
   async listAgents(@Query() query: AdminQueryAgentsDto) {
     return this.service.listAgentsWithFarmers(query);
   }
@@ -55,6 +57,7 @@ export class AdminLoanController {
   @Get('agents/:id/farmers-list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List farmers assigned to an agent' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgentFarmersList })
   async getAgentFarmersList(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AdminQueryAgentsDto,
@@ -65,6 +68,7 @@ export class AdminLoanController {
   @Get('agents/:id/applications')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List applications handled by an agent' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgentApplications })
   async getAgentApplications(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AdminQueryLoanDto,
@@ -75,6 +79,7 @@ export class AdminLoanController {
   @Get('agents/:id/verification-tasks')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List verification tasks for an agent' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgentVerificationTasks })
   async getAgentVerificationTasks(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AdminQueryLoanDto,
@@ -85,6 +90,7 @@ export class AdminLoanController {
   @Get('agents/:id/performance')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get performance metrics for an agent' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgentPerformance })
   async getAgentPerformance(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getAgentPerformance(id);
   }
@@ -92,6 +98,7 @@ export class AdminLoanController {
   @Get('agents/:id/activity-log')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get activity log for an agent over a time range' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgentActivityLog })
   async getAgentActivityLog(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: GetActivityLogsDto,
@@ -103,6 +110,7 @@ export class AdminLoanController {
   @Get('agents/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get agent profile with performance metrics' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminLoanResponse.getAgent })
   async getAgent(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getAgentById(id);
   }

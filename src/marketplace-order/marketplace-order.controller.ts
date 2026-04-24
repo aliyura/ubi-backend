@@ -11,10 +11,11 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { MarketplaceOrderService } from './marketplace-order.service';
 import { PlaceMarketplaceOrderDto, QueryMarketplaceOrderDto } from './dto';
+import { marketplaceOrderResponse } from './marketplace-order.response';
 
 @ApiTags('Marketplace Orders')
 @Controller('v1/loan-applications/:applicationId/marketplace-orders')
@@ -24,6 +25,7 @@ export class MarketplaceOrderController {
   @Get('credit-summary')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get approved credit, total spent, and remaining balance' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getCreditSummary })
   getCreditSummary(@Param('applicationId', ParseUUIDPipe) applicationId: string, @Req() req: Request) {
     return this.service.getCreditSummary(applicationId, (req as any).user);
   }
@@ -31,6 +33,7 @@ export class MarketplaceOrderController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Place a marketplace order using approved loan credit' })
+  @ApiResponse({ status: HttpStatus.CREATED, example: marketplaceOrderResponse.placeOrder })
   placeOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Body() body: PlaceMarketplaceOrderDto,
@@ -42,6 +45,7 @@ export class MarketplaceOrderController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List my marketplace orders for this application' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.listMyOrders })
   listMyOrders(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Query() query: QueryMarketplaceOrderDto,
@@ -53,6 +57,7 @@ export class MarketplaceOrderController {
   @Get(':orderId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a single marketplace order detail' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getMyOrder })
   getMyOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -64,6 +69,7 @@ export class MarketplaceOrderController {
   @Post(':orderId/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a pending marketplace order' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.cancelMyOrder })
   cancelMyOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Param('orderId', ParseUUIDPipe) orderId: string,

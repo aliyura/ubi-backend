@@ -44,6 +44,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
+      'https://ubi-finance-frontend.vercel.app',
       process.env.FRONTEND_URL,
     ],
     allowedHeaders: '*',

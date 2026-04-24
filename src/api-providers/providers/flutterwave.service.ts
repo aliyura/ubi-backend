@@ -571,15 +571,15 @@ export class FlutterwaveService {
 
         const existingTrx = await trx.transaction.findFirst({
           where: {
-            transferDetails: {
-              path: ['beneficiaryAccountNumber'],
-              equals: data?.bank?.account_number,
-            },
+            // transferDetails: {
+            //   path: ['beneficiaryAccountNumber'],
+            //   equals: data?.bank?.account_number,
+            // },
             status: TRANSACTION_STATUS.pending,
-
             // reference: data?.reference,
             transactionRef: data?.reference,
           },
+          orderBy: { createdAt: 'desc' },
         });
 
         if (!existingTrx)
@@ -644,14 +644,15 @@ export class FlutterwaveService {
 
         const existingTrx = await trx.transaction.findFirst({
           where: {
-            transferDetails: {
-              path: ['beneficiaryAccountNumber'],
-              equals: data?.bank?.account_number,
-            },
+            // transferDetails: {
+            //   path: ['beneficiaryAccountNumber'],
+            //   equals: data?.bank?.account_number,
+            // },
             status: TRANSACTION_STATUS.pending,
             // reference: data?.reference,
             transactionRef: data?.reference,
           },
+          orderBy: { createdAt: 'desc' },
         });
 
         if (!existingTrx)

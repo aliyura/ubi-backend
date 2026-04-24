@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
@@ -12,7 +9,14 @@ import {
   AssignAgentDto,
   ManualStatusDto,
 } from './dto';
-import { LOAN_APPLICATION_STATUS, LOAN_DECISION_TYPE, AGENT_RECOMMENDATION_TYPE, USER_ROLE, USER_ACCOUNT_STATUS, User } from '@prisma/client';
+import {
+  LOAN_APPLICATION_STATUS,
+  LOAN_DECISION_TYPE,
+  AGENT_RECOMMENDATION_TYPE,
+  USER_ROLE,
+  USER_ACCOUNT_STATUS,
+  User,
+} from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
 @Injectable()
@@ -36,16 +40,35 @@ export class AdminLoanService {
     }
 
     const agentSelect = {
-      id: true, fullname: true, email: true, phoneNumber: true,
-      username: true, gender: true, country: true,
-      address: true, state: true, city: true,
-      profileImageUrl: true, dateOfBirth: true,
-      isPhoneVerified: true, isEmailVerified: true, isBvnVerified: true, isNinVerified: true,
-      status: true, createdAt: true, updatedAt: true,
+      id: true,
+      fullname: true,
+      email: true,
+      phoneNumber: true,
+      username: true,
+      gender: true,
+      country: true,
+      address: true,
+      state: true,
+      city: true,
+      profileImageUrl: true,
+      dateOfBirth: true,
+      isPhoneVerified: true,
+      isEmailVerified: true,
+      isBvnVerified: true,
+      isNinVerified: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
     };
 
     const [agents, total] = await Promise.all([
-      this.prisma.user.findMany({ where, select: agentSelect, skip, take: Number(limit), orderBy: { createdAt: 'desc' } }),
+      this.prisma.user.findMany({
+        where,
+        select: agentSelect,
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
       this.prisma.user.count({ where }),
     ]);
 
@@ -126,8 +149,22 @@ export class AdminLoanService {
           farm: true,
           items: true,
           agentRecommendation: true,
-          user: { select: { id: true, fullname: true, email: true, phoneNumber: true } },
-          agent: { select: { id: true, fullname: true, email: true, phoneNumber: true } },
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+          agent: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
         },
         skip,
         take: Number(limit),
@@ -149,6 +186,8 @@ export class AdminLoanService {
       where: { id },
       include: {
         farm: { include: { photos: true } },
+        user: { omit: { createdAt: true, updatedAt: true } },
+        agent: { omit: { createdAt: true, updatedAt: true } },
         items: true,
         eligibilityChecks: true,
         agentRecommendation: true,
@@ -172,9 +211,11 @@ export class AdminLoanService {
     const statusMap: Record<LOAN_DECISION_TYPE, LOAN_APPLICATION_STATUS> = {
       [LOAN_DECISION_TYPE.approved]: LOAN_APPLICATION_STATUS.Approved,
       [LOAN_DECISION_TYPE.rejected]: LOAN_APPLICATION_STATUS.Rejected,
-      [LOAN_DECISION_TYPE.more_info_required]: LOAN_APPLICATION_STATUS.MoreInfoRequired,
+      [LOAN_DECISION_TYPE.more_info_required]:
+        LOAN_APPLICATION_STATUS.MoreInfoRequired,
       [LOAN_DECISION_TYPE.hold]: LOAN_APPLICATION_STATUS.UnderReview,
-      [LOAN_DECISION_TYPE.send_for_verification]: LOAN_APPLICATION_STATUS.PendingFieldVerification,
+      [LOAN_DECISION_TYPE.send_for_verification]:
+        LOAN_APPLICATION_STATUS.PendingFieldVerification,
     };
     const newStatus = statusMap[body.decision];
     this.loanAppService.validateTransition(app.status, newStatus);
@@ -240,15 +281,29 @@ export class AdminLoanService {
         body.repaymentTerms &&
         body.approvedTotalValue
       ) {
-        const { numberOfInstallments, frequency, firstDueDate, serviceCharge = 0 } =
-          body.repaymentTerms;
-        const totalRepayment = Helpers.round2(body.approvedTotalValue + serviceCharge);
-        const installmentAmount = Helpers.round2(totalRepayment / numberOfInstallments);
+        const {
+          numberOfInstallments,
+          frequency,
+          firstDueDate,
+          serviceCharge = 0,
+        } = body.repaymentTerms;
+        const totalRepayment = Helpers.round2(
+          body.approvedTotalValue + serviceCharge,
+        );
+        const installmentAmount = Helpers.round2(
+          totalRepayment / numberOfInstallments,
+        );
         const firstDate = new Date(firstDueDate);
 
         const lastDueDate = new Date(firstDate);
-        if (frequency === 'monthly') lastDueDate.setMonth(lastDueDate.getMonth() + (numberOfInstallments - 1));
-        else if (frequency === 'weekly') lastDueDate.setDate(lastDueDate.getDate() + (numberOfInstallments - 1) * 7);
+        if (frequency === 'monthly')
+          lastDueDate.setMonth(
+            lastDueDate.getMonth() + (numberOfInstallments - 1),
+          );
+        else if (frequency === 'weekly')
+          lastDueDate.setDate(
+            lastDueDate.getDate() + (numberOfInstallments - 1) * 7,
+          );
 
         await tx.repaymentPlan.create({
           data: {
@@ -265,8 +320,10 @@ export class AdminLoanService {
             repayments: {
               create: Array.from({ length: numberOfInstallments }, (_, i) => {
                 const dueDate = new Date(firstDate);
-                if (frequency === 'monthly') dueDate.setMonth(dueDate.getMonth() + i);
-                else if (frequency === 'weekly') dueDate.setDate(dueDate.getDate() + i * 7);
+                if (frequency === 'monthly')
+                  dueDate.setMonth(dueDate.getMonth() + i);
+                else if (frequency === 'weekly')
+                  dueDate.setDate(dueDate.getDate() + i * 7);
                 return {
                   installmentNumber: i + 1,
                   dueDate,
@@ -292,7 +349,11 @@ export class AdminLoanService {
       );
     }
 
-    return { status: true, message: 'Decision recorded successfully', data: null };
+    return {
+      status: true,
+      message: 'Decision recorded successfully',
+      data: null,
+    };
   }
 
   async assignAgent(id: string, body: AssignAgentDto, admin: User) {
@@ -401,9 +462,15 @@ export class AdminLoanService {
   async getSummaryReport() {
     const [total, approved, rejected, overdue] = await Promise.all([
       this.prisma.loanApplication.count(),
-      this.prisma.loanApplication.count({ where: { status: LOAN_APPLICATION_STATUS.Approved } }),
-      this.prisma.loanApplication.count({ where: { status: LOAN_APPLICATION_STATUS.Rejected } }),
-      this.prisma.loanApplication.count({ where: { status: LOAN_APPLICATION_STATUS.Overdue } }),
+      this.prisma.loanApplication.count({
+        where: { status: LOAN_APPLICATION_STATUS.Approved },
+      }),
+      this.prisma.loanApplication.count({
+        where: { status: LOAN_APPLICATION_STATUS.Rejected },
+      }),
+      this.prisma.loanApplication.count({
+        where: { status: LOAN_APPLICATION_STATUS.Overdue },
+      }),
     ]);
 
     return {
@@ -414,8 +481,12 @@ export class AdminLoanService {
         approved,
         rejected,
         overdue,
-        approvalRate: total ? ((approved / total) * 100).toFixed(1) + '%' : '0%',
-        rejectionRate: total ? ((rejected / total) * 100).toFixed(1) + '%' : '0%',
+        approvalRate: total
+          ? ((approved / total) * 100).toFixed(1) + '%'
+          : '0%',
+        rejectionRate: total
+          ? ((rejected / total) * 100).toFixed(1) + '%'
+          : '0%',
       },
     };
   }
@@ -432,7 +503,9 @@ export class AdminLoanService {
         take: Number(limit),
         orderBy: { updatedAt: 'asc' },
       }),
-      this.prisma.loanApplication.count({ where: { status: LOAN_APPLICATION_STATUS.Overdue } }),
+      this.prisma.loanApplication.count({
+        where: { status: LOAN_APPLICATION_STATUS.Overdue },
+      }),
     ]);
 
     return {
@@ -452,7 +525,12 @@ export class AdminLoanService {
     ] = await Promise.all([
       this.prisma.user.count({ where: { role: USER_ROLE.AGENT } }),
       this.prisma.user.count({
-        where: { role: USER_ROLE.AGENT, status: { in: [USER_ACCOUNT_STATUS.restricted, USER_ACCOUNT_STATUS.frozen] } },
+        where: {
+          role: USER_ROLE.AGENT,
+          status: {
+            in: [USER_ACCOUNT_STATUS.restricted, USER_ACCOUNT_STATUS.frozen],
+          },
+        },
       }),
       this.prisma.loanApplication.count({
         where: { status: LOAN_APPLICATION_STATUS.PendingFieldVerification },
@@ -484,6 +562,270 @@ export class AdminLoanService {
       take: 10,
     });
     return { status: true, message: 'Top items retrieved', data: items };
+  }
+
+  async getAgentFarmersList(id: string, query: AdminQueryAgentsDto) {
+    const { search, page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = {
+      role: USER_ROLE.FARMER,
+      loanApplications: { some: { agentId: id } },
+    };
+    if (search) {
+      where.OR = [
+        { fullname: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const farmerSelect = {
+      id: true,
+      fullname: true,
+      email: true,
+      phoneNumber: true,
+      username: true,
+      gender: true,
+      country: true,
+      address: true,
+      state: true,
+      city: true,
+      profileImageUrl: true,
+      dateOfBirth: true,
+      isPhoneVerified: true,
+      isEmailVerified: true,
+      isBvnVerified: true,
+      isNinVerified: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    };
+
+    const [farmers, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: farmerSelect,
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Farmers retrieved',
+      data: farmers,
+      meta: { total, page, limit, pages: Math.ceil(total / Number(limit)) },
+    };
+  }
+
+  async getAgentApplications(id: string, query: AdminQueryLoanDto) {
+    return this.listApplications({ ...query, agentId: id });
+  }
+
+  async getAgentVerificationTasks(id: string, query: AdminQueryLoanDto) {
+    const { page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = {
+      agentId: id,
+      OR: [
+        { status: LOAN_APPLICATION_STATUS.PendingFieldVerification },
+        { fieldVerification: { isNot: null } },
+      ],
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.loanApplication.findMany({
+        where,
+        include: {
+          fieldVerification: true,
+          farm: true,
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+        },
+        skip,
+        take: Number(limit),
+        orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
+      }),
+      this.prisma.loanApplication.count({ where }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Verification tasks retrieved',
+      data: items,
+      meta: { total, page, limit, pages: Math.ceil(total / Number(limit)) },
+    };
+  }
+
+  async getAgentPerformance(id: string) {
+    const agent = await this.prisma.user.findUnique({ where: { id } });
+    if (!agent || agent.role !== USER_ROLE.AGENT) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    const agentApps = await this.prisma.loanApplication.findMany({
+      where: { agentId: id },
+      select: { id: true },
+    });
+    const applicationIds = agentApps.map((a) => a.id);
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const approvedStatuses: LOAN_APPLICATION_STATUS[] = [
+      LOAN_APPLICATION_STATUS.Approved,
+      LOAN_APPLICATION_STATUS.FulfillmentInProgress,
+      LOAN_APPLICATION_STATUS.ReadyForPickup,
+      LOAN_APPLICATION_STATUS.OutForDelivery,
+      LOAN_APPLICATION_STATUS.Delivered,
+      LOAN_APPLICATION_STATUS.Active,
+      LOAN_APPLICATION_STATUS.PartiallyRepaid,
+      LOAN_APPLICATION_STATUS.Completed,
+      LOAN_APPLICATION_STATUS.Overdue,
+    ];
+
+    const [
+      disbursementAgg,
+      activeFarmerGroups,
+      approvedCount,
+      rejectedCount,
+      pendingCount,
+      agentRecommendations,
+      recentApps,
+    ] = await Promise.all([
+      this.prisma.loanDecision.aggregate({
+        where: {
+          applicationId: { in: applicationIds },
+          decision: LOAN_DECISION_TYPE.approved,
+        },
+        _sum: { approvedTotalValue: true },
+      }),
+      this.prisma.loanApplication.groupBy({
+        by: ['userId'],
+        where: {
+          agentId: id,
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Active,
+              LOAN_APPLICATION_STATUS.PartiallyRepaid,
+              LOAN_APPLICATION_STATUS.Overdue,
+            ],
+          },
+        },
+      }),
+      this.prisma.loanApplication.count({
+        where: { agentId: id, status: { in: approvedStatuses } },
+      }),
+      this.prisma.loanApplication.count({
+        where: {
+          agentId: id,
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Rejected,
+              LOAN_APPLICATION_STATUS.Cancelled,
+            ],
+          },
+        },
+      }),
+      this.prisma.loanApplication.count({
+        where: {
+          agentId: id,
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Draft,
+              LOAN_APPLICATION_STATUS.Submitted,
+              LOAN_APPLICATION_STATUS.EligibilityReview,
+              LOAN_APPLICATION_STATUS.PendingFieldVerification,
+              LOAN_APPLICATION_STATUS.UnderReview,
+              LOAN_APPLICATION_STATUS.MoreInfoRequired,
+            ],
+          },
+        },
+      }),
+      this.prisma.agentRecommendation.findMany({
+        where: { agentId: id },
+        include: {
+          application: {
+            include: { decisions: { orderBy: { decidedAt: 'desc' }, take: 1 } },
+          },
+        },
+      }),
+      this.prisma.loanApplication.findMany({
+        where: { agentId: id, createdAt: { gte: sevenDaysAgo } },
+        select: { createdAt: true, status: true },
+      }),
+    ]);
+
+    const TERMINAL = new Set<LOAN_DECISION_TYPE>([
+      LOAN_DECISION_TYPE.approved,
+      LOAN_DECISION_TYPE.rejected,
+    ]);
+    let correct = 0,
+      total = 0;
+    for (const rec of agentRecommendations) {
+      const latest = rec.application.decisions[0];
+      if (!latest || !TERMINAL.has(latest.decision)) continue;
+      total++;
+      const match =
+        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.recommended &&
+          latest.decision === LOAN_DECISION_TYPE.approved) ||
+        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.not_recommended &&
+          latest.decision === LOAN_DECISION_TYPE.rejected);
+      if (match) correct++;
+    }
+    const verificationAccuracy =
+      total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    const DAY_NAMES = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
+    const dayBuckets: Record<string, { total: number; approved: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dayBuckets[DAY_NAMES[d.getDay()]] = { total: 0, approved: 0 };
+    }
+    for (const app of recentApps) {
+      const key = DAY_NAMES[app.createdAt.getDay()];
+      dayBuckets[key].total++;
+      if (approvedStatuses.includes(app.status)) dayBuckets[key].approved++;
+    }
+    const sevenDaySuccessRate = Object.fromEntries(
+      Object.entries(dayBuckets).map(([day, { total, approved }]) => [
+        day,
+        total > 0 ? Math.round((approved / total) * 100) : 0,
+      ]),
+    );
+
+    return {
+      status: true,
+      message: 'Agent performance retrieved',
+      data: {
+        totalDisbursementsFacilitated:
+          disbursementAgg._sum.approvedTotalValue ?? 0,
+        activeFarmers: activeFarmerGroups.length,
+        verificationAccuracy,
+        approvedCount,
+        rejectedCount,
+        pendingCount,
+        sevenDaySuccessRate,
+      },
+    };
   }
 
   async getAgentById(id: string) {
@@ -524,33 +866,52 @@ export class AdminLoanService {
       recentApps,
     ] = await Promise.all([
       this.prisma.loanDecision.aggregate({
-        where: { applicationId: { in: applicationIds }, decision: LOAN_DECISION_TYPE.approved },
+        where: {
+          applicationId: { in: applicationIds },
+          decision: LOAN_DECISION_TYPE.approved,
+        },
         _sum: { approvedTotalValue: true },
       }),
       this.prisma.loanApplication.groupBy({
         by: ['userId'],
         where: {
           agentId: id,
-          status: { in: [LOAN_APPLICATION_STATUS.Active, LOAN_APPLICATION_STATUS.PartiallyRepaid, LOAN_APPLICATION_STATUS.Overdue] },
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Active,
+              LOAN_APPLICATION_STATUS.PartiallyRepaid,
+              LOAN_APPLICATION_STATUS.Overdue,
+            ],
+          },
         },
       }),
       this.prisma.loanApplication.count({
         where: { agentId: id, status: { in: approvedStatuses } },
       }),
       this.prisma.loanApplication.count({
-        where: { agentId: id, status: { in: [LOAN_APPLICATION_STATUS.Rejected, LOAN_APPLICATION_STATUS.Cancelled] } },
+        where: {
+          agentId: id,
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Rejected,
+              LOAN_APPLICATION_STATUS.Cancelled,
+            ],
+          },
+        },
       }),
       this.prisma.loanApplication.count({
         where: {
           agentId: id,
-          status: { in: [
-            LOAN_APPLICATION_STATUS.Draft,
-            LOAN_APPLICATION_STATUS.Submitted,
-            LOAN_APPLICATION_STATUS.EligibilityReview,
-            LOAN_APPLICATION_STATUS.PendingFieldVerification,
-            LOAN_APPLICATION_STATUS.UnderReview,
-            LOAN_APPLICATION_STATUS.MoreInfoRequired,
-          ]},
+          status: {
+            in: [
+              LOAN_APPLICATION_STATUS.Draft,
+              LOAN_APPLICATION_STATUS.Submitted,
+              LOAN_APPLICATION_STATUS.EligibilityReview,
+              LOAN_APPLICATION_STATUS.PendingFieldVerification,
+              LOAN_APPLICATION_STATUS.UnderReview,
+              LOAN_APPLICATION_STATUS.MoreInfoRequired,
+            ],
+          },
         },
       }),
       this.prisma.agentRecommendation.findMany({
@@ -567,20 +928,35 @@ export class AdminLoanService {
       }),
     ]);
 
-    const TERMINAL = new Set<LOAN_DECISION_TYPE>([LOAN_DECISION_TYPE.approved, LOAN_DECISION_TYPE.rejected]);
-    let correct = 0, total = 0;
+    const TERMINAL = new Set<LOAN_DECISION_TYPE>([
+      LOAN_DECISION_TYPE.approved,
+      LOAN_DECISION_TYPE.rejected,
+    ]);
+    let correct = 0,
+      total = 0;
     for (const rec of agentRecommendations) {
       const latest = rec.application.decisions[0];
       if (!latest || !TERMINAL.has(latest.decision)) continue;
       total++;
       const match =
-        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.recommended && latest.decision === LOAN_DECISION_TYPE.approved) ||
-        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.not_recommended && latest.decision === LOAN_DECISION_TYPE.rejected);
+        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.recommended &&
+          latest.decision === LOAN_DECISION_TYPE.approved) ||
+        (rec.recommendation === AGENT_RECOMMENDATION_TYPE.not_recommended &&
+          latest.decision === LOAN_DECISION_TYPE.rejected);
       if (match) correct++;
     }
-    const verificationAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const verificationAccuracy =
+      total > 0 ? Math.round((correct / total) * 100) : 0;
 
-    const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const DAY_NAMES = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     const dayBuckets: Record<string, { total: number; approved: number }> = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -610,7 +986,8 @@ export class AdminLoanService {
         status: agent.status,
         createdAt: agent.createdAt,
         updatedAt: agent.updatedAt,
-        totalDisbursementsFacilitated: disbursementAgg._sum.approvedTotalValue ?? 0,
+        totalDisbursementsFacilitated:
+          disbursementAgg._sum.approvedTotalValue ?? 0,
         activeFarmers: activeFarmerGroups.length,
         verificationAccuracy,
         approvedCount,

@@ -47,6 +47,43 @@ export class AdminLoanController {
     return this.service.listAgentsWithFarmers(query);
   }
 
+  @Get('agents/:id/farmers-list')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List farmers assigned to an agent' })
+  async getAgentFarmersList(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AdminQueryAgentsDto,
+  ) {
+    return this.service.getAgentFarmersList(id, query);
+  }
+
+  @Get('agents/:id/applications')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List applications handled by an agent' })
+  async getAgentApplications(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AdminQueryLoanDto,
+  ) {
+    return this.service.getAgentApplications(id, query);
+  }
+
+  @Get('agents/:id/verification-tasks')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'List verification tasks for an agent' })
+  async getAgentVerificationTasks(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AdminQueryLoanDto,
+  ) {
+    return this.service.getAgentVerificationTasks(id, query);
+  }
+
+  @Get('agents/:id/performance')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get performance metrics for an agent' })
+  async getAgentPerformance(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getAgentPerformance(id);
+  }
+
   @Get('agents/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get agent profile with performance metrics' })

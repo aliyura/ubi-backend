@@ -46,6 +46,7 @@ async function bootstrap() {
       'http://localhost:3001',
       process.env.FRONTEND_URL,
     ],
+    allowedHeaders: '*',
     credentials: true,
   });
 

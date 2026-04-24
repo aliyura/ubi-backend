@@ -378,7 +378,16 @@ export class ApiProviderService {
   ) {
     let amountToUse = body.amount;
     if (bill_type === 'data') {
-      const operator = await this.reloadlyService.getOperator(body.operatorId);
+      const operator = await this.flutterwaveService.purchaseBill(
+        body.itemCode,
+        body.billerCode,
+        {
+          customer_id: '+234' + body.phone.substring(1),
+          country: 'NG',
+          amount: body.amount,
+          reference: trx_ref,
+        },
+      );
 
       const validAmounts = operator?.fixedAmounts || [];
       if (!validAmounts.length) {

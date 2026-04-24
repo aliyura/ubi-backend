@@ -112,7 +112,7 @@ export class FlutterwaveService {
       headers: this.getHeaders(),
     });
 
-    console.log('Flutterwave transfer request: ', response?.data.data);
+    console.log('Flutterwave transfer response: ', response?.data.data);
 
     if (response.status !== 200) {
       console.error(response?.data);
@@ -273,6 +273,7 @@ export class FlutterwaveService {
       `/v3/billers/${billerCode}/items/${itemCode}/payment`;
 
     let response: any;
+    console.log('Flutterwave purchase bill request: ', payload);
     try {
       response = await axios.post(url, payload, {
         headers: this.getHeaders(),
@@ -281,6 +282,8 @@ export class FlutterwaveService {
       console.log('error paying for bill', error);
       throw error;
     }
+
+    console.log('Flutterwave purchase bill response: ', response?.data?.data);
 
     if (response.status !== 200)
       throw new InternalServerErrorException('Failed to purchase bill');

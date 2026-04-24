@@ -48,6 +48,10 @@ async function bootstrap() {
       process.env.FRONTEND_URL,
     ],
     allowedHeaders: '*',
+    exposedHeaders: '*',
+    methods: '*',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
     credentials: true,
   });
 

@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from '../user/serializer/user.serializer';
 import { plainToInstance } from 'class-transformer';
-import { User } from '@prisma/client';
+import { USER_ROLE, User } from '@prisma/client';
 import { Helpers } from 'src/helpers';
 import * as NodeCache from 'node-cache';
 import { LoginDto } from './dto/LoginDto';
@@ -161,6 +161,17 @@ export class AuthService {
       where: { id: user.id },
       data: { tokenVersion: currentVersion },
     });
+
+    if (user.role === USER_ROLE.AGENT) {
+      this.prisma.agentActivityLog.create({
+        data: {
+          agentId: user.id,
+          action: 'LOGIN',
+          description: 'Agent logged in',
+        },
+      }).catch(() => {});
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,

@@ -1,4 +1,12 @@
-import { Body, Controller, HttpStatus, Logger, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpStatus,
+  Logger,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WebhookService } from './webhook.service';
 import { Request, Response } from 'express';
@@ -29,7 +37,10 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.logger.log(`Flutterwave webhook received — event: ${body?.event}, ref: ${body?.data?.id}`);
+    this.logger.log('Flutterwave webhook body:', body);
+    this.logger.log(
+      `Flutterwave webhook received — event: ${body?.event}, ref: ${body?.data?.id}`,
+    );
 
     const secretHash = this.configService.get<string>(
       'FLUTTERWAVE_SECRET_HASH',
@@ -61,7 +72,9 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.logger.log(`VFD webhook received — ref: ${body?.reference}, account: ${body?.account_number}`);
+    this.logger.log(
+      `VFD webhook received — ref: ${body?.reference}, account: ${body?.account_number}`,
+    );
 
     const secretHash = this.configService.get<string>('VFD_SECRET_HASH');
 
@@ -87,7 +100,9 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.logger.log(`SafeHaven webhook received — type: ${body?.type}, ref: ${body?.reference}`);
+    this.logger.log(
+      `SafeHaven webhook received — type: ${body?.type}, ref: ${body?.reference}`,
+    );
     await this.webhookService.resolveSafeHavenWebhook(body);
     return res.status(200).end();
   }
@@ -103,7 +118,9 @@ export class WebhookController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.logger.log(`BellMFB webhook received — event: ${body?.event}, ref: ${body?.reference}`);
+    this.logger.log(
+      `BellMFB webhook received — event: ${body?.event}, ref: ${body?.reference}`,
+    );
     await this.webhookService.resolveBellBankWebhook(body);
     return res.status(200).end();
   }

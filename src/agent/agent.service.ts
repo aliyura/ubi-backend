@@ -2,11 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
-import { SubmitVerificationDto } from './dto';
-import { LOAN_APPLICATION_STATUS, User } from '@prisma/client';
+import { AGENT_ACTION, GetActivityLogsDto, SubmitVerificationDto } from './dto';
+import { LOAN_APPLICATION_STATUS, Prisma, USER_ROLE, User } from '@prisma/client';
 
 @Injectable()
 export class AgentService {
@@ -78,6 +79,13 @@ export class AgentService {
           details: { agentName: agentUser?.fullname, recommendation: body.recommendation },
         },
       }),
+      this.buildActivityLog({
+        agentId: agent.id,
+        action: AGENT_ACTION.SUBMIT_FIELD_VERIFICATION,
+        description: 'Submitted field verification report',
+        metadata: { recommendation: body.recommendation, applicationId: id },
+        applicationId: id,
+      }),
     ]);
 
     return { status: true, message: 'Field verification submitted', data: null };
@@ -92,6 +100,62 @@ export class AgentService {
       include: { farm: true },
       orderBy: { updatedAt: 'asc' },
     });
+
+    this.prisma.agentActivityLog.create({
+      data: {
+        agentId: agent.id,
+        action: AGENT_ACTION.VIEW_ASSIGNED_APPLICATIONS,
+        description: 'Viewed assigned loan applications',
+        metadata: { resultCount: apps.length },
+      },
+    }).catch(() => {});
+
     return { status: true, message: 'Assigned applications retrieved', data: apps };
+  }
+
+  async getActivityLogs(query: GetActivityLogsDto, caller: User) {
+    const isAdmin = caller.role === USER_ROLE.ADMIN;
+    const targetAgentId = isAdmin ? query.agentId : caller.id;
+
+    if (isAdmin && !targetAgentId) {
+      throw new BadRequestException('agentId query param is required for admin access');
+    }
+
+    const where: Prisma.AgentActivityLogWhereInput = {
+      agentId: targetAgentId,
+      ...(query.from || query.to
+        ? {
+            createdAt: {
+              ...(query.from ? { gte: new Date(query.from) } : {}),
+              ...(query.to ? { lte: new Date(query.to) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const logs = await this.prisma.agentActivityLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return { status: true, message: 'Activity logs retrieved', data: logs };
+  }
+
+  private buildActivityLog(params: {
+    agentId: string;
+    action: string;
+    description: string;
+    metadata?: Record<string, unknown>;
+    applicationId?: string;
+  }) {
+    return this.prisma.agentActivityLog.create({
+      data: {
+        agentId: params.agentId,
+        action: params.action,
+        description: params.description,
+        metadata: params.metadata !== undefined ? (params.metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
+        applicationId: params.applicationId ?? null,
+      },
+    });
   }
 }

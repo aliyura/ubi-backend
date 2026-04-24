@@ -180,6 +180,7 @@ model User {
   agentInvitations  AgentInvitation[]
   loanApplications  LoanApplication[] @relation("UserLoanApplications")
   agentApplications LoanApplication[] @relation("AgentLoanApplications")
+  agentActivityLogs AgentActivityLog[]
 
   isBusinessRegistered Boolean @default(false)
 
@@ -692,6 +693,7 @@ model LoanApplication {
   repaymentPlan    RepaymentPlan?
   auditLogs        LoanAuditLog[]
   marketplaceOrders MarketplaceOrder[]
+  agentActivityLogs AgentActivityLog[]
 
   @@index([userId])
   @@index([status])
@@ -841,6 +843,24 @@ model LoanAuditLog {
 
   @@index([applicationId])
   @@map("loan_audit_log")
+}
+
+model AgentActivityLog {
+  id            String  @id @default(uuid()) @db.Uuid
+  agentId       String  @db.Uuid
+  action        String
+  description   String
+  metadata      Json?
+  applicationId String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  agent       User             @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  application LoanApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@index([agentId])
+  @@index([agentId, createdAt])
+  @@map("agent_activity_log")
 }
 
 model Fulfillment {

@@ -179,18 +179,49 @@ export class BillService {
   }
 
   async getDataPlan(phone: number, currency: string) {
-    const network = this.getNetworkProvider(String(phone));
-    const countryISOCode =
-      this.apiProvider.getCountryCodeFromCurrency(currency);
+    if (!phone || phone.toString().length !== 11)
+      throw new BadRequestException('Invalid phone number');
 
-    const dataPlan = await this.prisma.dataPlan.findMany({
-      where: { network, countryISOCode },
-    });
+    const network = this.getNetworkProvider(String(phone));
+    console.log('network', network);
+    if (!network) throw new NotFoundException('Enter a valid phone number');
+
+    const plans: {
+      id: number;
+      name: string;
+      logo: string | null;
+      description: string | null;
+      short_name: string | null;
+      biller_code: string;
+      country: string;
+    }[] = await this.apiProvider.getOperator('MOBILEDATA');
+
+    let plan: any;
+    if (network.toLowerCase() === 'etisalat') {
+      plan = plans.find(
+        (plan) =>
+          plan.name.toLowerCase().includes('9mobile') ||
+          plan.name.toLowerCase().includes('etisalat'),
+      );
+    } else {
+      plan = plans.find((plan) =>
+        plan.name.toLowerCase().includes(network.toLowerCase()),
+      );
+    }
+    if (!plan) throw new NotFoundException('Plan not found');
+
+    let res: any;
+    try {
+      res = await this.apiProvider.getBillInfo(plan.biller_code);
+    } catch (error) {
+      console.log('error getting variation amount', error);
+      throw error;
+    }
 
     return {
       message: 'Data plan retrieve successfully',
       statusCode: HttpStatus.OK,
-      data: { network, plan: dataPlan },
+      data: { network, plan: res },
     };
   }
 

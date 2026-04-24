@@ -26,4 +26,19 @@ export const agentResponse = {
     message: 'Field verification submitted',
     data: null,
   },
+  getActivityLogs: {
+    statusCode: 200,
+    message: 'Activity logs retrieved',
+    data: [
+      {
+        id: 'log-uuid-001',
+        agentId: 'agent-uuid-001',
+        action: 'SUBMIT_FIELD_VERIFICATION',
+        description: 'Submitted field verification report',
+        metadata: { recommendation: 'recommended', applicationId: 'app-uuid-002' },
+        applicationId: 'app-uuid-002',
+        createdAt: '2026-04-24T10:30:00.000Z',
+      },
+    ],
+  },
 } as const;

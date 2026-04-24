@@ -8,5 +8,6 @@ import { LoanApplicationModule } from 'src/loan-application/loan-application.mod
   imports: [PrismaModule, LoanApplicationModule],
   controllers: [AgentController],
   providers: [AgentService],
+  exports: [AgentService],
 })
 export class AgentModule {}

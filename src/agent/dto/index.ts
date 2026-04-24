@@ -6,10 +6,17 @@ import {
   IsString,
   IsDateString,
   IsArray,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AGENT_RECOMMENDATION_TYPE } from '@prisma/client';
+
+export const AGENT_ACTION = {
+  LOGIN:                      'LOGIN',
+  VIEW_ASSIGNED_APPLICATIONS: 'VIEW_ASSIGNED_APPLICATIONS',
+  SUBMIT_FIELD_VERIFICATION:  'SUBMIT_FIELD_VERIFICATION',
+} as const;
 
 export class SubmitVerificationDto {
   @ApiPropertyOptional()
@@ -46,4 +53,21 @@ export class SubmitVerificationDto {
   @IsOptional()
   @IsArray()
   photos?: string[];
+}
+
+export class GetActivityLogsDto {
+  @ApiPropertyOptional({ description: 'ISO date — start of range (inclusive)' })
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'ISO date — end of range (inclusive)' })
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @ApiPropertyOptional({ description: 'Admin only: filter by agent UUID' })
+  @IsOptional()
+  @IsUUID()
+  agentId?: string;
 }

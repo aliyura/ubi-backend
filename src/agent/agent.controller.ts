@@ -7,13 +7,14 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AgentService } from './agent.service';
-import { SubmitVerificationDto } from './dto';
+import { GetActivityLogsDto, SubmitVerificationDto } from './dto';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
@@ -44,5 +45,16 @@ export class AgentController {
     @Req() req: Request,
   ) {
     return this.service.submitVerification(id, body, (req as any).user);
+  }
+
+  @Get('activity-logs')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get agent activity logs for a time range (admin must supply ?agentId=)' })
+  @ApiResponse({ status: HttpStatus.OK, example: agentResponse.getActivityLogs })
+  async getActivityLogs(
+    @Query() query: GetActivityLogsDto,
+    @Req() req: Request,
+  ) {
+    return this.service.getActivityLogs(query, (req as any).user);
   }
 }

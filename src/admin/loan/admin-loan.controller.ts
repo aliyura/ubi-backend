@@ -14,6 +14,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AdminLoanService } from './admin-loan.service';
+import { AgentService } from 'src/agent/agent.service';
+import { GetActivityLogsDto } from 'src/agent/dto';
 import {
   AdminDecisionDto,
   AdminQueryAgentsDto,
@@ -31,7 +33,10 @@ import { adminLoanResponse } from './admin-loan.response';
 @UseGuards(RolesGuard)
 @Roles(USER_ROLE.ADMIN)
 export class AdminLoanController {
-  constructor(private readonly service: AdminLoanService) {}
+  constructor(
+    private readonly service: AdminLoanService,
+    private readonly agentService: AgentService,
+  ) {}
 
   @Get('overview')
   @HttpCode(HttpStatus.OK)
@@ -82,6 +87,17 @@ export class AdminLoanController {
   @ApiOperation({ summary: 'Get performance metrics for an agent' })
   async getAgentPerformance(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getAgentPerformance(id);
+  }
+
+  @Get('agents/:id/activity-log')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get activity log for an agent over a time range' })
+  async getAgentActivityLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GetActivityLogsDto,
+    @Req() req: Request,
+  ) {
+    return this.agentService.getActivityLogs({ ...query, agentId: id }, (req as any).user);
   }
 
   @Get('agents/:id')

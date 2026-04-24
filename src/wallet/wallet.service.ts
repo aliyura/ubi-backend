@@ -2033,7 +2033,7 @@ export class WalletService {
               accountName: maskedAccountName,
               accountNumber: maskedRAccountNumber,
               dateAndTime: formattedDate,
-              receipientName: transferData?.account_number,
+              receipientName: transferData?.full_name,
               narration: body.description || '',
               reference: transferData?.reference,
               availableBalance: new Intl.NumberFormat('en-US', {
@@ -2049,7 +2049,7 @@ export class WalletService {
             user.phoneNumber,
             getSMSAlertMessage(
               amount,
-              transferData?.account_number,
+              transferData?.full_name,
               fromWallet?.accountName,
               transferData?.reference,
               formattedDate,
@@ -2058,9 +2058,12 @@ export class WalletService {
               {
                 isCredit: false,
               },
-              maskedSAccountNumber,
+              fromWallet?.accountNumber,
               maskedRAccountNumber,
               res?.data?.bank_name,
+              '',
+              '',
+              // maskedRAccountNumber,
               // .toUpperCase(),
             ),
           );

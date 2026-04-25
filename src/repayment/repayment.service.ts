@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
 import { RecordRepaymentDto } from './dto';
@@ -20,7 +25,11 @@ export class RepaymentService {
       include: { repayments: { orderBy: { installmentNumber: 'asc' } } },
     });
     if (!plan) throw new NotFoundException('Repayment plan not found');
-    return { status: true, message: 'Repayment schedule retrieved', data: plan };
+    return {
+      status: true,
+      message: 'Repayment schedule retrieved',
+      data: plan,
+    };
   }
 
   async adminListRepayments(page = 1, limit = 20, overdueOnly = false) {
@@ -32,7 +41,12 @@ export class RepaymentService {
       this.prisma.repaymentPlan.findMany({
         where,
         include: {
-          application: { select: { applicationRef: true, userId: true } },
+          application: {
+            select: {
+              applicationRef: true,
+              user: { omit: { createdAt: true, updatedAt: true } },
+            },
+          },
           repayments: { orderBy: { dueDate: 'asc' } },
         },
         skip,
@@ -42,10 +56,17 @@ export class RepaymentService {
       this.prisma.repaymentPlan.count({ where }),
     ]);
 
+    const enriched = items.map((plan) => {
+      const overdueAmount = plan.repayments
+        .filter((r) => r.status === REPAYMENT_STATUS.overdue)
+        .reduce((sum, r) => Helpers.round2(sum + (r.amount - r.amountPaid)), 0);
+      return { ...plan, overdueAmount };
+    });
+
     return {
       status: true,
       message: 'Repayments retrieved',
-      data: items,
+      data: enriched,
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
@@ -72,18 +93,23 @@ export class RepaymentService {
 
     for (const installment of plan.repayments) {
       if (remaining <= 0) break;
-      const needed = Helpers.round2(installment.amount - installment.amountPaid);
+      const needed = Helpers.round2(
+        installment.amount - installment.amountPaid,
+      );
       const paying = Helpers.round2(Math.min(needed, remaining));
       remaining = Helpers.round2(remaining - paying);
       const newPaid = Helpers.round2(installment.amountPaid + paying);
       const newStatus =
-        newPaid >= installment.amount ? REPAYMENT_STATUS.completed : REPAYMENT_STATUS.partial;
+        newPaid >= installment.amount
+          ? REPAYMENT_STATUS.completed
+          : REPAYMENT_STATUS.partial;
       await this.prisma.repayment.update({
         where: { id: installment.id },
         data: {
           amountPaid: newPaid,
           status: newStatus,
-          paidAt: newStatus === REPAYMENT_STATUS.completed ? new Date() : undefined,
+          paidAt:
+            newStatus === REPAYMENT_STATUS.completed ? new Date() : undefined,
           reference: body.reference,
           note: body.note,
         },
@@ -91,7 +117,9 @@ export class RepaymentService {
     }
 
     const newAmountRepaid = Helpers.round2(plan.amountRepaid + body.amountPaid);
-    const newOutstanding = Helpers.round2(Math.max(0, plan.outstandingBalance - body.amountPaid));
+    const newOutstanding = Helpers.round2(
+      Math.max(0, plan.outstandingBalance - body.amountPaid),
+    );
     const isFullyPaid = newOutstanding <= 0;
 
     await this.prisma.repaymentPlan.update({
@@ -99,7 +127,9 @@ export class RepaymentService {
       data: {
         amountRepaid: newAmountRepaid,
         outstandingBalance: newOutstanding,
-        status: isFullyPaid ? REPAYMENT_STATUS.completed : REPAYMENT_STATUS.partial,
+        status: isFullyPaid
+          ? REPAYMENT_STATUS.completed
+          : REPAYMENT_STATUS.partial,
       },
     });
 
@@ -117,7 +147,10 @@ export class RepaymentService {
         },
       });
     } else {
-      const activeStatuses: LOAN_APPLICATION_STATUS[] = [LOAN_APPLICATION_STATUS.Active, LOAN_APPLICATION_STATUS.Overdue];
+      const activeStatuses: LOAN_APPLICATION_STATUS[] = [
+        LOAN_APPLICATION_STATUS.Active,
+        LOAN_APPLICATION_STATUS.Overdue,
+      ];
       if (activeStatuses.includes(plan.application.status)) {
         await this.prisma.loanApplication.update({
           where: { id: applicationId },
@@ -158,7 +191,12 @@ export class RepaymentService {
         plan: {
           include: {
             application: {
-              select: { id: true, userId: true, applicationRef: true, status: true },
+              select: {
+                id: true,
+                userId: true,
+                applicationRef: true,
+                status: true,
+              },
             },
           },
         },
@@ -200,7 +238,9 @@ export class RepaymentService {
       }
     }
 
-    this.logger.log(`Marked ${overdueInstallments.length} installments as overdue`);
+    this.logger.log(
+      `Marked ${overdueInstallments.length} installments as overdue`,
+    );
     return {
       status: true,
       message: `Processed ${overdueInstallments.length} overdue repayments`,

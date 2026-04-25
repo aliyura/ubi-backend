@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
@@ -39,8 +36,9 @@ export class FulfillmentService {
       LOAN_APPLICATION_STATUS.FulfillmentInProgress,
     );
 
-    const fulfillmentRef = body.fulfillmentRef
-      ?? `FUL-${new Date().getFullYear()}-${Helpers.getUniqueId().toUpperCase()}`;
+    const fulfillmentRef =
+      body.fulfillmentRef ??
+      `FUL-${new Date().getFullYear()}-${Helpers.getUniqueId().toUpperCase()}`;
 
     const fulfillment = await this.prisma.$transaction(async (tx) => {
       const f = await tx.fulfillment.create({
@@ -53,9 +51,7 @@ export class FulfillmentService {
           deliveryAddress: body.deliveryAddress,
           deliveryOfficer: body.deliveryOfficer,
           deliveryPhone: body.deliveryPhone,
-          items: body.items
-            ? { create: body.items }
-            : undefined,
+          items: body.items ? { create: body.items } : undefined,
         },
         include: { items: true },
       });
@@ -108,16 +104,20 @@ export class FulfillmentService {
     if (!fulfillment) throw new NotFoundException('Fulfillment not found');
 
     const app = fulfillment.application;
-    const newStatus = fulfillment.deliveryMethod === 'pickup'
-      ? LOAN_APPLICATION_STATUS.ReadyForPickup
-      : LOAN_APPLICATION_STATUS.OutForDelivery;
+    const newStatus =
+      fulfillment.deliveryMethod === 'pickup'
+        ? LOAN_APPLICATION_STATUS.ReadyForPickup
+        : LOAN_APPLICATION_STATUS.OutForDelivery;
 
     this.loanAppService.validateTransition(app.status, newStatus);
 
     await this.prisma.$transaction([
       this.prisma.fulfillment.update({
         where: { id: fulfillmentId },
-        data: { status: FULFILLMENT_STATUS.dispatched, dispatchedAt: new Date() },
+        data: {
+          status: FULFILLMENT_STATUS.dispatched,
+          dispatchedAt: new Date(),
+        },
       }),
       this.prisma.loanApplication.update({
         where: { id: app.id },
@@ -157,7 +157,11 @@ export class FulfillmentService {
     return { status: true, message: 'Dispatch recorded', data: null };
   }
 
-  async deliver(fulfillmentId: string, body: DeliverFulfillmentDto, admin: User) {
+  async deliver(
+    fulfillmentId: string,
+    body: DeliverFulfillmentDto,
+    admin: User,
+  ) {
     const fulfillment = await this.prisma.fulfillment.findUnique({
       where: { id: fulfillmentId },
       include: { application: true },
@@ -165,7 +169,10 @@ export class FulfillmentService {
     if (!fulfillment) throw new NotFoundException('Fulfillment not found');
 
     const app = fulfillment.application;
-    this.loanAppService.validateTransition(app.status, LOAN_APPLICATION_STATUS.Delivered);
+    this.loanAppService.validateTransition(
+      app.status,
+      LOAN_APPLICATION_STATUS.Delivered,
+    );
 
     await this.prisma.$transaction([
       this.prisma.fulfillment.update({
@@ -231,7 +238,11 @@ export class FulfillmentService {
     const skip = (Number(page) - 1) * Number(limit);
     const [items, total] = await Promise.all([
       this.prisma.fulfillment.findMany({
-        include: { application: true, supplier: true },
+        include: {
+          application: true,
+          supplier: true,
+          items: { omit: { createdAt: true } },
+        },
         skip,
         take: Number(limit),
         orderBy: { createdAt: 'desc' },

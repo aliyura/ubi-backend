@@ -744,7 +744,7 @@ export class BillService {
           billType: bill_type,
           billerNumber: (body as PayDto)?.phone,
           network: this.getNetworkProvider((body as PayDto)?.phone),
-          operatorId: '',
+          operatorId: (body as PayDto)?.operatorId,
         };
       } else if (
         bill_type === BILL_TYPE.cable ||

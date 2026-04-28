@@ -19,11 +19,11 @@ export class PayDto {
   @Min(0.01, { message: 'Amount must be greater than 0' })
   amount: number;
 
-  // @ApiProperty({ example: 123 })
-  // @IsNotEmpty()
-  // @IsNumber()
-  // @IsOptional()
-  // operatorId: number;
+  @ApiProperty({ example: 123 })
+  @IsNotEmpty()
+  @IsNumber()
+  @IsOptional()
+  operatorId: number;
 
   @ApiProperty({ example: '08012345678' })
   @IsNotEmpty()

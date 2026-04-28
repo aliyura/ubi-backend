@@ -27,6 +27,7 @@ import { LoanCartModule } from './loan-cart/loan-cart.module';
 import { LoanEligibilityModule } from './loan-eligibility/loan-eligibility.module';
 import { LoanApplicationModule } from './loan-application/loan-application.module';
 import { AdminLoanModule } from './admin/loan/admin-loan.module';
+import { AdminDashboardModule } from './admin/dashboard/admin-dashboard.module';
 import { AgentModule } from './agent/agent.module';
 import { FulfillmentModule } from './fulfillment/fulfillment.module';
 import { RepaymentModule } from './repayment/repayment.module';
@@ -90,6 +91,7 @@ import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.mo
     LoanEligibilityModule,
     LoanApplicationModule,
     AdminLoanModule,
+    AdminDashboardModule,
     AgentModule,
     FulfillmentModule,
     RepaymentModule,

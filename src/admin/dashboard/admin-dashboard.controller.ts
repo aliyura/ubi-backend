@@ -5,7 +5,7 @@ import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
 import { adminDashboardResponse } from './admin-dashboard.response';
-import { AccountRegistryQueryDto, DateRangeDto, PaginationDto } from './admin-dashboard.dto';
+import { AccountRegistryQueryDto, DateRangeDto, PaginationDto, TransactionsHistoryQueryDto } from './admin-dashboard.dto';
 
 @ApiTags('Admin - Dashboard')
 @Controller('v1/admin/dashboard')
@@ -70,6 +70,14 @@ export class AdminDashboardController {
     return this.service.getRecentActiveUsers(query);
   }
 
+  @Get('loan-overview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Loan overview: total applications, pending verifications, approved loans sum, overdue loans sum' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminDashboardResponse.loanOverview })
+  async loanOverview() {
+    return this.service.getLoanOverview();
+  }
+
   @Get('accounts-overview')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Wallet accounts overview: total accounts, active accounts, total deposit volume' })
@@ -84,5 +92,21 @@ export class AdminDashboardController {
   @ApiResponse({ status: HttpStatus.OK, example: adminDashboardResponse.accountRegistry })
   async accountRegistry(@Query() query: AccountRegistryQueryDto) {
     return this.service.getAccountRegistry(query);
+  }
+
+  @Get('transactions-overview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Transactions overview: total volume, count, success %, failure % for the given date range' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminDashboardResponse.transactionsOverview })
+  async transactionsOverview(@Query() query: DateRangeDto) {
+    return this.service.getTransactionsOverview(query);
+  }
+
+  @Get('transactions-history')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Paginated transaction history filtered by reference, type, or category' })
+  @ApiResponse({ status: HttpStatus.OK, example: adminDashboardResponse.transactionsHistory })
+  async transactionsHistory(@Query() query: TransactionsHistoryQueryDto) {
+    return this.service.getTransactionsHistory(query);
   }
 }

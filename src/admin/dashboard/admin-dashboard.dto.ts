@@ -1,5 +1,6 @@
-import { IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { TRANSACTION_CATEGORY, TRANSACTION_TYPE } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 export class DateRangeDto {
@@ -44,4 +45,32 @@ export class AccountRegistryQueryDto extends PaginationDto {
     example: '0123456789',
   })
   search?: string;
+}
+
+export class TransactionsHistoryQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Filter by transaction reference',
+    example: 'TXN-20260428-001',
+  })
+  reference?: string;
+
+  @IsOptional()
+  @IsEnum(TRANSACTION_TYPE)
+  @ApiPropertyOptional({
+    enum: TRANSACTION_TYPE,
+    description: 'Filter by transaction type',
+    example: TRANSACTION_TYPE.DEBIT,
+  })
+  type?: TRANSACTION_TYPE;
+
+  @IsOptional()
+  @IsEnum(TRANSACTION_CATEGORY)
+  @ApiPropertyOptional({
+    enum: TRANSACTION_CATEGORY,
+    description: 'Filter by transaction category',
+    example: TRANSACTION_CATEGORY.TRANSFER,
+  })
+  category?: TRANSACTION_CATEGORY;
 }

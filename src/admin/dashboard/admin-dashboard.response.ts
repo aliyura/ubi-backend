@@ -111,6 +111,16 @@ export const adminDashboardResponse = {
       totalDepositVolume: 182500000,
     },
   },
+  loanOverview: {
+    status: true,
+    message: 'Loan overview retrieved',
+    data: {
+      totalApplications: 520,
+      pendingVerifications: 34,
+      totalApprovedLoansSum: 64800000,
+      totalOverdueLoansSum: 8250000,
+    },
+  },
   accountRegistry: {
     status: true,
     message: 'Account registry retrieved',
@@ -130,6 +140,40 @@ export const adminDashboardResponse = {
         },
       ],
       total: 3200,
+      page: 1,
+      limit: 20,
+    },
+  },
+  transactionsOverview: {
+    status: true,
+    message: 'Transactions overview retrieved',
+    data: {
+      totalVolume: 94500000,
+      totalTransactionCount: 3840,
+      successPercentage: 91,
+      failurePercentage: 6,
+    },
+  },
+  transactionsHistory: {
+    status: true,
+    message: 'Transactions history retrieved',
+    data: {
+      transactions: [
+        {
+          status: 'success',
+          reference: 'TXN-20260428-001',
+          type: 'DEBIT',
+          category: 'TRANSFER',
+          description: 'Transfer to Chidi Nwosu',
+          amount: 15000,
+          timestamp: '2026-04-28T10:23:00.000Z',
+          customer: {
+            fullname: 'Amara Okafor',
+            accountNumber: '0123456789',
+          },
+        },
+      ],
+      total: 3840,
       page: 1,
       limit: 20,
     },

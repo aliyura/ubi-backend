@@ -4,10 +4,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import {
   LOAN_APPLICATION_STATUS,
   LOAN_DECISION_TYPE,
+  REPAYMENT_STATUS,
+  TRANSACTION_STATUS,
   USER_ACCOUNT_STATUS,
   USER_ROLE,
 } from '@prisma/client';
-import { AccountRegistryQueryDto, DateRangeDto, PaginationDto } from './admin-dashboard.dto';
+import { AccountRegistryQueryDto, DateRangeDto, PaginationDto, TransactionsHistoryQueryDto } from './admin-dashboard.dto';
 
 const MONTH_NAMES = [
   'January',
@@ -402,6 +404,138 @@ export class AdminDashboardService {
         page,
         limit,
       },
+    };
+  }
+
+  async getLoanOverview() {
+    const [
+      totalApplications,
+      pendingVerifications,
+      approvedLoansAgg,
+      overdueLoansAgg,
+    ] = await Promise.all([
+      this.prisma.loanApplication.count(),
+      this.prisma.loanApplication.count({
+        where: { status: LOAN_APPLICATION_STATUS.PendingFieldVerification },
+      }),
+      this.prisma.loanDecision.aggregate({
+        _sum: { approvedTotalValue: true },
+        where: { decision: LOAN_DECISION_TYPE.approved },
+      }),
+      this.prisma.repaymentPlan.aggregate({
+        _sum: { outstandingBalance: true },
+        where: { status: REPAYMENT_STATUS.overdue },
+      }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Loan overview retrieved',
+      data: {
+        totalApplications,
+        pendingVerifications,
+        totalApprovedLoansSum: approvedLoansAgg._sum.approvedTotalValue ?? 0,
+        totalOverdueLoansSum: overdueLoansAgg._sum.outstandingBalance ?? 0,
+      },
+    };
+  }
+
+  async getTransactionsOverview(query: DateRangeDto) {
+    const { from, to } = this.parseDateRange(query);
+
+    const fromFilter = from ? Prisma.sql`AND t."createdAt" >= ${from}` : Prisma.empty;
+    const toFilter = to ? Prisma.sql`AND t."createdAt" <= ${to}` : Prisma.empty;
+    const dateFilter = this.buildDateFilter(from, to);
+
+    const [total, successCount, failedCount, volumeResult] = await Promise.all([
+      this.prisma.transaction.count({
+        where: dateFilter ? { createdAt: dateFilter } : {},
+      }),
+      this.prisma.transaction.count({
+        where: {
+          status: TRANSACTION_STATUS.success,
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.transaction.count({
+        where: {
+          status: TRANSACTION_STATUS.failed,
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.$queryRaw<[{ volume: number }]>`
+        SELECT COALESCE(SUM(ABS(t."currentBalance" - t."previousBalance")), 0) AS volume
+        FROM transaction t
+        WHERE t.status = 'success'
+        ${fromFilter}
+        ${toFilter}
+      `,
+    ]);
+
+    return {
+      status: true,
+      message: 'Transactions overview retrieved',
+      data: {
+        totalVolume: Number(volumeResult[0].volume),
+        totalTransactionCount: total,
+        successPercentage: total > 0 ? Math.round((successCount / total) * 100) : 0,
+        failurePercentage: total > 0 ? Math.round((failedCount / total) * 100) : 0,
+      },
+    };
+  }
+
+  async getTransactionsHistory(query: TransactionsHistoryQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+
+    const where: Prisma.TransactionWhereInput = {};
+
+    if (query.reference) {
+      where.OR = [
+        { reference: { contains: query.reference, mode: 'insensitive' } },
+        { transactionRef: { contains: query.reference, mode: 'insensitive' } },
+      ];
+    }
+    if (query.type) where.type = query.type;
+    if (query.category) where.category = query.category;
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        include: {
+          wallet: {
+            select: {
+              accountNumber: true,
+              user: { select: { fullname: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    const data = transactions.map((t) => ({
+      status: t.status,
+      reference: t.reference ?? t.transactionRef,
+      type: t.type,
+      category: t.category,
+      description: t.description,
+      amount: Math.abs(t.currentBalance - t.previousBalance),
+      timestamp: t.createdAt,
+      customer: {
+        fullname: t.wallet.user.fullname,
+        accountNumber: t.wallet.accountNumber,
+      },
+    }));
+
+    return {
+      status: true,
+      message: 'Transactions history retrieved',
+      data: { transactions: data, total, page, limit },
     };
   }
 

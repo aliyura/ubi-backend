@@ -5,11 +5,12 @@ import {
   LOAN_APPLICATION_STATUS,
   LOAN_DECISION_TYPE,
   REPAYMENT_STATUS,
+  SCAM_TICKET_STATUS,
   TRANSACTION_STATUS,
   USER_ACCOUNT_STATUS,
   USER_ROLE,
 } from '@prisma/client';
-import { AccountRegistryQueryDto, DateRangeDto, PaginationDto, TransactionsHistoryQueryDto } from './admin-dashboard.dto';
+import { AccountRegistryQueryDto, ActiveWalletsQueryDto, DateRangeDto, DisputesPipelineQueryDto, KycActivePipelineQueryDto, PaginationDto, TransactionsHistoryQueryDto, TransferPipelineQueryDto } from './admin-dashboard.dto';
 
 const MONTH_NAMES = [
   'January',
@@ -49,7 +50,7 @@ export class AdminDashboardService {
     const { from, to } = this.parseDateRange(query);
     const dateFilter = this.buildDateFilter(from, to);
 
-    const [activeFarmers, activeAgents, loanVolume, pendingVerifications] =
+    const [activeFarmers, activeAgents, loanVolume, pendingVerifications, walletBalancesResult] =
       await Promise.all([
         this.prisma.user.count({
           where: {
@@ -77,6 +78,9 @@ export class AdminDashboardService {
             ...(dateFilter && { createdAt: dateFilter }),
           },
         }),
+        this.prisma.$queryRaw<[{ total: number }]>`
+          SELECT COALESCE(SUM(w.balance), 0) AS total FROM wallet w
+        `,
       ]);
 
     return {
@@ -87,6 +91,7 @@ export class AdminDashboardService {
         activeAgents,
         loanVolume: loanVolume._sum.totalEstimatedValue ?? 0,
         pendingVerifications,
+        walletBalances: Number(walletBalancesResult[0].total),
       },
     };
   }
@@ -536,6 +541,435 @@ export class AdminDashboardService {
       status: true,
       message: 'Transactions history retrieved',
       data: { transactions: data, total, page, limit },
+    };
+  }
+
+  async getWalletOverview() {
+    const [systemBalanceResult, activeWalletCount, settlementResult, totalTxCount, failedTxCount] =
+      await Promise.all([
+        this.prisma.$queryRaw<[{ total: number }]>`
+          SELECT COALESCE(SUM(w.balance), 0) AS total FROM wallet w
+        `,
+        this.prisma.wallet.count({
+          where: { user: { status: USER_ACCOUNT_STATUS.active } },
+        }),
+        this.prisma.$queryRaw<[{ total: number }]>`
+          SELECT COALESCE(SUM("settlementAmount"), 0) AS total FROM "paymentEvent"
+        `,
+        this.prisma.transaction.count(),
+        this.prisma.transaction.count({ where: { status: TRANSACTION_STATUS.failed } }),
+      ]);
+
+    return {
+      status: true,
+      message: 'Wallet overview retrieved',
+      data: {
+        systemBalance: Number(systemBalanceResult[0].total),
+        activeWalletCount,
+        totalSettlementValue: Number(settlementResult[0].total),
+        failureRate: totalTxCount > 0 ? Math.round((failedTxCount / totalTxCount) * 100) : 0,
+      },
+    };
+  }
+
+  async getActiveWallets(query: ActiveWalletsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+    const search = query.search?.trim() ?? '';
+
+    type ActiveWalletRow = {
+      accountHolder: string;
+      accountNumber: string;
+      availableBalance: number;
+      assetType: string;
+      isTwoFaEnabled: boolean;
+    };
+
+    const searchFilter = search
+      ? Prisma.sql`AND (
+          w."accountNumber" ILIKE ${`%${search}%`}
+          OR u.fullname ILIKE ${`%${search}%`}
+          OR u.id::text = ${search}
+        )`
+      : Prisma.empty;
+
+    const [rows, countResult] = await Promise.all([
+      this.prisma.$queryRaw<ActiveWalletRow[]>`
+        SELECT
+          u.fullname           AS "accountHolder",
+          w."accountNumber",
+          w.balance            AS "availableBalance",
+          w.currency           AS "assetType",
+          u."enabledTwoFa"     AS "isTwoFaEnabled"
+        FROM wallet w
+        JOIN users u ON u.id = w."userId"
+        WHERE u.status = 'active'
+          ${searchFilter}
+        ORDER BY w."createdAt" DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM wallet w
+        JOIN users u ON u.id = w."userId"
+        WHERE u.status = 'active'
+          ${searchFilter}
+      `,
+    ]);
+
+    const wallets = rows.map((row) => ({
+      accountHolder: row.accountHolder,
+      accountNumber: row.accountNumber,
+      availableBalance: row.availableBalance,
+      assetType: row.assetType,
+      security: { twoFaEnabled: row.isTwoFaEnabled },
+    }));
+
+    return {
+      status: true,
+      message: 'Active wallets retrieved',
+      data: {
+        wallets,
+        total: Number(countResult[0].count),
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getTransfersOverview() {
+    const [totalCount, successCount, pendingCount, failedCount, volumeResult] =
+      await Promise.all([
+        this.prisma.transaction.count({
+          where: { category: 'TRANSFER' },
+        }),
+        this.prisma.transaction.count({
+          where: { category: 'TRANSFER', status: TRANSACTION_STATUS.success },
+        }),
+        this.prisma.transaction.count({
+          where: { category: 'TRANSFER', status: TRANSACTION_STATUS.pending },
+        }),
+        this.prisma.transaction.count({
+          where: { category: 'TRANSFER', status: TRANSACTION_STATUS.failed },
+        }),
+        this.prisma.$queryRaw<[{ volume: number }]>`
+          SELECT COALESCE(SUM(("transferDetails"->>'amount')::numeric), 0) AS volume
+          FROM transaction
+          WHERE category = 'TRANSFER' AND status = 'success'
+        `,
+      ]);
+
+    return {
+      status: true,
+      message: 'Transfers overview retrieved',
+      data: {
+        transferVolume: Number(volumeResult[0].volume),
+        activeVelocityCount: pendingCount,
+        successRatePercentage: totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0,
+        failedTaskCount: failedCount,
+      },
+    };
+  }
+
+  async getTransferPipeline(query: TransferPipelineQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+
+    const dateFilter = query.date
+      ? Prisma.sql`AND t."createdAt" >= ${new Date(`${query.date}T00:00:00.000Z`)}
+                  AND t."createdAt" <  ${new Date(`${query.date}T23:59:59.999Z`)}`
+      : Prisma.empty;
+
+    type TransferRow = {
+      status: string;
+      originator: string | null;
+      operationType: string;
+      value: number;
+      settlementDate: Date;
+    };
+
+    const [rows, countResult] = await Promise.all([
+      this.prisma.$queryRaw<TransferRow[]>`
+        SELECT
+          t.status,
+          (t."transferDetails"->>'senderName')  AS originator,
+          t.type                                AS "operationType",
+          COALESCE((t."transferDetails"->>'amount')::numeric,
+                   ABS(t."currentBalance" - t."previousBalance")) AS value,
+          t."createdAt"                         AS "settlementDate"
+        FROM transaction t
+        WHERE t.category = 'TRANSFER'
+          ${dateFilter}
+        ORDER BY t."createdAt" DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM transaction t
+        WHERE t.category = 'TRANSFER'
+          ${dateFilter}
+      `,
+    ]);
+
+    return {
+      status: true,
+      message: 'Transfer pipeline retrieved',
+      data: {
+        transfers: rows,
+        total: Number(countResult[0].count),
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getBillPaymentsOverview() {
+    const [totalCount, successCount, settlementResult] = await Promise.all([
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND status = 'success'
+      `,
+      this.prisma.$queryRaw<[{ total: number }]>`
+        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS total
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND status = 'success'
+      `,
+    ]);
+
+    const total = Number(totalCount[0].count);
+    const success = Number(successCount[0].count);
+
+    return {
+      status: true,
+      message: 'Bill payments overview retrieved',
+      data: {
+        totalSettlementsSum: Number(settlementResult[0].total),
+        totalTransactionCount: total,
+        reliabilityPercentage: total > 0 ? Math.round((success / total) * 100) : 0,
+      },
+    };
+  }
+
+  async getBillPaymentsAirtimeOverview() {
+    const [airtimeVolume, dataVolume, avgResult, totalCount, successCount] = await Promise.all([
+      this.prisma.$queryRaw<[{ volume: number }]>`
+        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS volume
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') = 'airtime'
+          AND status = 'success'
+      `,
+      this.prisma.$queryRaw<[{ volume: number }]>`
+        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS volume
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') = 'data'
+          AND status = 'success'
+      `,
+      this.prisma.$queryRaw<[{ avg: number }]>`
+        SELECT COALESCE(AVG((billDetails->>'amountPaid')::numeric), 0) AS avg
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND status = 'success'
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM transaction
+        WHERE category = 'BILL_PAYMENT'
+          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND status = 'success'
+      `,
+    ]);
+
+    const total = Number(totalCount[0].count);
+    const success = Number(successCount[0].count);
+
+    return {
+      status: true,
+      message: 'Bill payments airtime overview retrieved',
+      data: {
+        airtimeVolume: Number(airtimeVolume[0].volume),
+        dataVolume: Number(dataVolume[0].volume),
+        averageTransactionAmount: Math.round(Number(avgResult[0].avg) * 100) / 100,
+        uptimePercentage: total > 0 ? Math.round((success / total) * 100) : 0,
+      },
+    };
+  }
+
+  async getKycOverview() {
+    const verifiedTiers = await this.prisma.tier.findMany({
+      where: { kycLevel: { gt: 1 } },
+      select: { level: true },
+    });
+    const verifiedTierLevels = verifiedTiers.map((t) => t.level);
+
+    const [totalCustomers, totalVerifiedCustomers, totalKycPending, totalActiveCustomers] =
+      await Promise.all([
+        this.prisma.user.count({ where: { role: USER_ROLE.USER } }),
+        verifiedTierLevels.length > 0
+          ? this.prisma.user.count({
+              where: { role: USER_ROLE.USER, tierLevel: { in: verifiedTierLevels } },
+            })
+          : Promise.resolve(0),
+        this.prisma.user.count({
+          where: { role: USER_ROLE.USER, bvn: { not: null }, isBvnVerified: false },
+        }),
+        this.prisma.user.count({
+          where: { role: USER_ROLE.USER, status: USER_ACCOUNT_STATUS.active },
+        }),
+      ]);
+
+    return {
+      status: true,
+      message: 'KYC overview retrieved',
+      data: { totalCustomers, totalVerifiedCustomers, totalKycPending, totalActiveCustomers },
+    };
+  }
+
+  async getKycActivePipeline(query: KycActivePipelineQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+    const search = query.search?.trim() ?? '';
+
+    type KycPipelineRow = {
+      securityLevel: number | null;
+      identityHolder: string;
+      governmentId: string | null;
+      complianceStatus: string;
+    };
+
+    const searchFilter = search
+      ? Prisma.sql`AND (
+          u.fullname ILIKE ${`%${search}%`}
+          OR u.bvn = ${search}
+          OR u.email ILIKE ${`%${search}%`}
+        )`
+      : Prisma.empty;
+
+    const [rows, countResult] = await Promise.all([
+      this.prisma.$queryRaw<KycPipelineRow[]>`
+        SELECT
+          t."kycLevel"    AS "securityLevel",
+          u.fullname      AS "identityHolder",
+          u.bvn           AS "governmentId",
+          u."tierLevel"   AS "complianceStatus"
+        FROM users u
+        LEFT JOIN tier t ON t.level = u."tierLevel"
+        WHERE u.role = 'USER'
+          ${searchFilter}
+        ORDER BY u."createdAt" DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM users u
+        WHERE u.role = 'USER'
+          ${searchFilter}
+      `,
+    ]);
+
+    return {
+      status: true,
+      message: 'KYC active pipeline retrieved',
+      data: {
+        pipeline: rows,
+        total: Number(countResult[0].count),
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getDisputesOverview() {
+    const [totalTickets, openTickets, closedTickets] = await Promise.all([
+      this.prisma.scamTicket.count(),
+      this.prisma.scamTicket.count({ where: { status: SCAM_TICKET_STATUS.opened } }),
+      this.prisma.scamTicket.count({ where: { status: SCAM_TICKET_STATUS.closed } }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Disputes overview retrieved',
+      data: {
+        totalTickets,
+        openTickets,
+        closedTickets,
+        successRatePercentage: totalTickets > 0 ? Math.round((closedTickets / totalTickets) * 100) : 0,
+      },
+    };
+  }
+
+  async getDisputesPipeline(query: DisputesPipelineQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+    const search = query.search?.trim() ?? '';
+
+    const searchFilter = search
+      ? Prisma.sql`AND (
+          st.title ILIKE ${`%${search}%`}
+          OR st.ref_number::text ILIKE ${`%${search}%`}
+        )`
+      : Prisma.empty;
+
+    type DisputeRow = {
+      status: string;
+      identifier: string;
+      subject: string;
+      lastActivity: Date;
+    };
+
+    const [rows, countResult] = await Promise.all([
+      this.prisma.$queryRaw<DisputeRow[]>`
+        SELECT
+          st.status,
+          'SCM-' || LPAD(st.ref_number::text, 4, '0') AS identifier,
+          st.title                                      AS subject,
+          st."updatedAt"                                AS "lastActivity"
+        FROM "scamTicket" st
+        WHERE TRUE
+          ${searchFilter}
+        ORDER BY st."updatedAt" DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM "scamTicket" st
+        WHERE TRUE
+          ${searchFilter}
+      `,
+    ]);
+
+    return {
+      status: true,
+      message: 'Disputes pipeline retrieved',
+      data: {
+        disputes: rows,
+        total: Number(countResult[0].count),
+        page,
+        limit,
+      },
     };
   }
 

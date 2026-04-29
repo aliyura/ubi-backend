@@ -74,3 +74,43 @@ export class TransactionsHistoryQueryDto extends PaginationDto {
   })
   category?: TRANSACTION_CATEGORY;
 }
+
+export class ActiveWalletsQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Search by account number, customer name, or user ID',
+    example: '0123456789',
+  })
+  search?: string;
+}
+
+export class TransferPipelineQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({
+    example: '2026-04-29',
+    description: 'Filter transfers by date (YYYY-MM-DD)',
+  })
+  date?: string;
+}
+
+export class KycActivePipelineQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Search by customer name, BVN, or email',
+    example: 'Amara',
+  })
+  search?: string;
+}
+
+export class DisputesPipelineQueryDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Search by ref number or ticket title',
+    example: 'SCM-001',
+  })
+  search?: string;
+}

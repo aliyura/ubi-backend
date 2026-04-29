@@ -7,6 +7,7 @@ export const adminDashboardResponse = {
       activeAgents: 18,
       loanVolume: 48500000,
       pendingVerifications: 14,
+      walletBalances: 274500000,
     },
   },
   monthlyOnboarding: {
@@ -174,6 +175,135 @@ export const adminDashboardResponse = {
         },
       ],
       total: 3840,
+      page: 1,
+      limit: 20,
+    },
+  },
+  walletOverview: {
+    status: true,
+    message: 'Wallet overview retrieved',
+    data: {
+      systemBalance: 274500000,
+      activeWalletCount: 2750,
+      totalSettlementValue: 198000000,
+      failureRate: 6,
+    },
+  },
+  activeWallets: {
+    status: true,
+    message: 'Active wallets retrieved',
+    data: {
+      wallets: [
+        {
+          accountHolder: 'Amara Okafor',
+          accountNumber: '0123456789',
+          availableBalance: 45000,
+          assetType: 'NGN',
+          security: { twoFaEnabled: true },
+        },
+      ],
+      total: 2750,
+      page: 1,
+      limit: 20,
+    },
+  },
+  transfersOverview: {
+    status: true,
+    message: 'Transfers overview retrieved',
+    data: {
+      transferVolume: 74200000,
+      activeVelocityCount: 43,
+      successRatePercentage: 94,
+      failedTaskCount: 18,
+    },
+  },
+  billPaymentsOverview: {
+    status: true,
+    message: 'Bill payments overview retrieved',
+    data: {
+      totalSettlementsSum: 18750000,
+      totalTransactionCount: 4320,
+      reliabilityPercentage: 97,
+    },
+  },
+  billPaymentsAirtimeOverview: {
+    status: true,
+    message: 'Bill payments airtime overview retrieved',
+    data: {
+      airtimeVolume: 11200000,
+      dataVolume: 7550000,
+      averageTransactionAmount: 4340.28,
+      uptimePercentage: 97,
+    },
+  },
+  transferPipeline: {
+    status: true,
+    message: 'Transfer pipeline retrieved',
+    data: {
+      transfers: [
+        {
+          status: 'success',
+          originator: 'Amara Okafor',
+          operationType: 'DEBIT',
+          value: 25000,
+          settlementDate: '2026-04-29T09:15:00.000Z',
+        },
+      ],
+      total: 128,
+      page: 1,
+      limit: 20,
+    },
+  },
+  kycOverview: {
+    status: true,
+    message: 'KYC overview retrieved',
+    data: {
+      totalCustomers: 1240,
+      totalVerifiedCustomers: 934,
+      totalKycPending: 87,
+      totalActiveCustomers: 1180,
+    },
+  },
+  kycActivePipeline: {
+    status: true,
+    message: 'KYC active pipeline retrieved',
+    data: {
+      pipeline: [
+        {
+          securityLevel: 2,
+          identityHolder: 'Amara Okafor',
+          governmentId: '22345678901',
+          complianceStatus: 'two',
+        },
+      ],
+      total: 934,
+      page: 1,
+      limit: 20,
+    },
+  },
+  disputesOverview: {
+    status: true,
+    message: 'Disputes overview retrieved',
+    data: {
+      totalTickets: 142,
+      openTickets: 38,
+      closedTickets: 104,
+      successRatePercentage: 73,
+    },
+  },
+  disputesPipeline: {
+    status: true,
+    message: 'Disputes pipeline retrieved',
+    data: {
+      disputes: [
+        {
+          status: 'opened',
+          identifier: 'SCM-0012',
+          subject: 'Unauthorized transfer from my account',
+          lastActivity: '2026-04-28T14:32:00.000Z',
+        },
+      ],
+      total: 142,
       page: 1,
       limit: 20,
     },

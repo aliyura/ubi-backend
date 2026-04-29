@@ -60,7 +60,39 @@ export class MarketplaceOrderAdminService {
       },
     });
     if (!order) throw new NotFoundException('Order not found');
-    return { status: true, message: 'Order retrieved', data: order };
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: order.userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        phoneNumber: true,
+        fullname: true,
+        gender: true,
+        country: true,
+        role: true,
+        accountType: true,
+        currency: true,
+        businessName: true,
+        isBusiness: true,
+        companyRegistrationNumber: true,
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isBvnVerified: true,
+        isNinVerified: true,
+        isAddressVerified: true,
+        isPasscodeSet: true,
+        isWalletPinSet: true,
+        address: true,
+        state: true,
+        city: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return { status: true, message: 'Order retrieved', data: { ...order, user } };
   }
 
   async confirmOrder(orderId: string, body: AdminConfirmOrderDto, admin: User) {

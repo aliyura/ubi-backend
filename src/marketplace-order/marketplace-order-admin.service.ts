@@ -14,6 +14,34 @@ import {
 } from './dto';
 import { MARKETPLACE_ORDER_STATUS, User } from '@prisma/client';
 
+const USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  phoneNumber: true,
+  fullname: true,
+  gender: true,
+  country: true,
+  role: true,
+  accountType: true,
+  currency: true,
+  businessName: true,
+  isBusiness: true,
+  companyRegistrationNumber: true,
+  isPhoneVerified: true,
+  isEmailVerified: true,
+  isBvnVerified: true,
+  isNinVerified: true,
+  isAddressVerified: true,
+  isPasscodeSet: true,
+  isWalletPinSet: true,
+  address: true,
+  state: true,
+  city: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 @Injectable()
 export class MarketplaceOrderAdminService {
   constructor(
@@ -42,10 +70,17 @@ export class MarketplaceOrderAdminService {
       this.prisma.marketplaceOrder.count({ where }),
     ]);
 
+    const userIds = [...new Set(items.map((o) => o.userId))];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: USER_SELECT,
+    });
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+
     return {
       status: true,
       message: 'Orders retrieved',
-      data: items,
+      data: items.map((item) => ({ ...item, user: userMap[item.userId] ?? null })),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
@@ -63,33 +98,7 @@ export class MarketplaceOrderAdminService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: order.userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        phoneNumber: true,
-        fullname: true,
-        gender: true,
-        country: true,
-        role: true,
-        accountType: true,
-        currency: true,
-        businessName: true,
-        isBusiness: true,
-        companyRegistrationNumber: true,
-        isPhoneVerified: true,
-        isEmailVerified: true,
-        isBvnVerified: true,
-        isNinVerified: true,
-        isAddressVerified: true,
-        isPasscodeSet: true,
-        isWalletPinSet: true,
-        address: true,
-        state: true,
-        city: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: USER_SELECT,
     });
 
     return { status: true, message: 'Order retrieved', data: { ...order, user } };

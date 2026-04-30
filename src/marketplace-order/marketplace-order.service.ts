@@ -10,6 +10,34 @@ import { PlaceMarketplaceOrderDto, QueryMarketplaceOrderDto } from './dto';
 import { LOAN_APPLICATION_STATUS, MARKETPLACE_ORDER_STATUS, User } from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
+const USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  phoneNumber: true,
+  fullname: true,
+  gender: true,
+  country: true,
+  role: true,
+  accountType: true,
+  currency: true,
+  businessName: true,
+  isBusiness: true,
+  companyRegistrationNumber: true,
+  isPhoneVerified: true,
+  isEmailVerified: true,
+  isBvnVerified: true,
+  isNinVerified: true,
+  isAddressVerified: true,
+  isPasscodeSet: true,
+  isWalletPinSet: true,
+  address: true,
+  state: true,
+  city: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 @Injectable()
 export class MarketplaceOrderService {
   constructor(
@@ -168,10 +196,16 @@ export class MarketplaceOrderService {
       { isolationLevel: 'Serializable' },
     );
 
-    const farmer = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      select: { phoneNumber: true },
-    });
+    const [farmer, userInfo] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { phoneNumber: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: USER_SELECT,
+      }),
+    ]);
     if (farmer) {
       await this.notifications.notifyMarketplaceOrderStatus(
         farmer.phoneNumber,
@@ -183,7 +217,7 @@ export class MarketplaceOrderService {
     return {
       status: true,
       message: 'Marketplace order placed successfully',
-      data: order.created,
+      data: { ...order.created, user: userInfo },
     };
   }
 
@@ -202,43 +236,44 @@ export class MarketplaceOrderService {
     const limit = Number(query.limit ?? 20);
     const skip = (page - 1) * limit;
 
-    const [items, total] = await Promise.all([
+    const orderWhere = {
+      applicationId,
+      ...(query.status ? { status: query.status } : {}),
+    };
+
+    const [items, total, userInfo] = await Promise.all([
       this.prisma.marketplaceOrder.findMany({
-        where: {
-          applicationId,
-          ...(query.status ? { status: query.status } : {}),
-        },
+        where: orderWhere,
         include: { items: true, supplier: true },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.marketplaceOrder.count({
-        where: {
-          applicationId,
-          ...(query.status ? { status: query.status } : {}),
-        },
-      }),
+      this.prisma.marketplaceOrder.count({ where: orderWhere }),
+      this.prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT }),
     ]);
 
     return {
       status: true,
       message: 'Orders retrieved',
-      data: items,
+      data: items.map((item) => ({ ...item, user: userInfo })),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
 
   async getMyOrder(applicationId: string, orderId: string, user: User) {
-    const order = await this.prisma.marketplaceOrder.findUnique({
-      where: { id: orderId },
-      include: { items: { include: { resource: true } }, supplier: true },
-    });
+    const [order, userInfo] = await Promise.all([
+      this.prisma.marketplaceOrder.findUnique({
+        where: { id: orderId },
+        include: { items: { include: { resource: true } }, supplier: true },
+      }),
+      this.prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT }),
+    ]);
     if (!order || order.applicationId !== applicationId)
       throw new NotFoundException('Order not found');
     if (order.userId !== user.id) throw new ForbiddenException();
 
-    return { status: true, message: 'Order retrieved', data: order };
+    return { status: true, message: 'Order retrieved', data: { ...order, user: userInfo } };
   }
 
   async cancelMyOrder(applicationId: string, orderId: string, user: User) {

@@ -92,9 +92,13 @@ export class AdminLoanService {
     ];
 
     const [farmerGroups, activeLoanGroups] = await Promise.all([
-      this.prisma.loanApplication.groupBy({
-        by: ['agentId', 'userId'],
-        where: { agentId: { in: agentIds } },
+      this.prisma.loanApplication.findMany({
+        where: {
+          agentId: { in: agentIds },
+          user: { role: USER_ROLE.FARMER },
+        },
+        distinct: ['agentId', 'userId'],
+        select: { agentId: true, userId: true },
       }),
       this.prisma.loanApplication.groupBy({
         by: ['agentId'],

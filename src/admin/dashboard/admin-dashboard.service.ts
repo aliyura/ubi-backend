@@ -731,20 +731,20 @@ export class AdminDashboardService {
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
       this.prisma.$queryRaw<[{ total: number }]>`
-        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS total
+        SELECT COALESCE(SUM(("billDetails"->>'amountPaid')::numeric), 0) AS total
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
     ]);
@@ -766,37 +766,37 @@ export class AdminDashboardService {
   async getBillPaymentsAirtimeOverview() {
     const [airtimeVolume, dataVolume, avgResult, totalCount, successCount] = await Promise.all([
       this.prisma.$queryRaw<[{ volume: number }]>`
-        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS volume
+        SELECT COALESCE(SUM(("billDetails"->>'amountPaid')::numeric), 0) AS volume
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') = 'airtime'
+          AND ("billDetails"->>'type') = 'airtime'
           AND status = 'success'
       `,
       this.prisma.$queryRaw<[{ volume: number }]>`
-        SELECT COALESCE(SUM((billDetails->>'amountPaid')::numeric), 0) AS volume
+        SELECT COALESCE(SUM(("billDetails"->>'amountPaid')::numeric), 0) AS volume
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') = 'data'
+          AND ("billDetails"->>'type') = 'data'
           AND status = 'success'
       `,
       this.prisma.$queryRaw<[{ avg: number }]>`
-        SELECT COALESCE(AVG((billDetails->>'amountPaid')::numeric), 0) AS avg
+        SELECT COALESCE(AVG(("billDetails"->>'amountPaid')::numeric), 0) AS avg
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
-          AND (billDetails->>'type') IN ('airtime', 'data')
+          AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
     ]);

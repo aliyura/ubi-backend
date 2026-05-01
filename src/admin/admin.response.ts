@@ -121,6 +121,7 @@ export const adminResponse = {
       email: 'admin@example.com',
       role: 'ADMIN',
       passwordLastChangedAt: '2024-01-01T00:00:00.000Z',
+      twoFaEnabled: true,
     },
   },
 } as const;

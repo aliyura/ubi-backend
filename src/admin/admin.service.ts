@@ -58,6 +58,7 @@ export class AdminService {
         email: admin.email,
         role: admin.role,
         passwordLastChangedAt: admin.updatedAt,
+        twoFaEnabled: admin.enabledTwoFa,
       },
     };
   }

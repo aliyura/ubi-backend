@@ -504,6 +504,9 @@ export class AdminDashboardService {
     }
     if (query.type) where.type = query.type;
     if (query.category) where.category = query.category;
+    if (query.billType) {
+      where.billDetails = { path: ['type'], equals: query.billType };
+    }
 
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
@@ -851,12 +854,36 @@ export class AdminDashboardService {
     const limit = query.limit ?? 20;
     const offset = (page - 1) * limit;
     const search = query.search?.trim() ?? '';
+    const fromDate = query.fromDate ?? null;
+    const toDate = query.toDate ?? null;
 
     type KycPipelineRow = {
       securityLevel: number | null;
       identityHolder: string;
       governmentId: string | null;
       complianceStatus: string;
+      userId: string;
+      email: string;
+      username: string;
+      phoneNumber: string;
+      gender: string | null;
+      country: string | null;
+      status: string;
+      tierLevel: string;
+      isBvnVerified: boolean;
+      isNinVerified: boolean;
+      isEmailVerified: boolean;
+      isPhoneVerified: boolean;
+      isAddressVerified: boolean;
+      dateOfBirth: string | null;
+      createdAt: Date;
+      walletId: string | null;
+      walletBalance: number | null;
+      accountNumber: string | null;
+      accountName: string | null;
+      bankName: string | null;
+      bankCode: string | null;
+      currency: string | null;
     };
 
     const searchFilter = search
@@ -867,17 +894,50 @@ export class AdminDashboardService {
         )`
       : Prisma.empty;
 
+    const dateFilter =
+      fromDate && toDate
+        ? Prisma.sql`AND u."createdAt" >= ${new Date(fromDate)}::timestamp AND u."createdAt" < ${new Date(toDate)}::timestamp + INTERVAL '1 day'`
+        : fromDate
+          ? Prisma.sql`AND u."createdAt" >= ${new Date(fromDate)}::timestamp`
+          : toDate
+            ? Prisma.sql`AND u."createdAt" < ${new Date(toDate)}::timestamp + INTERVAL '1 day'`
+            : Prisma.empty;
+
     const [rows, countResult] = await Promise.all([
       this.prisma.$queryRaw<KycPipelineRow[]>`
         SELECT
-          t."kycLevel"    AS "securityLevel",
-          u.fullname      AS "identityHolder",
-          u.bvn           AS "governmentId",
-          u."tierLevel"   AS "complianceStatus"
+          t."kycLevel"          AS "securityLevel",
+          u.fullname            AS "identityHolder",
+          u.bvn                 AS "governmentId",
+          u."tierLevel"         AS "complianceStatus",
+          u.id                  AS "userId",
+          u.email               AS "email",
+          u.username            AS "username",
+          u."phoneNumber"       AS "phoneNumber",
+          u.gender              AS "gender",
+          u.country             AS "country",
+          u.status              AS "status",
+          u."tierLevel"         AS "tierLevel",
+          u."isBvnVerified"     AS "isBvnVerified",
+          u."isNinVerified"     AS "isNinVerified",
+          u."isEmailVerified"   AS "isEmailVerified",
+          u."isPhoneVerified"   AS "isPhoneVerified",
+          u."isAddressVerified" AS "isAddressVerified",
+          u."dateOfBirth"       AS "dateOfBirth",
+          u."createdAt"         AS "createdAt",
+          w.id                  AS "walletId",
+          w.balance             AS "walletBalance",
+          w."accountNumber"     AS "accountNumber",
+          w."accountName"       AS "accountName",
+          w."bankName"          AS "bankName",
+          w."bankCode"          AS "bankCode",
+          w.currency            AS "currency"
         FROM users u
         LEFT JOIN tier t ON t.level = u."tierLevel"
+        LEFT JOIN wallet w ON w."userId" = u.id
         WHERE u.role = 'USER'
           ${searchFilter}
+          ${dateFilter}
         ORDER BY u."createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       `,
@@ -886,14 +946,51 @@ export class AdminDashboardService {
         FROM users u
         WHERE u.role = 'USER'
           ${searchFilter}
+          ${dateFilter}
       `,
     ]);
+
+    const pipeline = rows.map((row) => ({
+      securityLevel: row.securityLevel,
+      identityHolder: row.identityHolder,
+      governmentId: row.governmentId,
+      complianceStatus: row.complianceStatus,
+      user: {
+        id: row.userId,
+        email: row.email,
+        username: row.username,
+        phoneNumber: row.phoneNumber,
+        fullname: row.identityHolder,
+        gender: row.gender,
+        country: row.country,
+        status: row.status,
+        tierLevel: row.tierLevel,
+        isBvnVerified: row.isBvnVerified,
+        isNinVerified: row.isNinVerified,
+        isEmailVerified: row.isEmailVerified,
+        isPhoneVerified: row.isPhoneVerified,
+        isAddressVerified: row.isAddressVerified,
+        dateOfBirth: row.dateOfBirth,
+        createdAt: row.createdAt,
+      },
+      wallet: row.walletId
+        ? {
+            id: row.walletId,
+            balance: row.walletBalance,
+            accountNumber: row.accountNumber,
+            accountName: row.accountName,
+            bankName: row.bankName,
+            bankCode: row.bankCode,
+            currency: row.currency,
+          }
+        : null,
+    }));
 
     return {
       status: true,
       message: 'KYC active pipeline retrieved',
       data: {
-        pipeline: rows,
+        pipeline,
         total: Number(countResult[0].count),
         page,
         limit,

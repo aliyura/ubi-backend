@@ -75,4 +75,52 @@ export const adminResponse = {
     message: 'Agent invited successfully',
     data: null,
   },
+  systemSettings: {
+    statusCode: 200,
+    message: 'System settings fetched successfully',
+    data: {
+      transferLimits: {
+        tier1: {
+          dailyCumulativeLimit: 1000000,
+          perTransactionLimit: 50000,
+          walletBalanceLimit: 5000000,
+        },
+        tier2: {
+          dailyCumulativeLimit: 5000000,
+          perTransactionLimit: 200000,
+          walletBalanceLimit: 10000000,
+        },
+        tier3: {
+          dailyCumulativeLimit: 9999999999999,
+          perTransactionLimit: 9999999999999,
+          walletBalanceLimit: 9999999999999,
+        },
+        businessTier1: {
+          dailyCumulativeLimit: 1000000,
+          walletBalanceLimit: 5000000,
+        },
+      },
+      fees: {
+        cable: 50,
+        electricity: 50,
+        internet: 10,
+        schoolFee: 10,
+        transport: 10,
+        internationalAirtime: 100,
+        giftCard: 0,
+        referralBonus: 500,
+      },
+    },
+  },
+  adminProfile: {
+    statusCode: 200,
+    message: 'Profile fetched successfully',
+    data: {
+      adminId: 'uuid',
+      fullName: 'John Doe',
+      email: 'admin@example.com',
+      role: 'ADMIN',
+      passwordLastChangedAt: '2024-01-01T00:00:00.000Z',
+    },
+  },
 } as const;

@@ -15,6 +15,27 @@ import { EmailService } from 'src/email/email.service';
 import { User } from '@prisma/client';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import {
+  TIER_ONE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+  TIER_ONE_CUMMULATIVE_BALANCE_LIMIT,
+  TIER_ONE_PER_TRANSACTION_LIMIT,
+  TIER_TWO_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+  TIER_TWO_CUMMULATIVE_BALANCE_LIMIT,
+  TIER_TWO_PER_TRANSACTION_LIMIT,
+  TIER_THREE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+  TIER_THREE_CUMMULATIVE_BALANCE_LIMIT,
+  TIER_THREE_PER_TRANSACTION_LIMIT,
+  BUSINESS_TIER_ONE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+  BUSINESS_TIER_ONE_CUMMULATIVE_BALANCE_LIMIT,
+  CABLE_FEE,
+  ELECTRICITY_FEE,
+  INTERNET_FEE,
+  SCHOOLFEE_FEE,
+  TRANSPORT_FEE,
+  INTERNATIONAL_AIRTIME_FEE,
+  GIFT_CARD_FEE,
+  REFERRAL_BONUS_PRICE,
+} from 'src/constants';
 
 @Injectable()
 export class AdminService {
@@ -26,6 +47,62 @@ export class AdminService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
   ) {}
+
+  getProfile(admin: User) {
+    return {
+      message: 'Profile fetched successfully',
+      statusCode: HttpStatus.OK,
+      data: {
+        adminId: admin.id,
+        fullName: admin.fullname,
+        email: admin.email,
+        role: admin.role,
+        passwordLastChangedAt: admin.updatedAt,
+      },
+    };
+  }
+
+  getSystemSettings() {
+    return {
+      message: 'System settings fetched successfully',
+      statusCode: HttpStatus.OK,
+      data: {
+        transferLimits: {
+          tier1: {
+            dailyCumulativeLimit: TIER_ONE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+            perTransactionLimit: TIER_ONE_PER_TRANSACTION_LIMIT,
+            walletBalanceLimit: TIER_ONE_CUMMULATIVE_BALANCE_LIMIT,
+          },
+          tier2: {
+            dailyCumulativeLimit: TIER_TWO_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+            perTransactionLimit: TIER_TWO_PER_TRANSACTION_LIMIT,
+            walletBalanceLimit: TIER_TWO_CUMMULATIVE_BALANCE_LIMIT,
+          },
+          tier3: {
+            dailyCumulativeLimit:
+              TIER_THREE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+            perTransactionLimit: TIER_THREE_PER_TRANSACTION_LIMIT,
+            walletBalanceLimit: TIER_THREE_CUMMULATIVE_BALANCE_LIMIT,
+          },
+          businessTier1: {
+            dailyCumulativeLimit:
+              BUSINESS_TIER_ONE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
+            walletBalanceLimit: BUSINESS_TIER_ONE_CUMMULATIVE_BALANCE_LIMIT,
+          },
+        },
+        fees: {
+          cable: CABLE_FEE,
+          electricity: ELECTRICITY_FEE,
+          internet: INTERNET_FEE,
+          schoolFee: SCHOOLFEE_FEE,
+          transport: TRANSPORT_FEE,
+          internationalAirtime: INTERNATIONAL_AIRTIME_FEE,
+          giftCard: GIFT_CARD_FEE,
+          referralBonus: REFERRAL_BONUS_PRICE,
+        },
+      },
+    };
+  }
 
   async inviteAgent(body: InviteAgentDto, admin: User) {
     const pending = await this.prisma.agentInvitation.findFirst({

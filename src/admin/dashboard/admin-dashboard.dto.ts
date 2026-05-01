@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { TRANSACTION_CATEGORY, TRANSACTION_TYPE } from '@prisma/client';
+import { BILL_TYPE, TRANSACTION_CATEGORY, TRANSACTION_TYPE } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 export class DateRangeDto {
@@ -73,6 +73,15 @@ export class TransactionsHistoryQueryDto extends PaginationDto {
     example: TRANSACTION_CATEGORY.TRANSFER,
   })
   category?: TRANSACTION_CATEGORY;
+
+  @IsOptional()
+  @IsEnum(BILL_TYPE)
+  @ApiPropertyOptional({
+    enum: BILL_TYPE,
+    description: 'Filter by bill type (only applies to bill payment transactions)',
+    example: BILL_TYPE.airtime,
+  })
+  billType?: BILL_TYPE;
 }
 
 export class ActiveWalletsQueryDto extends PaginationDto {
@@ -103,6 +112,22 @@ export class KycActivePipelineQueryDto extends PaginationDto {
     example: 'Amara',
   })
   search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({
+    example: '2026-01-01',
+    description: 'Filter by registration date from (YYYY-MM-DD)',
+  })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @ApiPropertyOptional({
+    example: '2026-12-31',
+    description: 'Filter by registration date to (YYYY-MM-DD)',
+  })
+  toDate?: string;
 }
 
 export class DisputesPipelineQueryDto extends PaginationDto {

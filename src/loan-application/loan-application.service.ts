@@ -7,9 +7,11 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanEligibilityService } from 'src/loan-eligibility/loan-eligibility.service';
 import { LoanNotificationService } from './loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateLoanApplicationDto, QueryLoanApplicationDto } from './dto';
 import {
   LOAN_APPLICATION_STATUS,
+  NOTIFICATION_TYPE,
   User,
 } from '@prisma/client';
 import { Helpers } from 'src/helpers';
@@ -54,6 +56,7 @@ export class LoanApplicationService {
     private readonly prisma: PrismaService,
     private readonly eligibility: LoanEligibilityService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   validateTransition(from: LOAN_APPLICATION_STATUS, to: LOAN_APPLICATION_STATUS) {
@@ -192,6 +195,15 @@ export class LoanApplicationService {
       applicationRef,
     );
 
+    await this.notificationService.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPE.LOAN_APPLICATION_SUBMITTED,
+      title: 'Loan Application Submitted',
+      message: `Your loan application ${applicationRef} has been submitted and is under review.`,
+      resourceId: application.id,
+      resourceType: 'loan_application',
+    });
+
     return {
       status: true,
       message: 'Loan application submitted successfully',
@@ -286,6 +298,15 @@ export class LoanApplicationService {
         },
       }),
     ]);
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.LOAN_APPLICATION_CANCELLED,
+      title: 'Application Cancelled',
+      message: 'Your loan application has been cancelled.',
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Application cancelled', data: null };
   }

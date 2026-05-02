@@ -4,9 +4,10 @@ import { AdminLoanService } from './admin-loan.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { LoanApplicationModule } from 'src/loan-application/loan-application.module';
 import { AgentModule } from 'src/agent/agent.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [PrismaModule, LoanApplicationModule, AgentModule],
+  imports: [PrismaModule, LoanApplicationModule, AgentModule, NotificationModule],
   controllers: [AdminLoanController],
   providers: [AdminLoanService],
   exports: [AdminLoanService],

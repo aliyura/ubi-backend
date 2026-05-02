@@ -6,8 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { PlaceMarketplaceOrderDto, QueryMarketplaceOrderDto } from './dto';
-import { LOAN_APPLICATION_STATUS, MARKETPLACE_ORDER_STATUS, User } from '@prisma/client';
+import {
+  LOAN_APPLICATION_STATUS,
+  MARKETPLACE_ORDER_STATUS,
+  NOTIFICATION_TYPE,
+  User,
+} from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
 const USER_SELECT = {
@@ -43,6 +49,7 @@ export class MarketplaceOrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private generateOrderRef(): string {
@@ -214,6 +221,15 @@ export class MarketplaceOrderService {
       );
     }
 
+    await this.notificationService.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPE.ORDER_PLACED,
+      title: 'Order Placed',
+      message: `Your marketplace order ${order.created.orderRef} has been placed and is awaiting confirmation.`,
+      resourceId: order.created.id,
+      resourceType: 'marketplace_order',
+    });
+
     return {
       status: true,
       message: 'Marketplace order placed successfully',
@@ -320,6 +336,15 @@ export class MarketplaceOrderService {
         order.orderRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPE.ORDER_CANCELLED,
+      title: 'Order Cancelled',
+      message: `Your marketplace order ${order.orderRef} has been cancelled.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
 
     return { status: true, message: 'Order cancelled', data: null };
   }

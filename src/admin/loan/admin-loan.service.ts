@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import {
   AdminDecisionDto,
   AdminQueryAgentsDto,
@@ -13,6 +14,7 @@ import {
   LOAN_APPLICATION_STATUS,
   LOAN_DECISION_TYPE,
   AGENT_RECOMMENDATION_TYPE,
+  NOTIFICATION_TYPE,
   USER_ROLE,
   USER_ACCOUNT_STATUS,
   User,
@@ -25,6 +27,7 @@ export class AdminLoanService {
     private readonly prisma: PrismaService,
     private readonly loanAppService: LoanApplicationService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async listAgentsWithFarmers(query: AdminQueryAgentsDto) {
@@ -353,6 +356,30 @@ export class AdminLoanService {
       );
     }
 
+    const decisionNotificationTypeMap: Partial<Record<LOAN_APPLICATION_STATUS, NOTIFICATION_TYPE>> = {
+      [LOAN_APPLICATION_STATUS.Approved]: NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED,
+      [LOAN_APPLICATION_STATUS.Rejected]: NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED,
+      [LOAN_APPLICATION_STATUS.MoreInfoRequired]: NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED,
+      [LOAN_APPLICATION_STATUS.PendingFieldVerification]: NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION,
+    };
+    const decisionNotificationType = decisionNotificationTypeMap[newStatus];
+    if (decisionNotificationType) {
+      const decisionTitleMap: Record<string, string> = {
+        [NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED]: 'Loan Approved',
+        [NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED]: 'Loan Application Rejected',
+        [NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED]: 'Additional Information Required',
+        [NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION]: 'Field Verification Initiated',
+      };
+      await this.notificationService.create({
+        userId: app.userId,
+        type: decisionNotificationType,
+        title: decisionTitleMap[decisionNotificationType],
+        message: `Your loan application ${app.applicationRef} status has been updated to ${newStatus}.`,
+        resourceId: id,
+        resourceType: 'loan_application',
+      });
+    }
+
     return {
       status: true,
       message: 'Decision recorded successfully',
@@ -379,6 +406,15 @@ export class AdminLoanService {
         },
       }),
     ]);
+
+    await this.notificationService.create({
+      userId: body.agentId,
+      type: NOTIFICATION_TYPE.AGENT_ASSIGNED_TO_APPLICATION,
+      title: 'New Loan Assignment',
+      message: 'You have been assigned to verify a loan application.',
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Agent assigned', data: null };
   }
@@ -425,6 +461,15 @@ export class AdminLoanService {
         app.applicationRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.LOAN_STATUS_UPDATED,
+      title: 'Application Status Updated',
+      message: `Your loan application ${app.applicationRef} status has been updated to ${body.status}.`,
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Status updated', data: null };
   }

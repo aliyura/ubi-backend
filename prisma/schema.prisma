@@ -181,6 +181,7 @@ model User {
   loanApplications  LoanApplication[] @relation("UserLoanApplications")
   agentApplications LoanApplication[] @relation("AgentLoanApplications")
   agentActivityLogs AgentActivityLog[]
+  notifications     Notification[]
 
   isBusinessRegistered Boolean @default(false)
 
@@ -1067,4 +1068,51 @@ model Tier {
   updatedAt           DateTime   @updatedAt
 
   @@map("tier")
+}
+
+enum NOTIFICATION_TYPE {
+  LOAN_APPLICATION_SUBMITTED
+  LOAN_APPLICATION_CANCELLED
+  LOAN_APPLICATION_APPROVED
+  LOAN_APPLICATION_REJECTED
+  LOAN_MORE_INFO_REQUIRED
+  LOAN_PENDING_FIELD_VERIFICATION
+  LOAN_STATUS_UPDATED
+  FULFILLMENT_IN_PROGRESS
+  FULFILLMENT_READY_FOR_PICKUP
+  FULFILLMENT_OUT_FOR_DELIVERY
+  FULFILLMENT_DELIVERED
+  REPAYMENT_RECORDED
+  REPAYMENT_OVERDUE
+  ORDER_PLACED
+  ORDER_CANCELLED
+  ORDER_CONFIRMED
+  ORDER_PACKED
+  ORDER_DISPATCHED
+  ORDER_DELIVERED
+  ORDER_CANCELLED_BY_ADMIN
+  KYC_TIER_UPGRADED
+  AGENT_ASSIGNED_TO_APPLICATION
+}
+
+model Notification {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String            @db.Uuid
+  type         NOTIFICATION_TYPE
+  title        String
+  message      String
+  isRead       Boolean           @default(false)
+  readAt       DateTime?
+  resourceId   String?           @db.Uuid
+  resourceType String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

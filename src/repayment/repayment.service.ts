@@ -6,8 +6,13 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { RecordRepaymentDto } from './dto';
-import { LOAN_APPLICATION_STATUS, REPAYMENT_STATUS } from '@prisma/client';
+import {
+  LOAN_APPLICATION_STATUS,
+  NOTIFICATION_TYPE,
+  REPAYMENT_STATUS,
+} from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
 @Injectable()
@@ -17,6 +22,7 @@ export class RepaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getRepaymentSchedule(applicationId: string) {
@@ -167,6 +173,15 @@ export class RepaymentService {
       }
     }
 
+    await this.notificationService.create({
+      userId: plan.application.userId,
+      type: NOTIFICATION_TYPE.REPAYMENT_RECORDED,
+      title: 'Repayment Recorded',
+      message: `A repayment of ₦${body.amountPaid.toLocaleString()} has been recorded. Outstanding balance: ₦${newOutstanding.toLocaleString()}.`,
+      resourceId: applicationId,
+      resourceType: 'loan_application',
+    });
+
     return {
       status: true,
       message: 'Repayment recorded',
@@ -235,6 +250,17 @@ export class RepaymentService {
           LOAN_APPLICATION_STATUS.Overdue,
           app.applicationRef,
         );
+      }
+
+      if (app.status !== LOAN_APPLICATION_STATUS.Overdue) {
+        await this.notificationService.create({
+          userId: app.userId,
+          type: NOTIFICATION_TYPE.REPAYMENT_OVERDUE,
+          title: 'Repayment Overdue',
+          message: `Your repayment for loan ${app.applicationRef} is overdue. Please make payment as soon as possible.`,
+          resourceId: app.id,
+          resourceType: 'loan_application',
+        });
       }
     }
 

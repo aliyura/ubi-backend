@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import {
   AdminCancelOrderDto,
   AdminConfirmOrderDto,
@@ -12,7 +13,7 @@ import {
   AdminDispatchOrderDto,
   QueryMarketplaceOrderDto,
 } from './dto';
-import { MARKETPLACE_ORDER_STATUS, User } from '@prisma/client';
+import { MARKETPLACE_ORDER_STATUS, NOTIFICATION_TYPE, User } from '@prisma/client';
 
 const USER_SELECT = {
   id: true,
@@ -47,6 +48,7 @@ export class MarketplaceOrderAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async listOrders(query: QueryMarketplaceOrderDto) {
@@ -162,6 +164,15 @@ export class MarketplaceOrderAdminService {
       );
     }
 
+    await this.notificationService.create({
+      userId: order.userId,
+      type: NOTIFICATION_TYPE.ORDER_CONFIRMED,
+      title: 'Order Confirmed',
+      message: `Your marketplace order ${order.orderRef} has been confirmed.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
+
     return { status: true, message: 'Order confirmed and stock reserved', data: null };
   }
 
@@ -189,6 +200,15 @@ export class MarketplaceOrderAdminService {
         },
       }),
     ]);
+
+    await this.notificationService.create({
+      userId: order.userId,
+      type: NOTIFICATION_TYPE.ORDER_PACKED,
+      title: 'Order Packed',
+      message: `Your marketplace order ${order.orderRef} has been packed and will be dispatched soon.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
 
     return { status: true, message: 'Order marked as packed', data: null };
   }
@@ -233,6 +253,15 @@ export class MarketplaceOrderAdminService {
         order.orderRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: order.userId,
+      type: NOTIFICATION_TYPE.ORDER_DISPATCHED,
+      title: 'Order Dispatched',
+      message: `Your marketplace order ${order.orderRef} has been dispatched and is on its way.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
 
     return { status: true, message: 'Order dispatched', data: null };
   }
@@ -279,6 +308,15 @@ export class MarketplaceOrderAdminService {
         order.orderRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: order.userId,
+      type: NOTIFICATION_TYPE.ORDER_DELIVERED,
+      title: 'Order Delivered',
+      message: `Your marketplace order ${order.orderRef} has been delivered successfully.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
 
     return { status: true, message: 'Delivery recorded', data: null };
   }
@@ -339,6 +377,15 @@ export class MarketplaceOrderAdminService {
         order.orderRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: order.userId,
+      type: NOTIFICATION_TYPE.ORDER_CANCELLED_BY_ADMIN,
+      title: 'Order Cancelled by Admin',
+      message: `Your marketplace order ${order.orderRef} has been cancelled. Reason: ${body.cancelReason ?? 'N/A'}.`,
+      resourceId: orderId,
+      resourceType: 'marketplace_order',
+    });
 
     return { status: true, message: 'Order cancelled', data: null };
   }

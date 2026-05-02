@@ -13,6 +13,7 @@ import {
   BENEFICIARY_TYPE,
   BILL_TYPE,
   CURRENCY,
+  NOTIFICATION_TYPE,
   TIER_LEVEL,
   Transaction,
   TRANSACTION_CATEGORY,
@@ -78,6 +79,7 @@ import {
   REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
   USER_FILE_UPLOAD_FOLDER_NAME,
 } from 'src/constants';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {
@@ -91,6 +93,7 @@ export class UserService {
     private readonly emailService: EmailService,
     private readonly fileService: FileService,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async register(body: RegisterDto | RegisterFarmerDto) {
@@ -716,6 +719,13 @@ export class UserService {
         },
       });
 
+      await this.notificationService.create({
+        userId: user.id,
+        type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
+        title: 'KYC Level Upgraded',
+        message: 'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
+      });
+
       return {
         message: 'Tier2 kyc verification successful',
         statusCode: HttpStatus.OK,
@@ -743,6 +753,13 @@ export class UserService {
       },
     });
 
+    await this.notificationService.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
+      title: 'KYC Level Upgraded',
+      message: 'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
+    });
+
     return {
       message: 'Tier2 kyc verification successful',
       statusCode: HttpStatus.OK,
@@ -766,6 +783,13 @@ export class UserService {
             TIER_THREE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
           cummulativeBalanceLimit: TIER_THREE_CUMMULATIVE_BALANCE_LIMIT,
         },
+      });
+
+      await this.notificationService.create({
+        userId: user.id,
+        type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
+        title: 'KYC Level Upgraded',
+        message: 'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
       });
 
       return {
@@ -806,6 +830,13 @@ export class UserService {
           TIER_THREE_DAILY_CUMMULATIVE_TRANSACTION_LIMIT,
         cummulativeBalanceLimit: TIER_THREE_CUMMULATIVE_BALANCE_LIMIT,
       },
+    });
+
+    await this.notificationService.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
+      title: 'KYC Level Upgraded',
+      message: 'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
     });
 
     return {

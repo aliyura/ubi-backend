@@ -1,0 +1,31 @@
+-- CreateEnum
+CREATE TYPE "NOTIFICATION_TYPE" AS ENUM ('LOAN_APPLICATION_SUBMITTED', 'LOAN_APPLICATION_CANCELLED', 'LOAN_APPLICATION_APPROVED', 'LOAN_APPLICATION_REJECTED', 'LOAN_MORE_INFO_REQUIRED', 'LOAN_PENDING_FIELD_VERIFICATION', 'LOAN_STATUS_UPDATED', 'FULFILLMENT_IN_PROGRESS', 'FULFILLMENT_READY_FOR_PICKUP', 'FULFILLMENT_OUT_FOR_DELIVERY', 'FULFILLMENT_DELIVERED', 'REPAYMENT_RECORDED', 'REPAYMENT_OVERDUE', 'ORDER_PLACED', 'ORDER_CANCELLED', 'ORDER_CONFIRMED', 'ORDER_PACKED', 'ORDER_DISPATCHED', 'ORDER_DELIVERED', 'ORDER_CANCELLED_BY_ADMIN', 'KYC_TIER_UPGRADED', 'AGENT_ASSIGNED_TO_APPLICATION');
+
+-- CreateTable
+CREATE TABLE "notifications" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "type" "NOTIFICATION_TYPE" NOT NULL,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "readAt" TIMESTAMP(3),
+    "resourceId" UUID,
+    "resourceType" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "notifications_userId_idx" ON "notifications"("userId");
+
+-- CreateIndex
+CREATE INDEX "notifications_userId_isRead_idx" ON "notifications"("userId", "isRead");
+
+-- CreateIndex
+CREATE INDEX "notifications_userId_createdAt_idx" ON "notifications"("userId", "createdAt");
+
+-- AddForeignKey
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

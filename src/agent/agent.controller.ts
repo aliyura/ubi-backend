@@ -47,6 +47,14 @@ export class AgentController {
     return this.service.submitVerification(id, body, (req as any).user);
   }
 
+  @Get('farmers')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get farmers assigned to the logged-in agent' })
+  @ApiResponse({ status: HttpStatus.OK, example: agentResponse.getAssignedFarmers })
+  async getAssignedFarmers(@Req() req: Request) {
+    return this.service.getAssignedFarmers((req as any).user);
+  }
+
   @Get('activity-logs')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get agent activity logs for a time range (admin must supply ?agentId=)' })

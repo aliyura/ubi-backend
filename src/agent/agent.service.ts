@@ -113,6 +113,48 @@ export class AgentService {
     return { status: true, message: 'Assigned applications retrieved', data: apps };
   }
 
+  async getAssignedFarmers(agent: User) {
+    const farmers = await this.prisma.user.findMany({
+      where: {
+        loanApplications: {
+          some: { agentId: agent.id },
+        },
+      },
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        phoneNumber: true,
+        state: true,
+        city: true,
+        profileImageUrl: true,
+        createdAt: true,
+        loanApplications: {
+          where: { agentId: agent.id },
+          select: {
+            id: true,
+            applicationRef: true,
+            status: true,
+            fieldVerification: {
+              select: {
+                farmExists: true,
+                visitedAt: true,
+                cropConfirmed: true,
+                estimatedFarmSize: true,
+                recommendation: true,
+                note: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fullname: 'asc' },
+    });
+
+    return { status: true, message: 'Assigned farmers retrieved', data: farmers };
+  }
+
   async getActivityLogs(query: GetActivityLogsDto, caller: User) {
     const isAdmin = caller.role === USER_ROLE.ADMIN;
     const targetAgentId = isAdmin ? query.agentId : caller.id;

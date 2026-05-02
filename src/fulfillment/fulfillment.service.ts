@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
+import { NotificationService } from 'src/notification/notification.service';
 import {
   CreateFulfillmentDto,
   CreateSupplierDto,
@@ -10,6 +11,7 @@ import {
 import {
   FULFILLMENT_STATUS,
   LOAN_APPLICATION_STATUS,
+  NOTIFICATION_TYPE,
   User,
 } from '@prisma/client';
 import { Helpers } from 'src/helpers';
@@ -20,6 +22,7 @@ export class FulfillmentService {
     private readonly prisma: PrismaService,
     private readonly loanAppService: LoanApplicationService,
     private readonly notifications: LoanNotificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createFulfillment(
@@ -93,6 +96,15 @@ export class FulfillmentService {
       );
     }
 
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.FULFILLMENT_IN_PROGRESS,
+      title: 'Inputs Being Prepared',
+      message: `Your farm inputs for application ${app.applicationRef} are being prepared.`,
+      resourceId: app.id,
+      resourceType: 'loan_application',
+    });
+
     return { status: true, message: 'Fulfillment created', data: fulfillment };
   }
 
@@ -153,6 +165,23 @@ export class FulfillmentService {
         app.applicationRef,
       );
     }
+
+    const dispatchNotificationType =
+      newStatus === LOAN_APPLICATION_STATUS.ReadyForPickup
+        ? NOTIFICATION_TYPE.FULFILLMENT_READY_FOR_PICKUP
+        : NOTIFICATION_TYPE.FULFILLMENT_OUT_FOR_DELIVERY;
+    const dispatchTitle =
+      newStatus === LOAN_APPLICATION_STATUS.ReadyForPickup
+        ? 'Inputs Ready for Pickup'
+        : 'Inputs Out for Delivery';
+    await this.notificationService.create({
+      userId: app.userId,
+      type: dispatchNotificationType,
+      title: dispatchTitle,
+      message: `Your farm inputs for application ${app.applicationRef} are ${newStatus === LOAN_APPLICATION_STATUS.ReadyForPickup ? 'ready for pickup' : 'out for delivery'}.`,
+      resourceId: app.id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Dispatch recorded', data: null };
   }
@@ -230,6 +259,15 @@ export class FulfillmentService {
         app.applicationRef,
       );
     }
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.FULFILLMENT_DELIVERED,
+      title: 'Inputs Delivered',
+      message: `Your farm inputs for application ${app.applicationRef} have been delivered. Your loan is now active.`,
+      resourceId: app.id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Delivery recorded', data: null };
   }

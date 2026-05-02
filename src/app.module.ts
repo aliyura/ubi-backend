@@ -32,6 +32,7 @@ import { AgentModule } from './agent/agent.module';
 import { FulfillmentModule } from './fulfillment/fulfillment.module';
 import { RepaymentModule } from './repayment/repayment.module';
 import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.mo
     FulfillmentModule,
     RepaymentModule,
     MarketplaceOrderModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

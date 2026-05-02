@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { NOTIFICATION_TYPE } from '@prisma/client';
+import { NOTIFICATION_TYPE, USER_ROLE } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryNotificationsDto } from './dto';
 
@@ -28,6 +28,22 @@ export class NotificationService {
       await this.prisma.notification.create({ data: payload });
     } catch (err) {
       this.logger.error('Failed to create in-app notification', err?.message);
+    }
+  }
+
+  async notifyAdmins(payload: Omit<CreateNotificationPayload, 'userId'>): Promise<void> {
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: { role: USER_ROLE.ADMIN },
+        select: { id: true },
+      });
+      await Promise.all(
+        admins.map((admin) =>
+          this.prisma.notification.create({ data: { ...payload, userId: admin.id } }),
+        ),
+      );
+    } catch (err) {
+      this.logger.error('Failed to create admin notifications', err?.message);
     }
   }
 

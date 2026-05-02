@@ -230,6 +230,14 @@ export class MarketplaceOrderService {
       resourceType: 'marketplace_order',
     });
 
+    await this.notificationService.notifyAdmins({
+      type: NOTIFICATION_TYPE.NEW_MARKETPLACE_ORDER,
+      title: 'New Marketplace Order',
+      message: `A new marketplace order ${order.created.orderRef} has been placed and requires confirmation.`,
+      resourceId: order.created.id,
+      resourceType: 'marketplace_order',
+    });
+
     return {
       status: true,
       message: 'Marketplace order placed successfully',

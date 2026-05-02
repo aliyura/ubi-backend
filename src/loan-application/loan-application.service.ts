@@ -204,6 +204,14 @@ export class LoanApplicationService {
       resourceType: 'loan_application',
     });
 
+    await this.notificationService.notifyAdmins({
+      type: NOTIFICATION_TYPE.NEW_LOAN_APPLICATION,
+      title: 'New Loan Application',
+      message: `A new loan application ${applicationRef} has been submitted and requires review.`,
+      resourceId: application.id,
+      resourceType: 'loan_application',
+    });
+
     return {
       status: true,
       message: 'Loan application submitted successfully',

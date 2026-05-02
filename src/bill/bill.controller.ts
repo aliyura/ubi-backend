@@ -34,7 +34,7 @@ export class BillController {
   @ApiOperation({ summary: 'Get Airtime Plan' })
   @ApiResponse({ status: HttpStatus.OK, example: billResponse.getAirtimePlan })
   async getAirtimePlan(
-    @Query('phone') phone: number,
+    @Query('phone') phone: string,
     @Query('currency') currency: string,
   ) {
     return this.billService.getAirtimePlan(phone, currency);
@@ -92,7 +92,7 @@ export class BillController {
   @ApiOperation({ summary: 'Get Data Plan' })
   @ApiResponse({ status: HttpStatus.OK, example: billResponse.getDataPlan })
   async getDataPlan(
-    @Query('phone') phone: number,
+    @Query('phone') phone: string,
     @Query('currency') currency: string,
   ) {
     return this.billService.getDataPlan(phone, currency);

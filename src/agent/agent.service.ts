@@ -6,14 +6,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { AGENT_ACTION, GetActivityLogsDto, SubmitVerificationDto } from './dto';
-import { LOAN_APPLICATION_STATUS, Prisma, USER_ROLE, User } from '@prisma/client';
+import { LOAN_APPLICATION_STATUS, NOTIFICATION_TYPE, Prisma, USER_ROLE, User } from '@prisma/client';
 
 @Injectable()
 export class AgentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly loanAppService: LoanApplicationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async submitVerification(id: string, body: SubmitVerificationDto, agent: User) {
@@ -87,6 +89,14 @@ export class AgentService {
         applicationId: id,
       }),
     ]);
+
+    await this.notificationService.notifyAdmins({
+      type: NOTIFICATION_TYPE.AGENT_VERIFICATION_SUBMITTED,
+      title: 'Field Verification Submitted',
+      message: `Agent ${agent.fullname ?? agent.username} has submitted a field verification report for application ${app.applicationRef}.`,
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
 
     return { status: true, message: 'Field verification submitted', data: null };
   }

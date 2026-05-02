@@ -363,7 +363,12 @@ export class ApiProviderService {
   }
 
   async getOperator(operatorId: string) {
-    return this.flutterwaveService.getBillers(operatorId);
+    try {
+      return this.flutterwaveService.getBillers(operatorId);
+    } catch (error) {
+      console.log('error', error);
+      throw error;
+    }
   }
 
   async getAutoDetectOperator(phone: number, countryisoCode: string) {

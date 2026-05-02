@@ -127,16 +127,22 @@ export class FlutterwaveService {
       this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
       `/v3/bills/${category}/billers?country=NG`;
 
-    const response = await axios.get(url, {
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await axios.get(url, {
+        headers: this.getHeaders(),
+      });
+      if (response.status !== 200) {
+        console.error(response?.data);
+        throw new InternalServerErrorException(
+          'Failed to get bill information',
+        );
+      }
 
-    if (response.status !== 200) {
-      console.error(response?.data);
+      return response?.data?.data;
+    } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException('Failed to get bill information');
     }
-
-    return response?.data?.data;
   }
 
   async getBillInfo(billerCode: string) {

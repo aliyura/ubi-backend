@@ -21,7 +21,7 @@ import { NotificationService } from './notification.service';
 @ApiTags('Notifications')
 @Controller('v1/notifications')
 @UseGuards(RolesGuard)
-@Roles(USER_ROLE.FARMER, USER_ROLE.AGENT)
+@Roles(USER_ROLE.FARMER, USER_ROLE.AGENT, USER_ROLE.ADMIN)
 export class NotificationController {
   constructor(private readonly service: NotificationService) {}
 

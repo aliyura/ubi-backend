@@ -78,9 +78,11 @@ export class BillService {
     };
   }
 
-  async getAirtimePlan(phone: number, currency: string) {
-    if (!phone || phone.toString().length !== 11)
+  async getAirtimePlan(phone: string, currency: string) {
+    console.log('phone', phone);
+    if (!phone || phone.toString().length !== 11) {
       throw new BadRequestException('Invalid phone number');
+    }
 
     const network = this.getNetworkProvider(String(phone));
     console.log('network', network);
@@ -95,6 +97,8 @@ export class BillService {
       biller_code: string;
       country: string;
     }[] = await this.apiProvider.getOperator('AIRTIME');
+
+    return plans;
 
     let plan: any;
     if (network.toLowerCase() === 'etisalat') {
@@ -178,9 +182,11 @@ export class BillService {
     };
   }
 
-  async getDataPlan(phone: number, currency: string) {
-    if (!phone || phone.toString().length !== 11)
+  async getDataPlan(phone: string, currency: string) {
+    console.log('phone', phone);
+    if (!phone || phone.toString().length !== 11) {
       throw new BadRequestException('Invalid phone number');
+    }
 
     const network = this.getNetworkProvider(String(phone));
     console.log('network', network);

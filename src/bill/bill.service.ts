@@ -811,7 +811,6 @@ export class BillService {
         bill_type === 'transport' ||
         bill_type === 'schoolfee'
       ) {
-        return await this.apiProvider.purchaseBill(body as PayBillDto, trx_ref);
       } else {
         return await this.apiProvider.purchaseBillWithIdentifier(
           body as PayBillDto,
@@ -821,7 +820,8 @@ export class BillService {
       }
     } catch (error) {
       console.error(`Error paying for ${bill_type}`, error);
-      throw new InternalServerErrorException('Payment processing failed');
+      // throw new InternalServerErrorException('Payment processing failed');
+      throw error;
     }
   }
 

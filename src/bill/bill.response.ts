@@ -93,7 +93,17 @@ export const billResponse = {
   getElectricityPlan: {
     statusCode: 200,
     message: 'Electricity plans fetched successfully',
-    data: [{ id: 1, name: 'Prepaid' }],
+    data: [
+      {
+        id: 12,
+        name: 'EKO DISCO ELECTRICITY BILLS',
+        logo: null,
+        description: 'EKO DISCO ELECTRICITY BILLS',
+        short_name: 'EKO DISCO ELECTRICITY BILLS',
+        biller_code: 'BIL112',
+        country_code: 'NG',
+      },
+    ],
   },
   getInternetPlan: {
     statusCode: 200,
@@ -158,7 +168,33 @@ export const billResponse = {
   getElectricityBillInfo: {
     statusCode: 200,
     message: 'Electricity bill info fetched successfully',
-    data: { billerCode: 'ikeja', hasVariation: true },
+    data: [
+      {
+        id: 269,
+        biller_code: 'BIL113',
+        name: 'IKEDC  PREPAID',
+        default_commission: 0.3,
+        date_added: '2020-02-11T11:09:48.087Z',
+        country: 'NG',
+        is_airtime: false,
+        biller_name: 'IKEDC  PREPAID',
+        item_code: 'UB159',
+        short_name: 'IKEDC  PREPAID',
+        fee: 100,
+        commission_on_fee: true,
+        reg_expression: '^[0-9]+$',
+        label_name: 'Meter Number',
+        amount: 0,
+        is_resolvable: true,
+        group_name: 'IKEJA DISCO ELECTRICITY BILLS',
+        category_name: 'Electricity/Utility Bills',
+        is_data: null,
+        default_commission_on_amount: null,
+        commission_on_fee_or_amount: 1,
+        validity_period: null,
+        payAmount: 150,
+      },
+    ],
   },
   getInternetBillInfo: {
     statusCode: 200,

@@ -682,7 +682,7 @@ export class BillService {
 
         console.error('Transaction failed:', error);
         if (error instanceof BadRequestException) throw error;
-        throw new InternalServerErrorException('Payment processing failed');
+        throw new InternalServerErrorException(JSON.stringify(error));
       }
     }
     // If all retries exhausted

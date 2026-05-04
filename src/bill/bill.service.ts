@@ -42,6 +42,7 @@ import { PayBillDto } from './dto/PayBillDto';
 import * as bcrypt from 'bcrypt';
 import parsePhoneNumber, { PhoneNumber } from 'libphonenumber-js';
 import { getSMSAlertMessage } from 'src/utils';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class BillService {
@@ -681,8 +682,11 @@ export class BillService {
         }
 
         console.error('Transaction failed:', error);
+        if (error instanceof AxiosError) {
+          throw new BadRequestException(error?.response?.data);
+        }
         if (error instanceof BadRequestException) throw error;
-        throw new InternalServerErrorException(JSON.stringify(error));
+        throw new InternalServerErrorException(error);
       }
     }
     // If all retries exhausted

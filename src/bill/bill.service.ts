@@ -795,15 +795,10 @@ export class BillService {
           trx_ref,
         );
       } else if (bill_type === 'electricity') {
-        return await this.apiProvider.purchaseBill(
-          {
-            amount: (body as PayDto).amount,
-            currency: (body as PayDto).currency,
-            itemCode: (body as PayDto).itemCode,
-            billerCode: (body as PayDto).billerCode,
-            billerNumber: (body as PayDto).phone,
-            walletPin: (body as PayDto).walletPin,
-          },
+        return await this.apiProvider.purchaseTopup(
+          body as PayDto,
+          user?.email,
+          bill_type,
           trx_ref,
         );
       } else if (

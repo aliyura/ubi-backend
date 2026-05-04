@@ -794,9 +794,20 @@ export class BillService {
           user?.email,
           trx_ref,
         );
+      } else if (bill_type === 'electricity') {
+        return await this.apiProvider.purchaseBill(
+          {
+            amount: (body as PayDto).amount,
+            currency: (body as PayDto).currency,
+            itemCode: (body as PayDto).itemCode,
+            billerCode: (body as PayDto).billerCode,
+            billerNumber: (body as PayDto).phone,
+            walletPin: (body as PayDto).walletPin,
+          },
+          trx_ref,
+        );
       } else if (
         bill_type === 'cable' ||
-        bill_type === 'electricity' ||
         bill_type === 'internet' ||
         bill_type === 'transport' ||
         bill_type === 'schoolfee'

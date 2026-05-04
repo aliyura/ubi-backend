@@ -329,7 +329,7 @@ export class BillController {
     status: HttpStatus.CREATED,
     example: billResponse.electricityPay,
   })
-  async electricityPay(@Body() body: PayBillDto, @Req() req: Request) {
+  async electricityPay(@Body() body: PayDto, @Req() req: Request) {
     const user = req['user'];
     return this.billService.pay(body, user, BILL_TYPE.electricity);
   }

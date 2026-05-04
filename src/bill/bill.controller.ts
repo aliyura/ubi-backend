@@ -106,7 +106,7 @@ export class BillController {
     return this.billService.getCablePlan(currency);
   }
 
-  @ApiExcludeEndpoint()
+  // @ApiExcludeEndpoint()
   @Get('electricity/get-plan')
   @ApiOperation({ summary: 'Get Electricity Plan' })
   @ApiResponse({
@@ -247,7 +247,7 @@ export class BillController {
     return this.billService.getBillInfo(billerCode, 'cable');
   }
 
-  @ApiExcludeEndpoint()
+  // @ApiExcludeEndpoint()
   @Get('electricity/get-bill-info')
   @ApiOperation({ summary: 'Get Electricity Bill Info' })
   @ApiResponse({
@@ -322,7 +322,7 @@ export class BillController {
     return this.billService.pay(body, user, BILL_TYPE.cable);
   }
 
-  @ApiExcludeEndpoint()
+  // @ApiExcludeEndpoint()
   @Post('electricity/pay')
   @ApiOperation({ summary: 'Electricity Pay' })
   @ApiResponse({

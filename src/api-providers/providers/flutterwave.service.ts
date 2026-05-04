@@ -122,6 +122,27 @@ export class FlutterwaveService {
     return response?.data;
   }
 
+  async getCategories() {
+    const url =
+      this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
+      '/v3/top-bill-categories';
+
+    try {
+      const response = await axios.get(url, {
+        headers: this.getHeaders(),
+      });
+      if (response.status !== 200) {
+        console.error(response?.data);
+        throw new InternalServerErrorException('Failed to get bill categories');
+      }
+
+      return response?.data?.data;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Failed to get bill categories');
+    }
+  }
+
   async getBillers(category: string) {
     const url =
       this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
@@ -146,20 +167,27 @@ export class FlutterwaveService {
   }
 
   async getBillInfo(billerCode: string) {
-    const url =
-      this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
-      `/v3/billers/${billerCode}/items`;
+    try {
+      const url =
+        this.configService.get<string>('FLUTTERWAVE_BASE_URL') +
+        `/v3/billers/${billerCode}/items`;
 
-    const response = await axios.get(url, {
-      headers: this.getHeaders(),
-    });
+      const response = await axios.get(url, {
+        headers: this.getHeaders(),
+      });
 
-    if (response.status !== 200) {
-      console.error(response?.data);
+      if (response.status !== 200) {
+        console.error(response?.data);
+        throw new InternalServerErrorException(
+          'Failed to get bill information',
+        );
+      }
+
+      return response?.data?.data;
+    } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException('Failed to get bill information');
     }
-
-    return response?.data?.data;
   }
 
   async verifyBillerNumber(

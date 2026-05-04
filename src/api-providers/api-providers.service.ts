@@ -487,6 +487,10 @@ export class ApiProviderService {
     return this.reloadlyService.getGiftCardCategories();
   }
 
+  async getCategories() {
+    return this.flutterwaveService.getCategories();
+  }
+
   async getBillInfo(billerCode: string) {
     return this.flutterwaveService.getBillInfo(billerCode);
   }

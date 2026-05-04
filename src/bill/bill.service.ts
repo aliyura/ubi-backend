@@ -246,11 +246,14 @@ export class BillService {
   }
 
   async getElectricityPlan(currency: string) {
-    const countryISOCode =
-      this.apiProvider.getCountryCodeFromCurrency(currency);
-    const electricityPlan = await this.prisma.electricityPlan.findMany({
-      where: { countryISOCode },
-    });
+    // const countryISOCode =
+    //   this.apiProvider.getCountryCodeFromCurrency(currency);
+    // const electricityPlan = await this.prisma.electricityPlan.findMany({
+    //   where: { countryISOCode },
+    // });
+
+    // const electricityPlan = await this.apiProvider.getBillInfo('UTILITYBILLS');
+    const electricityPlan = await this.apiProvider.getOperator('UTILITYBILLS');
 
     return {
       message: 'Electricity plan retrieve successfully',

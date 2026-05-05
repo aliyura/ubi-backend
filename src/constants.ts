@@ -46,16 +46,18 @@ export const MTN_PREFIXES = [
   '07025',
   '07026',
   '0703',
+  '0704',
   '0706',
 ];
 
 export const GLO_PREFIXES = [
   '0805',
+  '0807',
+  '0811',
+  '0815',
+  '0817',
   '0705',
   '0905',
-  '0807',
-  '0815',
-  '0811',
   '0915',
 ];
 
@@ -69,9 +71,10 @@ export const AIRTEL_PREFIXES = [
   '0902',
   '0904',
   '0907',
+  '0911',
   '0912',
 ];
-export const ETISALAT_PREFIXES = ['0809', '0909', '0817', '0818', '0908'];
+export const ETISALAT_PREFIXES = ['0809', '0817', '0818', '0908', '0909'];
 
 export const defaultBankCode = '090286';
 export const defaultBankName = 'Bell MFB';

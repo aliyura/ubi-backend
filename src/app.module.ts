@@ -33,6 +33,7 @@ import { FulfillmentModule } from './fulfillment/fulfillment.module';
 import { RepaymentModule } from './repayment/repayment.module';
 import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.module';
 import { NotificationModule } from './notification/notification.module';
+import { StatementModule } from './statement/statement.module';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { NotificationModule } from './notification/notification.module';
     RepaymentModule,
     MarketplaceOrderModule,
     NotificationModule,
+    StatementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

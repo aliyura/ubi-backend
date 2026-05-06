@@ -302,7 +302,7 @@ export class BillController {
     return this.billService.verifyBillerNumber(body, 'cable');
   }
 
-  @ApiExcludeEndpoint()
+  // @ApiExcludeEndpoint()
   @Post('electricity/verify-meter-number')
   @ApiOperation({ summary: 'Verify Meter Number' })
   @ApiResponse({

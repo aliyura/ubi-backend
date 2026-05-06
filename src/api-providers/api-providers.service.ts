@@ -375,6 +375,13 @@ export class ApiProviderService {
     return this.reloadlyService.getAutoDetectOperator(phone, countryisoCode);
   }
 
+  async verifyBiller(itemCode: string, customerNumber) {
+    return this.flutterwaveService.verifyBillerNumber(itemCode, {
+      code: itemCode,
+      customer: customerNumber,
+    });
+  }
+
   async purchaseTopup(
     body: PayDto,
     email: string,

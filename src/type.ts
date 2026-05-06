@@ -3,6 +3,11 @@ interface EmailOptions {
   subject: string;
   template: string; // this is the template name
   context?: any;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }>;
 }
 
 interface SafeHavenAccount {

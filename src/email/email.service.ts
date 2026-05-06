@@ -12,6 +12,7 @@ export class EmailService {
         subject: options.subject,
         template: options.template,
         context: options.context || {},
+        attachments: options.attachments,
       });
     } catch (err) {
       console.log('error sending mail', err);

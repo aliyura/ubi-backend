@@ -2,12 +2,16 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { USER_ROLE } from '@prisma/client';
 import { format } from 'date-fns';
 import * as PDFDocument from 'pdfkit';
+import { EmailService } from 'src/email/email.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { StatementQueryDto, StatementSection } from './dto/statement-query.dto';
 
 @Injectable()
 export class StatementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async generateCsv(query: StatementQueryDto, user: any): Promise<Buffer> {
     this.validateDateRange(query.startDate, query.endDate);
@@ -20,6 +24,25 @@ export class StatementService {
     this.validateDateRange(query.startDate, query.endDate);
     const data = await this.fetchStatementData(query, user);
     return this.buildPdfContent(data, query, user);
+  }
+
+  async sendStatementEmail(
+    buffer: Buffer,
+    filename: string,
+    contentType: string,
+    user: any,
+  ): Promise<void> {
+    await this.emailService.sendEmail({
+      to: user.email,
+      subject: `Your Account Statement – ${format(new Date(), 'MMMM yyyy')}`,
+      template: 'user/statement',
+      context: {
+        fullname: user.fullname,
+        filename,
+        year: new Date().getFullYear(),
+      },
+      attachments: [{ filename, content: buffer, contentType }],
+    });
   }
 
   private validateDateRange(startDate: string, endDate: string) {

@@ -11,5 +11,6 @@ import { NotificationModule } from 'src/notification/notification.module';
   imports: [PrismaModule, ApiProvidersModule, EmailModule, FileModule, NotificationModule],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}

@@ -15,6 +15,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { FULFILLMENT_METHOD, MARKETPLACE_ORDER_STATUS } from '@prisma/client';
 
+export enum MARKETPLACE_PAYMENT_METHOD {
+  credit = 'credit',
+  transfer = 'transfer',
+  card = 'card',
+}
+
 export class MarketplaceOrderItemDto {
   @ApiProperty()
   @IsUUID()
@@ -34,6 +40,14 @@ export class PlaceMarketplaceOrderDto {
   @ValidateNested({ each: true })
   @Type(() => MarketplaceOrderItemDto)
   items: MarketplaceOrderItemDto[];
+
+  @ApiPropertyOptional({
+    enum: MARKETPLACE_PAYMENT_METHOD,
+    default: MARKETPLACE_PAYMENT_METHOD.credit,
+  })
+  @IsOptional()
+  @IsEnum(MARKETPLACE_PAYMENT_METHOD)
+  paymentMethod?: MARKETPLACE_PAYMENT_METHOD;
 
   @ApiPropertyOptional({ enum: FULFILLMENT_METHOD })
   @IsOptional()

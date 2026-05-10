@@ -8,6 +8,7 @@ import {
   AdminQueryAgentsDto,
   AdminQueryLoanDto,
   AssignAgentDto,
+  CancelLoanDto,
   ManualStatusDto,
 } from './dto';
 import {
@@ -188,6 +189,72 @@ export class AdminLoanService {
     };
   }
 
+  async getAssignedFarmerPreviousLoans(
+    agentId: string,
+    farmerId: string,
+    query: AdminQueryLoanDto,
+  ) {
+    const { page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [agent, farmer] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: agentId } }),
+      this.prisma.user.findUnique({ where: { id: farmerId } }),
+    ]);
+
+    if (!agent || agent.role !== USER_ROLE.AGENT) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    if (!farmer || farmer.role !== USER_ROLE.FARMER) {
+      throw new NotFoundException('Farmer not found');
+    }
+
+    const where = {
+      agentId,
+      userId: farmerId,
+      repaymentPlan: { isNot: null },
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.loanApplication.findMany({
+        where,
+        include: {
+          farm: true,
+          items: true,
+          repaymentPlan: true,
+          user: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+          agent: {
+            select: {
+              id: true,
+              fullname: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+        },
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.loanApplication.count({ where }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Assigned farmer previous loans retrieved',
+      data: items,
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+    };
+  }
+
   async getApplicationDetail(id: string) {
     const app = await this.prisma.loanApplication.findUnique({
       where: { id },
@@ -356,19 +423,28 @@ export class AdminLoanService {
       );
     }
 
-    const decisionNotificationTypeMap: Partial<Record<LOAN_APPLICATION_STATUS, NOTIFICATION_TYPE>> = {
-      [LOAN_APPLICATION_STATUS.Approved]: NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED,
-      [LOAN_APPLICATION_STATUS.Rejected]: NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED,
-      [LOAN_APPLICATION_STATUS.MoreInfoRequired]: NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED,
-      [LOAN_APPLICATION_STATUS.PendingFieldVerification]: NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION,
+    const decisionNotificationTypeMap: Partial<
+      Record<LOAN_APPLICATION_STATUS, NOTIFICATION_TYPE>
+    > = {
+      [LOAN_APPLICATION_STATUS.Approved]:
+        NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED,
+      [LOAN_APPLICATION_STATUS.Rejected]:
+        NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED,
+      [LOAN_APPLICATION_STATUS.MoreInfoRequired]:
+        NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED,
+      [LOAN_APPLICATION_STATUS.PendingFieldVerification]:
+        NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION,
     };
     const decisionNotificationType = decisionNotificationTypeMap[newStatus];
     if (decisionNotificationType) {
       const decisionTitleMap: Record<string, string> = {
         [NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED]: 'Loan Approved',
-        [NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED]: 'Loan Application Rejected',
-        [NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED]: 'Additional Information Required',
-        [NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION]: 'Field Verification Initiated',
+        [NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED]:
+          'Loan Application Rejected',
+        [NOTIFICATION_TYPE.LOAN_MORE_INFO_REQUIRED]:
+          'Additional Information Required',
+        [NOTIFICATION_TYPE.LOAN_PENDING_FIELD_VERIFICATION]:
+          'Field Verification Initiated',
       };
       await this.notificationService.create({
         userId: app.userId,
@@ -1045,5 +1121,268 @@ export class AdminLoanService {
         sevenDaySuccessRate,
       },
     };
+  }
+
+  async approveLoan(id: string, body: AdminDecisionDto, admin: User) {
+    const app = await this.prisma.loanApplication.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+
+    const newStatus = LOAN_APPLICATION_STATUS.Approved;
+    this.loanAppService.validateTransition(app.status, newStatus);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.loanDecision.create({
+        data: {
+          applicationId: id,
+          decidedBy: admin.id,
+          decision: LOAN_DECISION_TYPE.approved,
+          reason: body.reason,
+          note: body.note,
+          approvedTotalValue: body.approvedTotalValue,
+          repaymentTerms: body.repaymentTerms as any,
+          supplierId: body.supplierId,
+        },
+      });
+
+      if (body.approvedItems?.length) {
+        await Promise.all(
+          body.approvedItems.map((item) =>
+            tx.loanApplicationItem.update({
+              where: { id: item.applicationItemId },
+              data: {
+                approvedQuantity: item.approvedQuantity,
+                approvedAmount: item.approvedAmount,
+              },
+            }),
+          ),
+        );
+      }
+
+      await tx.loanApplication.update({
+        where: { id },
+        data: { status: newStatus },
+      });
+
+      await tx.loanStatusHistory.create({
+        data: {
+          applicationId: id,
+          fromStatus: app.status,
+          toStatus: newStatus,
+          changedBy: admin.id,
+          reason: body.reason,
+          note: body.note,
+        },
+      });
+
+      await tx.loanAuditLog.create({
+        data: {
+          applicationId: id,
+          action: 'LOAN_APPROVED',
+          performedById: admin.id,
+          performedByRole: admin.role,
+          details: { reason: body.reason, note: body.note },
+        },
+      });
+
+      if (body.repaymentTerms && body.approvedTotalValue) {
+        const {
+          numberOfInstallments,
+          frequency,
+          firstDueDate,
+          serviceCharge = 0,
+        } = body.repaymentTerms;
+        const totalRepayment = Helpers.round2(
+          body.approvedTotalValue + serviceCharge,
+        );
+        const installmentAmount = Helpers.round2(
+          totalRepayment / numberOfInstallments,
+        );
+        const firstDate = new Date(firstDueDate);
+
+        const lastDueDate = new Date(firstDate);
+        if (frequency === 'monthly')
+          lastDueDate.setMonth(
+            lastDueDate.getMonth() + (numberOfInstallments - 1),
+          );
+        else if (frequency === 'weekly')
+          lastDueDate.setDate(
+            lastDueDate.getDate() + (numberOfInstallments - 1) * 7,
+          );
+
+        await tx.repaymentPlan.create({
+          data: {
+            applicationId: id,
+            principalEquivalent: body.approvedTotalValue,
+            serviceCharge,
+            totalRepaymentAmount: totalRepayment,
+            repaymentFrequency: frequency,
+            numberOfInstallments,
+            installmentAmount,
+            firstDueDate: firstDate,
+            lastDueDate,
+            outstandingBalance: totalRepayment,
+            repayments: {
+              create: Array.from({ length: numberOfInstallments }, (_, i) => {
+                const dueDate = new Date(firstDate);
+                if (frequency === 'monthly')
+                  dueDate.setMonth(dueDate.getMonth() + i);
+                else if (frequency === 'weekly')
+                  dueDate.setDate(dueDate.getDate() + i * 7);
+                return {
+                  installmentNumber: i + 1,
+                  dueDate,
+                  amount: installmentAmount,
+                };
+              }),
+            },
+          },
+        });
+      }
+    });
+
+    const farmer = await this.prisma.user.findUnique({
+      where: { id: app.userId },
+      select: { phoneNumber: true },
+    });
+    if (farmer) {
+      await this.notifications.notifyOnStatusChange(
+        farmer.phoneNumber,
+        newStatus,
+        app.applicationRef,
+      );
+    }
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.LOAN_APPLICATION_APPROVED,
+      title: 'Loan Approved',
+      message: `Your loan application ${app.applicationRef} has been approved.`,
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
+
+    return { status: true, message: 'Loan approved successfully', data: null };
+  }
+
+  async rejectLoan(id: string, body: AdminDecisionDto, admin: User) {
+    const app = await this.prisma.loanApplication.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+
+    const newStatus = LOAN_APPLICATION_STATUS.Rejected;
+    this.loanAppService.validateTransition(app.status, newStatus);
+
+    await this.prisma.$transaction([
+      this.prisma.loanDecision.create({
+        data: {
+          applicationId: id,
+          decidedBy: admin.id,
+          decision: LOAN_DECISION_TYPE.rejected,
+          reason: body.reason,
+          note: body.note,
+        },
+      }),
+      this.prisma.loanApplication.update({
+        where: { id },
+        data: { status: newStatus },
+      }),
+      this.prisma.loanStatusHistory.create({
+        data: {
+          applicationId: id,
+          fromStatus: app.status,
+          toStatus: newStatus,
+          changedBy: admin.id,
+          reason: body.reason,
+          note: body.note,
+        },
+      }),
+      this.prisma.loanAuditLog.create({
+        data: {
+          applicationId: id,
+          action: 'LOAN_REJECTED',
+          performedById: admin.id,
+          performedByRole: admin.role,
+          details: { reason: body.reason, note: body.note },
+        },
+      }),
+    ]);
+
+    const farmer = await this.prisma.user.findUnique({
+      where: { id: app.userId },
+      select: { phoneNumber: true },
+    });
+    if (farmer) {
+      await this.notifications.notifyOnStatusChange(
+        farmer.phoneNumber,
+        newStatus,
+        app.applicationRef,
+      );
+    }
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.LOAN_APPLICATION_REJECTED,
+      title: 'Loan Application Rejected',
+      message: `Your loan application ${app.applicationRef} has been rejected. Reason: ${body.reason || 'Not specified'}`,
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
+
+    return { status: true, message: 'Loan rejected successfully', data: null };
+  }
+
+  async cancelLoan(id: string, body: CancelLoanDto, admin: User) {
+    const app = await this.prisma.loanApplication.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException('Application not found');
+
+    const newStatus = LOAN_APPLICATION_STATUS.Cancelled;
+    this.loanAppService.validateTransition(app.status, newStatus);
+
+    await this.prisma.$transaction([
+      this.prisma.loanApplication.update({
+        where: { id },
+        data: { status: newStatus },
+      }),
+      this.prisma.loanStatusHistory.create({
+        data: {
+          applicationId: id,
+          fromStatus: app.status,
+          toStatus: newStatus,
+          changedBy: admin.id,
+          reason: body.remark,
+        },
+      }),
+      this.prisma.loanAuditLog.create({
+        data: {
+          applicationId: id,
+          action: 'LOAN_CANCELLED',
+          performedById: admin.id,
+          performedByRole: admin.role,
+          details: { remark: body.remark },
+        },
+      }),
+    ]);
+
+    const farmer = await this.prisma.user.findUnique({
+      where: { id: app.userId },
+      select: { phoneNumber: true },
+    });
+    if (farmer) {
+      await this.notifications.notifyOnStatusChange(
+        farmer.phoneNumber,
+        newStatus,
+        app.applicationRef,
+      );
+    }
+
+    await this.notificationService.create({
+      userId: app.userId,
+      type: NOTIFICATION_TYPE.LOAN_APPLICATION_CANCELLED,
+      title: 'Loan Application Cancelled',
+      message: `Your loan application ${app.applicationRef} has been cancelled. ${body.remark ? `Remark: ${body.remark}` : ''}`,
+      resourceId: id,
+      resourceType: 'loan_application',
+    });
+
+    return { status: true, message: 'Loan cancelled successfully', data: null };
   }
 }

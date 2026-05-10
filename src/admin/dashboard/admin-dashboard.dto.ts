@@ -1,6 +1,21 @@
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  IsUUID,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BILL_TYPE, TRANSACTION_CATEGORY, TRANSACTION_TYPE } from '@prisma/client';
+import {
+  BILL_TYPE,
+  TRANSACTION_CATEGORY,
+  TRANSACTION_TYPE,
+  USER_ROLE,
+  COUNTRY,
+  GENDER,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 
 export class DateRangeDto {
@@ -33,7 +48,10 @@ export class PaginationDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @ApiPropertyOptional({ example: 20, description: 'Number of results per page' })
+  @ApiPropertyOptional({
+    example: 20,
+    description: 'Number of results per page',
+  })
   limit?: number = 20;
 }
 
@@ -78,7 +96,8 @@ export class TransactionsHistoryQueryDto extends PaginationDto {
   @IsEnum(BILL_TYPE)
   @ApiPropertyOptional({
     enum: BILL_TYPE,
-    description: 'Filter by bill type (only applies to bill payment transactions)',
+    description:
+      'Filter by bill type (only applies to bill payment transactions)',
     example: BILL_TYPE.airtime,
   })
   billType?: BILL_TYPE;
@@ -138,4 +157,65 @@ export class DisputesPipelineQueryDto extends PaginationDto {
     example: 'SCM-001',
   })
   search?: string;
+}
+
+export class AdvancedTransactionsQueryDto extends TransactionsHistoryQueryDto {
+  @IsOptional()
+  @IsEnum(USER_ROLE)
+  @ApiPropertyOptional({
+    enum: USER_ROLE,
+    description: 'Filter by user role',
+    example: USER_ROLE.FARMER,
+  })
+  userRole?: USER_ROLE;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Filter by user state',
+    example: 'Lagos',
+  })
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Filter by user city',
+    example: 'Ikeja',
+  })
+  city?: string;
+
+  @IsOptional()
+  @IsEnum(COUNTRY)
+  @ApiPropertyOptional({
+    enum: COUNTRY,
+    description: 'Filter by user country',
+    example: COUNTRY.NG,
+  })
+  country?: COUNTRY;
+
+  @IsOptional()
+  @IsEnum(GENDER)
+  @ApiPropertyOptional({
+    enum: GENDER,
+    description: 'Filter by user gender',
+    example: GENDER.M,
+  })
+  gender?: GENDER;
+
+  @IsOptional()
+  @IsUUID()
+  @ApiPropertyOptional({
+    description: 'Filter by agent who onboarded the farmer',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  agentId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    description: 'Filter by agent name (searches in agent fullname)',
+    example: 'John Doe',
+  })
+  agentName?: string;
 }

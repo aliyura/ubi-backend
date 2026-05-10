@@ -116,6 +116,16 @@ export class MarketplaceOrderAdminService {
       throw new BadRequestException('Only pending orders can be confirmed');
     }
 
+    const paymentEvent = await this.prisma.paymentEvent.findFirst({
+      where: { refId: order.orderRef },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (paymentEvent && paymentEvent.status !== 'successful') {
+      throw new BadRequestException(
+        'Checkout payment is not successful yet. Confirm payment before confirming this order.',
+      );
+    }
+
     await this.prisma.$transaction(async (tx) => {
       for (const item of order.items) {
         const resource = await tx.loanResource.findUnique({

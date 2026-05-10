@@ -76,6 +76,8 @@ export class CreateLoanApplicationDto {
   declarations?: boolean[];
 }
 
+export class CreateMarketplaceLoanApplicationDto extends CreateLoanApplicationDto {}
+
 export class QueryLoanApplicationDto {
   @ApiPropertyOptional({ enum: LOAN_APPLICATION_STATUS })
   @IsOptional()

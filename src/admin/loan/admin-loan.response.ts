@@ -10,7 +10,13 @@ export const adminLoanResponse = {
         status: 'UnderReview',
         totalEstimatedValue: 61500,
         submittedAt: '2026-04-18T10:30:00.000Z',
-        farm: { name: 'Abubakar North Farm', state: 'Katsina', lga: 'Kankia', mainCropType: 'Maize', sizeValue: 5 },
+        farm: {
+          name: 'Abubakar North Farm',
+          state: 'Katsina',
+          lga: 'Kankia',
+          mainCropType: 'Maize',
+          sizeValue: 5,
+        },
         agentRecommendation: null,
         items: [
           { itemName: 'Maize Seeds (OPV)', quantity: 5, totalAmount: 17500 },
@@ -44,7 +50,14 @@ export const adminLoanResponse = {
       status: 'UnderReview',
       totalEstimatedValue: 61500,
       farm: { name: 'Abubakar North Farm', state: 'Katsina', photos: [] },
-      items: [{ itemName: 'Maize Seeds (OPV)', quantity: 5, unitPrice: 3500, totalAmount: 17500 }],
+      items: [
+        {
+          itemName: 'Maize Seeds (OPV)',
+          quantity: 5,
+          unitPrice: 3500,
+          totalAmount: 17500,
+        },
+      ],
       eligibilityChecks: [
         { checkName: 'KYC Verification', result: 'pass' },
         { checkName: 'Active Loan Conflict', result: 'pass' },
@@ -53,20 +66,51 @@ export const adminLoanResponse = {
       fieldVerification: null,
       decisions: [],
       statusHistory: [
-        { toStatus: 'Submitted', changedBy: 'user-uuid-001', createdAt: '2026-04-18T10:30:00.000Z' },
-        { toStatus: 'UnderReview', changedBy: 'admin-uuid-001', createdAt: '2026-04-18T11:00:00.000Z' },
+        {
+          toStatus: 'Submitted',
+          changedBy: 'user-uuid-001',
+          createdAt: '2026-04-18T10:30:00.000Z',
+        },
+        {
+          toStatus: 'UnderReview',
+          changedBy: 'admin-uuid-001',
+          createdAt: '2026-04-18T11:00:00.000Z',
+        },
       ],
       fulfillment: null,
       repaymentPlan: null,
       auditLogs: [
-        { action: 'APPLICATION_SUBMITTED', performedByRole: 'FARMER', createdAt: '2026-04-18T10:30:00.000Z' },
-        { action: 'STATUS_UPDATED_TO_UNDERREVIEW', performedByRole: 'ADMIN', createdAt: '2026-04-18T11:00:00.000Z' },
+        {
+          action: 'APPLICATION_SUBMITTED',
+          performedByRole: 'FARMER',
+          createdAt: '2026-04-18T10:30:00.000Z',
+        },
+        {
+          action: 'STATUS_UPDATED_TO_UNDERREVIEW',
+          performedByRole: 'ADMIN',
+          createdAt: '2026-04-18T11:00:00.000Z',
+        },
       ],
     },
   },
   decision: {
     statusCode: 200,
     message: 'Decision recorded successfully',
+    data: null,
+  },
+  approve: {
+    status: true,
+    message: 'Loan approved successfully',
+    data: null,
+  },
+  reject: {
+    status: true,
+    message: 'Loan rejected successfully',
+    data: null,
+  },
+  cancel: {
+    status: true,
+    message: 'Loan cancelled successfully',
     data: null,
   },
   assignAgent: {
@@ -83,8 +127,22 @@ export const adminLoanResponse = {
     statusCode: 200,
     message: 'Audit log retrieved',
     data: [
-      { id: 'log-uuid-001', action: 'APPLICATION_SUBMITTED', performedById: 'user-uuid-001', performedByRole: 'FARMER', details: { eligibilityResult: 'pass' }, createdAt: '2026-04-18T10:30:00.000Z' },
-      { id: 'log-uuid-002', action: 'DECISION_APPROVED', performedById: 'admin-uuid-001', performedByRole: 'ADMIN', details: { decision: 'approved', reason: 'All checks passed' }, createdAt: '2026-04-19T09:00:00.000Z' },
+      {
+        id: 'log-uuid-001',
+        action: 'APPLICATION_SUBMITTED',
+        performedById: 'user-uuid-001',
+        performedByRole: 'FARMER',
+        details: { eligibilityResult: 'pass' },
+        createdAt: '2026-04-18T10:30:00.000Z',
+      },
+      {
+        id: 'log-uuid-002',
+        action: 'DECISION_APPROVED',
+        performedById: 'admin-uuid-001',
+        performedByRole: 'ADMIN',
+        details: { decision: 'approved', reason: 'All checks passed' },
+        createdAt: '2026-04-19T09:00:00.000Z',
+      },
     ],
   },
   summaryReport: {
@@ -118,9 +176,21 @@ export const adminLoanResponse = {
     statusCode: 200,
     message: 'Top items retrieved',
     data: [
-      { itemName: 'Maize Seeds (OPV)', _sum: { quantity: 1250, totalAmount: 4375000 }, _count: { itemName: 180 } },
-      { itemName: 'Urea Fertilizer', _sum: { quantity: 620, totalAmount: 13640000 }, _count: { itemName: 95 } },
-      { itemName: 'NPK Fertilizer', _sum: { quantity: 380, totalAmount: 7220000 }, _count: { itemName: 70 } },
+      {
+        itemName: 'Maize Seeds (OPV)',
+        _sum: { quantity: 1250, totalAmount: 4375000 },
+        _count: { itemName: 180 },
+      },
+      {
+        itemName: 'Urea Fertilizer',
+        _sum: { quantity: 620, totalAmount: 13640000 },
+        _count: { itemName: 95 },
+      },
+      {
+        itemName: 'NPK Fertilizer',
+        _sum: { quantity: 380, totalAmount: 7220000 },
+        _count: { itemName: 70 },
+      },
     ],
   },
   overview: {
@@ -191,6 +261,46 @@ export const adminLoanResponse = {
     ],
     meta: { total: 1, page: 1, limit: 20, pages: 1 },
   },
+  getAssignedFarmerPreviousLoans: {
+    statusCode: 200,
+    message: 'Assigned farmer previous loans retrieved',
+    data: [
+      {
+        id: 'app-uuid-010',
+        applicationRef: 'UBI-2026-K9L2M1N',
+        userId: 'farmer-uuid-001',
+        agentId: 'agent-uuid-001',
+        status: 'Completed',
+        totalEstimatedValue: 120000,
+        currency: 'NGN',
+        submittedAt: '2026-01-12T08:30:00.000Z',
+        user: {
+          id: 'farmer-uuid-001',
+          fullname: 'Abubakar Sani',
+          email: 'abubakar.sani@example.com',
+          phoneNumber: '08098765432',
+        },
+        agent: {
+          id: 'agent-uuid-001',
+          fullname: 'Ibrahim Musa',
+          email: 'ibrahim.musa@ubi.com',
+          phoneNumber: '08012345678',
+        },
+        farm: { name: 'Abubakar North Farm', state: 'Katsina', lga: 'Kankia' },
+        items: [
+          { itemName: 'Hybrid Maize Seeds', quantity: 10, totalAmount: 40000 },
+          { itemName: 'NPK Fertilizer', quantity: 4, totalAmount: 80000 },
+        ],
+        repaymentPlan: {
+          totalRepaymentAmount: 126000,
+          amountRepaid: 126000,
+          outstandingBalance: 0,
+          status: 'completed',
+        },
+      },
+    ],
+    meta: { total: 1, page: 1, limit: 20, pages: 1 },
+  },
   getAgentApplications: {
     statusCode: 200,
     message: 'Applications retrieved',
@@ -202,7 +312,13 @@ export const adminLoanResponse = {
         status: 'PendingFieldVerification',
         totalEstimatedValue: 45000,
         submittedAt: '2026-04-20T09:00:00.000Z',
-        farm: { name: 'Sani East Farm', state: 'Katsina', lga: 'Kankia', mainCropType: 'Sorghum', sizeValue: 3 },
+        farm: {
+          name: 'Sani East Farm',
+          state: 'Katsina',
+          lga: 'Kankia',
+          mainCropType: 'Sorghum',
+          sizeValue: 3,
+        },
         agentRecommendation: null,
         items: [{ itemName: 'Sorghum Seeds', quantity: 3, totalAmount: 10500 }],
       },
@@ -218,8 +334,18 @@ export const adminLoanResponse = {
         applicationRef: 'UBI-2026-XY7ZW1',
         status: 'PendingFieldVerification',
         submittedAt: '2026-04-20T09:00:00.000Z',
-        farm: { id: 'farm-uuid-002', name: 'Sani East Farm', state: 'Katsina', lga: 'Kankia' },
-        user: { id: 'farmer-uuid-001', fullname: 'Abubakar Sani', email: 'abubakar.sani@example.com', phoneNumber: '08098765432' },
+        farm: {
+          id: 'farm-uuid-002',
+          name: 'Sani East Farm',
+          state: 'Katsina',
+          lga: 'Kankia',
+        },
+        user: {
+          id: 'farmer-uuid-001',
+          fullname: 'Abubakar Sani',
+          email: 'abubakar.sani@example.com',
+          phoneNumber: '08098765432',
+        },
         fieldVerification: null,
       },
     ],
@@ -254,8 +380,12 @@ export const adminLoanResponse = {
         id: 'log-uuid-001',
         agentId: 'agent-uuid-001',
         action: 'SUBMIT_FIELD_VERIFICATION',
-        description: 'Submitted field verification report for application UBI-2026-XY7ZW1',
-        metadata: { recommendation: 'recommended', applicationId: 'app-uuid-002' },
+        description:
+          'Submitted field verification report for application UBI-2026-XY7ZW1',
+        metadata: {
+          recommendation: 'recommended',
+          applicationId: 'app-uuid-002',
+        },
         applicationId: 'app-uuid-002',
         createdAt: '2026-04-24T10:30:00.000Z',
       },

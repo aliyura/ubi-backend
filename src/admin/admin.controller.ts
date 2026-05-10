@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -36,7 +37,7 @@ export class AdminController {
   @Get('profile')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get admin profile' })
   @ApiResponse({ status: HttpStatus.OK, example: adminResponse.adminProfile })
@@ -47,9 +48,11 @@ export class AdminController {
   @Get('system-settings')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get system settings: daily transfer limits and fees' })
+  @ApiOperation({
+    summary: 'Get system settings: daily transfer limits and fees',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     example: adminResponse.systemSettings,
@@ -63,7 +66,10 @@ export class AdminController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Invite an agent by email (super admin only)' })
+  @ApiOperation({
+    summary:
+      'Invite a staff user by email as AGENT or CUSTOMER_SUPPORT (super admin only)',
+  })
   @ApiResponse({ status: HttpStatus.OK, example: adminResponse.inviteAgent })
   async inviteAgent(@Body() body: InviteAgentDto, @Req() req: Request) {
     return this.adminService.inviteAgent(body, (req as any).user);
@@ -153,5 +159,23 @@ export class AdminController {
     @Param('bill_type') bill_type: string,
   ) {
     return this.adminService.deletePlan(id, bill_type.toLowerCase());
+  }
+
+  @Get('agents/:agentId/farmers')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all farmers linked to a specific agent' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: adminResponse.getAgentFarmers,
+  })
+  async getAgentFarmers(
+    @Param('agentId', ParseUUIDPipe) agentId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.adminService.getAgentFarmers(agentId, startDate, endDate);
   }
 }

@@ -76,6 +76,7 @@ import { WalletSetupDto } from 'src/wallet/dto/WalletSetupDto';
 import { FileService } from 'src/file/file.service';
 import { ConfigService } from '@nestjs/config';
 import {
+  FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
   REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
   USER_FILE_UPLOAD_FOLDER_NAME,
 } from 'src/constants';
@@ -96,7 +97,10 @@ export class UserService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async register(body: RegisterDto | RegisterFarmerDto) {
+  async register(
+    body: RegisterDto | RegisterFarmerDto,
+    policeReport?: Express.Multer.File,
+  ) {
     let user: User;
     try {
       user = await this.prisma.$transaction(async (tx) => {
@@ -173,6 +177,33 @@ export class UserService {
         }
 
         const newUser = await tx.user.create({ data: payload });
+
+        if (body.accountType === ACCOUNT_TYPE.FARMER) {
+          if (!policeReport) {
+            throw new BadRequestException(
+              'Police report file is required for farmer registration',
+            );
+          }
+
+          const uploadResponse = await this.fileService.uploadFile(policeReport, {
+            folder: FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
+            prefix: newUser.id,
+          });
+
+          if (!uploadResponse.success || !uploadResponse.data) {
+            throw new BadRequestException(
+              uploadResponse.message || 'Unable to upload police report',
+            );
+          }
+
+          await tx.user.update({
+            where: { id: newUser.id },
+            data: {
+              policeReportUrl: uploadResponse.data.url,
+              policeReportFilename: uploadResponse.data.fileName,
+            },
+          });
+        }
 
         const farmData = (body as RegisterDto).farm;
         if (farmData) {
@@ -269,6 +300,11 @@ export class UserService {
     );
 
     const newUser = await this.prisma.$transaction(async (tx) => {
+      const invitedRole =
+        invitation.role === USER_ROLE.CUSTOMER_SUPPORT
+          ? USER_ROLE.CUSTOMER_SUPPORT
+          : USER_ROLE.AGENT;
+
       const user = await tx.user.create({
         data: {
           fullname: body.fullname,
@@ -277,8 +313,11 @@ export class UserService {
           email: invitation.email,
           password: hashedPassword,
           dateOfBirth: body.dateOfBirth,
-          accountType: ACCOUNT_TYPE.AGENT,
-          role: USER_ROLE.AGENT,
+          accountType:
+            invitedRole === USER_ROLE.CUSTOMER_SUPPORT
+              ? ACCOUNT_TYPE.ADMIN
+              : ACCOUNT_TYPE.AGENT,
+          role: invitedRole,
           referralCode: await this.generateReferralCode(),
         },
       });
@@ -299,7 +338,10 @@ export class UserService {
     });
 
     return {
-      message: 'Agent registered successfully',
+      message:
+        newUser.role === USER_ROLE.CUSTOMER_SUPPORT
+          ? 'Customer support registered successfully'
+          : 'Agent registered successfully',
       user: plainToInstance(UserEntity, newUser),
       statusCode: HttpStatus.CREATED,
     };

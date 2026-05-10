@@ -154,7 +154,7 @@ export class UpdateLoanResourceDto {
 export class QueryLoanResourceDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   categoryId?: string;
 
   @ApiPropertyOptional()

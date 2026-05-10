@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -21,13 +22,18 @@ import {
   QueryMarketplaceOrderDto,
 } from './dto';
 import { marketplaceOrderAdminResponse } from './marketplace-order-admin.response';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/guards/roles.decorator';
+import { USER_ROLE } from '@prisma/client';
 
 @ApiTags('Admin — Marketplace Orders')
 @Controller('v1/admin/marketplace-orders')
+@UseGuards(RolesGuard)
 export class MarketplaceOrderAdminController {
   constructor(private readonly service: MarketplaceOrderAdminService) {}
 
   @Get()
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all marketplace orders' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.listOrders })
@@ -36,6 +42,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Get(':orderId')
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get full marketplace order detail' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.getOrderDetail })
@@ -44,6 +51,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Post(':orderId/confirm')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm order and deduct stock from inventory' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.confirmOrder })
@@ -56,6 +64,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Post(':orderId/pack')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as packed' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.packOrder })
@@ -64,6 +73,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Post(':orderId/dispatch')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as dispatched' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.dispatchOrder })
@@ -76,6 +86,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Post(':orderId/deliver')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Record delivery and upload proof' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.deliverOrder })
@@ -88,6 +99,7 @@ export class MarketplaceOrderAdminController {
   }
 
   @Post(':orderId/cancel')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin cancel order (re-credits stock if confirmed)' })
   @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.cancelOrder })

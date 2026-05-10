@@ -32,7 +32,7 @@ export class MarketplaceOrderController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Place a marketplace order using approved loan credit' })
+  @ApiOperation({ summary: 'Place a marketplace order using credit, transfer, or card' })
   @ApiResponse({ status: HttpStatus.CREATED, example: marketplaceOrderResponse.placeOrder })
   placeOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
@@ -40,6 +40,21 @@ export class MarketplaceOrderController {
     @Req() req: Request,
   ) {
     return this.service.placeOrder(applicationId, body, (req as any).user);
+  }
+
+  @Post('checkout')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary:
+      'Checkout directly and proceed to payment via credit, bank transfer, or card',
+  })
+  @ApiResponse({ status: HttpStatus.CREATED, example: marketplaceOrderResponse.checkout })
+  checkout(
+    @Param('applicationId', ParseUUIDPipe) applicationId: string,
+    @Body() body: PlaceMarketplaceOrderDto,
+    @Req() req: Request,
+  ) {
+    return this.service.checkout(applicationId, body, (req as any).user);
   }
 
   @Get()
@@ -64,6 +79,22 @@ export class MarketplaceOrderController {
     @Req() req: Request,
   ) {
     return this.service.getMyOrder(applicationId, orderId, (req as any).user);
+  }
+
+  @Get(':orderId/payment-status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get checkout payment status for a marketplace order' })
+  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getOrderPaymentStatus })
+  getOrderPaymentStatus(
+    @Param('applicationId', ParseUUIDPipe) applicationId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+  ) {
+    return this.service.getOrderPaymentStatus(
+      applicationId,
+      orderId,
+      (req as any).user,
+    );
   }
 
   @Post(':orderId/cancel')

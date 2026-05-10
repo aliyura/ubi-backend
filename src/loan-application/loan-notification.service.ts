@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TermiiService } from 'src/api-providers/providers/termii.service';
-import { LOAN_APPLICATION_STATUS, MARKETPLACE_ORDER_STATUS } from '@prisma/client';
+import {
+  LOAN_APPLICATION_STATUS,
+  MARKETPLACE_ORDER_STATUS,
+} from '@prisma/client';
 
 @Injectable()
 export class LoanNotificationService {
@@ -8,7 +11,10 @@ export class LoanNotificationService {
 
   constructor(private readonly termii: TermiiService) {}
 
-  private getMessage(status: LOAN_APPLICATION_STATUS, ref: string): string | null {
+  private getMessage(
+    status: LOAN_APPLICATION_STATUS,
+    ref: string,
+  ): string | null {
     const messages: Partial<Record<LOAN_APPLICATION_STATUS, string>> = {
       [LOAN_APPLICATION_STATUS.Submitted]: `Your Farm Input Loan request ${ref} has been submitted and is being reviewed.`,
       [LOAN_APPLICATION_STATUS.UnderReview]: `Your application ${ref} is now under review by the loan team.`,
@@ -16,6 +22,7 @@ export class LoanNotificationService {
       [LOAN_APPLICATION_STATUS.FulfillmentInProgress]: `Your farm inputs for ${ref} are being prepared for delivery.`,
       [LOAN_APPLICATION_STATUS.Approved]: `Great news! Your Farm Input Loan ${ref} has been approved. Fulfillment will begin shortly.`,
       [LOAN_APPLICATION_STATUS.Rejected]: `We regret to inform you that your Farm Input Loan ${ref} was not approved. Please check the app for details.`,
+      [LOAN_APPLICATION_STATUS.Cancelled]: `Your Farm Input Loan application ${ref} has been cancelled. Please check the app for details.`,
       [LOAN_APPLICATION_STATUS.ReadyForPickup]: `Your approved inputs for ${ref} are ready for pickup. Please visit the designated center.`,
       [LOAN_APPLICATION_STATUS.OutForDelivery]: `Your inputs for ${ref} are on their way to you.`,
       [LOAN_APPLICATION_STATUS.Delivered]: `Your farm inputs for ${ref} have been delivered. Your loan is now active.`,
@@ -36,16 +43,26 @@ export class LoanNotificationService {
     try {
       await this.termii.sendSms({ phoneNumber, message });
     } catch (err) {
-      this.logger.error(`Failed to send SMS notification for ${applicationRef}`, err?.message);
+      this.logger.error(
+        `Failed to send SMS notification for ${applicationRef}`,
+        err?.message,
+      );
     }
   }
 
-  async sendRepaymentReminder(phoneNumber: string, ref: string, dueDate: string) {
+  async sendRepaymentReminder(
+    phoneNumber: string,
+    ref: string,
+    dueDate: string,
+  ) {
     const message = `Reminder: Your repayment for loan ${ref} is due on ${dueDate}. Please ensure timely payment.`;
     try {
       await this.termii.sendSms({ phoneNumber, message });
     } catch (err) {
-      this.logger.error(`Failed to send repayment reminder for ${ref}`, err?.message);
+      this.logger.error(
+        `Failed to send repayment reminder for ${ref}`,
+        err?.message,
+      );
     }
   }
 
@@ -67,7 +84,10 @@ export class LoanNotificationService {
     try {
       await this.termii.sendSms({ phoneNumber, message });
     } catch (err) {
-      this.logger.error(`Failed to send marketplace order SMS for ${orderRef}`, err?.message);
+      this.logger.error(
+        `Failed to send marketplace order SMS for ${orderRef}`,
+        err?.message,
+      );
     }
   }
 }

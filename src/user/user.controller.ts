@@ -82,14 +82,51 @@ export class UserController {
   }
 
   @Post('register-farmer')
+  @UseInterceptors(
+    FileInterceptor('policeReport', multerOptions('farmer-police-report')),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: [
+        'username',
+        'fullname',
+        'email',
+        'phoneNumber',
+        'dateOfBirth',
+        'companyRegistrationNumber',
+        'password',
+        'policeReport',
+      ],
+      properties: {
+        username: { type: 'string', example: 'acmecorp' },
+        fullname: { type: 'string', example: 'Acme Corporation' },
+        email: { type: 'string', example: 'admin@acme.com' },
+        phoneNumber: { type: 'string', example: '08012345678' },
+        dateOfBirth: { type: 'string', example: '8-Mar-1995' },
+        companyRegistrationNumber: { type: 'string', example: 'RC1234567' },
+        password: { type: 'string', example: 'StrongPass123!' },
+        countryCode: { type: 'string', example: 'NG' },
+        referralCode: { type: 'string', example: 'UBIREF123' },
+        currency: { type: 'string', example: 'NGN' },
+        isBusinessRegistered: { type: 'boolean', example: true },
+        accountType: { type: 'string', example: 'FARMER' },
+        policeReport: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register Farmer Account' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     example: userResponse.registerFarmerAccount,
   })
-  async registerFarmerAccount(@Body() body: RegisterFarmerDto) {
-    return this.userService.register(body);
+  async registerFarmerAccount(
+    @Body() body: RegisterFarmerDto,
+    @UploadedFile() policeReport: Express.Multer.File,
+  ) {
+    return this.userService.register(body, policeReport);
   }
   @Post('create-passcode')
   @ApiOperation({ summary: 'Create Passcode' })

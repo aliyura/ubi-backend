@@ -3,6 +3,10 @@ import { SafeHavenService } from './providers/safe-haven.service';
 import { BILL_TYPE, CURRENCY, User } from '@prisma/client';
 import { DojahService } from './providers/dojah.service';
 import { FlutterwaveService } from './providers/flutterwave.service';
+import {
+  FlutterwaveCreatePaymentRequest,
+  FlutterwaveCreatePaymentResponse,
+} from './providers/flutterwave.service';
 import { TransferDto } from 'src/wallet/dto/TransferDto';
 import { ReloadlyService } from './providers/reloadly.service';
 import { PayDto } from 'src/bill/dto/PayDto';
@@ -297,6 +301,12 @@ export class ApiProviderService {
       currency: body.currency,
       debit_subaccount: body.debitSubaccountId,
     });
+  }
+
+  async createFlutterwavePaymentLink(
+    payload: FlutterwaveCreatePaymentRequest,
+  ): Promise<FlutterwaveCreatePaymentResponse> {
+    return this.flutterwaveService.createPayment(payload);
   }
 
   async transferVFDFund(

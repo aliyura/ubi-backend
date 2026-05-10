@@ -29,11 +29,11 @@ import { fulfillmentResponse } from './fulfillment.response';
 @ApiTags('Admin - Fulfillment')
 @Controller('v1/admin')
 @UseGuards(RolesGuard)
-@Roles(USER_ROLE.ADMIN)
 export class FulfillmentController {
   constructor(private readonly service: FulfillmentService) {}
 
   @Get('fulfillments')
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all fulfillments' })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.listFulfillments })
@@ -45,6 +45,7 @@ export class FulfillmentController {
   }
 
   @Post('loan-applications/:id/fulfillment')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create fulfillment for an approved application' })
   @ApiResponse({ status: HttpStatus.CREATED, example: fulfillmentResponse.createFulfillment })
@@ -57,6 +58,7 @@ export class FulfillmentController {
   }
 
   @Post('fulfillments/:id/dispatch')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark fulfillment as dispatched (ReadyForPickup or OutForDelivery)' })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.dispatch })
@@ -65,6 +67,7 @@ export class FulfillmentController {
   }
 
   @Post('fulfillments/:id/deliver')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm delivery and upload proof' })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.deliver })
@@ -77,6 +80,7 @@ export class FulfillmentController {
   }
 
   @Get('suppliers')
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all active suppliers' })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.listSuppliers })
@@ -85,6 +89,7 @@ export class FulfillmentController {
   }
 
   @Post('suppliers')
+  @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new supplier' })
   @ApiResponse({ status: HttpStatus.CREATED, example: fulfillmentResponse.createSupplier })

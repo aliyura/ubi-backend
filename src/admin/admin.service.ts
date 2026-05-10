@@ -12,7 +12,7 @@ import { ApiProviderService } from 'src/api-providers/api-providers.service';
 import { AddCablPlanDto } from './dto/AddCablPlanDto';
 import { InviteAgentDto } from './dto/InviteAgentDto';
 import { EmailService } from 'src/email/email.service';
-import { User } from '@prisma/client';
+import { User, USER_ROLE } from '@prisma/client';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -123,27 +123,38 @@ export class AdminService {
       data: {
         email: body.email,
         token,
+        role: body.role,
         expiresAt,
         invitedById: admin.id,
       },
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? 'https://ubi.com';
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ?? 'https://ubi.com';
     const registrationUrl = `${frontendUrl}/register?token=${token}`;
 
     try {
+      const isCustomerSupportInvite = body.role === USER_ROLE.CUSTOMER_SUPPORT;
       await this.emailService.sendEmail({
         to: body.email,
-        subject: "You've Been Invited to Join UBI as an Agent",
+        subject: isCustomerSupportInvite
+          ? "You've Been Invited to Join UBI as Customer Support"
+          : "You've Been Invited to Join UBI as an Agent",
         template: 'admin/agent-invitation.hbs',
         context: { registrationUrl },
       });
     } catch (error) {
-      this.logger.error(`Failed to send agent invitation email to ${body.email}`, error);
+      this.logger.error(
+        `Failed to send agent invitation email to ${body.email}`,
+        error,
+      );
     }
 
     return {
-      message: 'Agent invitation sent successfully',
+      message:
+        body.role === USER_ROLE.CUSTOMER_SUPPORT
+          ? 'Customer support invitation sent successfully'
+          : 'Agent invitation sent successfully',
       statusCode: HttpStatus.OK,
     };
   }
@@ -409,6 +420,106 @@ export class AdminService {
     return {
       message: 'Plan with id deleted successfully',
       statusCode: HttpStatus.OK,
+    };
+  }
+
+  async getAgentFarmers(agentId: string, startDate?: string, endDate?: string) {
+    const agent = await this.prisma.user.findFirst({
+      where: {
+        id: agentId,
+        role: USER_ROLE.AGENT,
+      },
+    });
+
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    const dateFilter: any = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(endDate);
+    }
+
+    const loanApplications = await this.prisma.loanApplication.findMany({
+      where: {
+        agentId,
+        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullname: true,
+            phoneNumber: true,
+            role: true,
+            createdAt: true,
+            country: true,
+            status: true,
+            tierLevel: true,
+            profileImageUrl: true,
+            isPhoneVerified: true,
+            isEmailVerified: true,
+            isBvnVerified: true,
+            isNinVerified: true,
+            isAddressVerified: true,
+          },
+        },
+      },
+      distinct: ['userId'],
+    });
+
+    // Get loan application count per farmer
+    const farmerLoanCounts = await this.prisma.loanApplication.groupBy({
+      by: ['userId'],
+      where: {
+        agentId,
+        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    const loanCountMap = new Map(
+      farmerLoanCounts.map((item) => [item.userId, item._count.id]),
+    );
+
+    const farmers = loanApplications.map((app) => ({
+      id: app.user.id,
+      email: app.user.email,
+      fullname: app.user.fullname,
+      phoneNumber: app.user.phoneNumber,
+      country: app.user.country,
+      status: app.user.status,
+      tierLevel: app.user.tierLevel,
+      profileImageUrl: app.user.profileImageUrl,
+      verification: {
+        isPhoneVerified: app.user.isPhoneVerified,
+        isEmailVerified: app.user.isEmailVerified,
+        isBvnVerified: app.user.isBvnVerified,
+        isNinVerified: app.user.isNinVerified,
+        isAddressVerified: app.user.isAddressVerified,
+      },
+      loanApplicationCount: loanCountMap.get(app.user.id) || 0,
+      createdAt: app.user.createdAt,
+    }));
+
+    return {
+      message: 'Farmers fetched successfully',
+      statusCode: HttpStatus.OK,
+      data: {
+        agent: {
+          id: agent.id,
+          fullname: agent.fullname,
+          email: agent.email,
+        },
+        farmers,
+        totalFarmers: farmers.length,
+      },
     };
   }
 }

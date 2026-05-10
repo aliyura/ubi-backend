@@ -72,7 +72,7 @@ export const adminResponse = {
   },
   inviteAgent: {
     statusCode: 200,
-    message: 'Agent invited successfully',
+    message: 'Agent invitation sent successfully',
     data: null,
   },
   systemSettings: {
@@ -122,6 +122,58 @@ export const adminResponse = {
       role: 'ADMIN',
       passwordLastChangedAt: '2024-01-01T00:00:00.000Z',
       twoFaEnabled: true,
+    },
+  },
+  getAgentFarmers: {
+    statusCode: 200,
+    message: 'Farmers fetched successfully',
+    data: {
+      agent: {
+        id: 'agent-uuid',
+        fullname: 'Agent Name',
+        email: 'agent@example.com',
+      },
+      farmers: [
+        {
+          id: 'farmer-uuid-1',
+          email: 'farmer1@example.com',
+          fullname: 'Farmer One',
+          phoneNumber: '+2348012345678',
+          country: 'NG',
+          status: 'active',
+          tierLevel: 'one',
+          profileImageUrl: 'https://example.com/profile.jpg',
+          verification: {
+            isPhoneVerified: true,
+            isEmailVerified: true,
+            isBvnVerified: false,
+            isNinVerified: true,
+            isAddressVerified: false,
+          },
+          loanApplicationCount: 3,
+          createdAt: '2024-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'farmer-uuid-2',
+          email: 'farmer2@example.com',
+          fullname: 'Farmer Two',
+          phoneNumber: '+2348023456789',
+          country: 'NG',
+          status: 'active',
+          tierLevel: 'two',
+          profileImageUrl: null,
+          verification: {
+            isPhoneVerified: true,
+            isEmailVerified: false,
+            isBvnVerified: true,
+            isNinVerified: false,
+            isAddressVerified: true,
+          },
+          loanApplicationCount: 1,
+          createdAt: '2024-01-02T00:00:00.000Z',
+        },
+      ],
+      totalFarmers: 2,
     },
   },
 } as const;

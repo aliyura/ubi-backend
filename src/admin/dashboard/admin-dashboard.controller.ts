@@ -15,6 +15,7 @@ import { adminDashboardResponse } from './admin-dashboard.response';
 import {
   AccountRegistryQueryDto,
   ActiveWalletsQueryDto,
+  AdvancedTransactionsQueryDto,
   DateRangeDto,
   DisputesPipelineQueryDto,
   KycActivePipelineQueryDto,
@@ -26,7 +27,7 @@ import {
 @ApiTags('Admin - Dashboard')
 @Controller('v1/admin/dashboard')
 @UseGuards(RolesGuard)
-@Roles(USER_ROLE.ADMIN)
+@Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
 export class AdminDashboardController {
   constructor(private readonly service: AdminDashboardService) {}
 
@@ -193,6 +194,22 @@ export class AdminDashboardController {
   })
   async transactionsHistory(@Query() query: TransactionsHistoryQueryDto) {
     return this.service.getTransactionsHistory(query);
+  }
+
+  @Get('transactions-advanced')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Advanced transaction history with demographic filtering by location, agent relationships, user role, gender, and more',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: adminDashboardResponse.transactionsAdvanced,
+    description:
+      'Returns transactions with user demographic information including agent relationships',
+  })
+  async transactionsAdvanced(@Query() query: AdvancedTransactionsQueryDto) {
+    return this.service.getAdvancedTransactionsHistory(query);
   }
 
   @Get('wallet-overview')

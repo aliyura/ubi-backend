@@ -146,6 +146,14 @@ export class AdminQueryAgentsDto {
   limit?: number = 20;
 }
 
+export class CancelLoanDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  remark?: string;
+}
+
 export class AdminQueryLoanDto {
   @ApiPropertyOptional({ enum: LOAN_APPLICATION_STATUS })
   @IsOptional()

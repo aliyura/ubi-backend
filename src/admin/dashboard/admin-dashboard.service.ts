@@ -10,7 +10,17 @@ import {
   USER_ACCOUNT_STATUS,
   USER_ROLE,
 } from '@prisma/client';
-import { AccountRegistryQueryDto, ActiveWalletsQueryDto, DateRangeDto, DisputesPipelineQueryDto, KycActivePipelineQueryDto, PaginationDto, TransactionsHistoryQueryDto, TransferPipelineQueryDto } from './admin-dashboard.dto';
+import {
+  AccountRegistryQueryDto,
+  ActiveWalletsQueryDto,
+  AdvancedTransactionsQueryDto,
+  DateRangeDto,
+  DisputesPipelineQueryDto,
+  KycActivePipelineQueryDto,
+  PaginationDto,
+  TransactionsHistoryQueryDto,
+  TransferPipelineQueryDto,
+} from './admin-dashboard.dto';
 
 const MONTH_NAMES = [
   'January',
@@ -50,38 +60,43 @@ export class AdminDashboardService {
     const { from, to } = this.parseDateRange(query);
     const dateFilter = this.buildDateFilter(from, to);
 
-    const [activeFarmers, activeAgents, loanVolume, pendingVerifications, walletBalancesResult] =
-      await Promise.all([
-        this.prisma.user.count({
-          where: {
-            role: USER_ROLE.FARMER,
-            status: USER_ACCOUNT_STATUS.active,
-            ...(dateFilter && { createdAt: dateFilter }),
-          },
-        }),
-        this.prisma.user.count({
-          where: {
-            role: USER_ROLE.AGENT,
-            status: USER_ACCOUNT_STATUS.active,
-            ...(dateFilter && { createdAt: dateFilter }),
-          },
-        }),
-        this.prisma.loanApplication.aggregate({
-          _sum: { totalEstimatedValue: true },
-          where: {
-            ...(dateFilter && { createdAt: dateFilter }),
-          },
-        }),
-        this.prisma.loanApplication.count({
-          where: {
-            status: LOAN_APPLICATION_STATUS.PendingFieldVerification,
-            ...(dateFilter && { createdAt: dateFilter }),
-          },
-        }),
-        this.prisma.$queryRaw<[{ total: number }]>`
+    const [
+      activeFarmers,
+      activeAgents,
+      loanVolume,
+      pendingVerifications,
+      walletBalancesResult,
+    ] = await Promise.all([
+      this.prisma.user.count({
+        where: {
+          role: USER_ROLE.FARMER,
+          status: USER_ACCOUNT_STATUS.active,
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          role: USER_ROLE.AGENT,
+          status: USER_ACCOUNT_STATUS.active,
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.loanApplication.aggregate({
+        _sum: { totalEstimatedValue: true },
+        where: {
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.loanApplication.count({
+        where: {
+          status: LOAN_APPLICATION_STATUS.PendingFieldVerification,
+          ...(dateFilter && { createdAt: dateFilter }),
+        },
+      }),
+      this.prisma.$queryRaw<[{ total: number }]>`
           SELECT COALESCE(SUM(w.balance), 0) AS total FROM wallet w
         `,
-      ]);
+    ]);
 
     return {
       status: true,
@@ -132,10 +147,26 @@ export class AdminDashboardService {
     const rangeEnd = to ?? new Date(`${year + 1}-01-01T00:00:00.000Z`);
 
     const quarterBoundaries = [
-      { q: 1, start: new Date(`${year}-01-01T00:00:00.000Z`), end: new Date(`${year}-04-01T00:00:00.000Z`) },
-      { q: 2, start: new Date(`${year}-04-01T00:00:00.000Z`), end: new Date(`${year}-07-01T00:00:00.000Z`) },
-      { q: 3, start: new Date(`${year}-07-01T00:00:00.000Z`), end: new Date(`${year}-10-01T00:00:00.000Z`) },
-      { q: 4, start: new Date(`${year}-10-01T00:00:00.000Z`), end: new Date(`${year + 1}-01-01T00:00:00.000Z`) },
+      {
+        q: 1,
+        start: new Date(`${year}-01-01T00:00:00.000Z`),
+        end: new Date(`${year}-04-01T00:00:00.000Z`),
+      },
+      {
+        q: 2,
+        start: new Date(`${year}-04-01T00:00:00.000Z`),
+        end: new Date(`${year}-07-01T00:00:00.000Z`),
+      },
+      {
+        q: 3,
+        start: new Date(`${year}-07-01T00:00:00.000Z`),
+        end: new Date(`${year}-10-01T00:00:00.000Z`),
+      },
+      {
+        q: 4,
+        start: new Date(`${year}-10-01T00:00:00.000Z`),
+        end: new Date(`${year + 1}-01-01T00:00:00.000Z`),
+      },
     ];
 
     const data = await Promise.all(
@@ -143,7 +174,8 @@ export class AdminDashboardService {
         const qStart = start < rangeStart ? rangeStart : start;
         const qEnd = end > rangeEnd ? rangeEnd : end;
 
-        if (qStart >= qEnd) return { quarter: q, loansRequested: 0, loansDisbursed: 0 };
+        if (qStart >= qEnd)
+          return { quarter: q, loansRequested: 0, loansDisbursed: 0 };
 
         const [requestedAgg, disbursedAgg] = await Promise.all([
           this.prisma.loanApplication.aggregate({
@@ -313,18 +345,21 @@ export class AdminDashboardService {
   }
 
   async getAccountsOverview() {
-    const [totalWalletAccounts, totalActiveWalletAccounts, depositVolumeResult] =
-      await Promise.all([
-        this.prisma.wallet.count(),
-        this.prisma.wallet.count({
-          where: { user: { status: USER_ACCOUNT_STATUS.active } },
-        }),
-        this.prisma.$queryRaw<[{ total: number }]>`
+    const [
+      totalWalletAccounts,
+      totalActiveWalletAccounts,
+      depositVolumeResult,
+    ] = await Promise.all([
+      this.prisma.wallet.count(),
+      this.prisma.wallet.count({
+        where: { user: { status: USER_ACCOUNT_STATUS.active } },
+      }),
+      this.prisma.$queryRaw<[{ total: number }]>`
           SELECT COALESCE(SUM(t."currentBalance" - t."previousBalance"), 0) AS total
           FROM transaction t
           WHERE t.category = 'DEPOSIT' AND t.status = 'success'
         `,
-      ]);
+    ]);
 
     return {
       status: true,
@@ -448,7 +483,9 @@ export class AdminDashboardService {
   async getTransactionsOverview(query: DateRangeDto) {
     const { from, to } = this.parseDateRange(query);
 
-    const fromFilter = from ? Prisma.sql`AND t."createdAt" >= ${from}` : Prisma.empty;
+    const fromFilter = from
+      ? Prisma.sql`AND t."createdAt" >= ${from}`
+      : Prisma.empty;
     const toFilter = to ? Prisma.sql`AND t."createdAt" <= ${to}` : Prisma.empty;
     const dateFilter = this.buildDateFilter(from, to);
 
@@ -483,8 +520,10 @@ export class AdminDashboardService {
       data: {
         totalVolume: Number(volumeResult[0].volume),
         totalTransactionCount: total,
-        successPercentage: total > 0 ? Math.round((successCount / total) * 100) : 0,
-        failurePercentage: total > 0 ? Math.round((failedCount / total) * 100) : 0,
+        successPercentage:
+          total > 0 ? Math.round((successCount / total) * 100) : 0,
+        failurePercentage:
+          total > 0 ? Math.round((failedCount / total) * 100) : 0,
       },
     };
   }
@@ -547,21 +586,141 @@ export class AdminDashboardService {
     };
   }
 
+  async getAdvancedTransactionsHistory(query: AdvancedTransactionsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+
+    // Build Prisma where clause using nested relations
+    const where: Prisma.TransactionWhereInput = {};
+
+    // Basic transaction filters
+    if (query.reference) {
+      where.OR = [
+        { reference: { contains: query.reference, mode: 'insensitive' } },
+        { transactionRef: { contains: query.reference, mode: 'insensitive' } },
+      ];
+    }
+    if (query.type) where.type = query.type;
+    if (query.category) where.category = query.category;
+    if (query.billType) {
+      where.billDetails = { path: ['type'], equals: query.billType };
+    }
+
+    // User demographic filters via wallet relation
+    const userFilters: any = {};
+
+    if (query.userRole) userFilters.role = query.userRole;
+    if (query.state)
+      userFilters.state = { contains: query.state, mode: 'insensitive' };
+    if (query.city)
+      userFilters.city = { contains: query.city, mode: 'insensitive' };
+    if (query.country) userFilters.country = query.country;
+    if (query.gender) userFilters.gender = query.gender;
+    if (query.agentId) userFilters.onboardedByAgentId = query.agentId;
+    if (query.agentName) {
+      userFilters.onboardedByAgent = {
+        fullname: { contains: query.agentName, mode: 'insensitive' },
+      };
+    }
+
+    if (Object.keys(userFilters).length > 0) {
+      where.wallet = {
+        user: userFilters,
+      };
+    }
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        include: {
+          wallet: {
+            select: {
+              accountNumber: true,
+              user: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  email: true,
+                  phoneNumber: true,
+                  role: true,
+                  state: true,
+                  city: true,
+                  country: true,
+                  gender: true,
+                  onboardedByAgent: {
+                    select: {
+                      id: true,
+                      fullname: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    const data = transactions.map((t) => ({
+      status: t.status,
+      reference: t.reference ?? t.transactionRef,
+      type: t.type,
+      category: t.category,
+      description: t.description,
+      amount: Math.abs(t.currentBalance - t.previousBalance),
+      timestamp: t.createdAt,
+      customer: {
+        fullname: t.wallet.user.fullname,
+        accountNumber: t.wallet.accountNumber,
+      },
+      user: {
+        id: t.wallet.user.id,
+        fullname: t.wallet.user.fullname,
+        email: t.wallet.user.email,
+        phoneNumber: t.wallet.user.phoneNumber,
+        role: t.wallet.user.role,
+        state: t.wallet.user.state,
+        city: t.wallet.user.city,
+        country: t.wallet.user.country,
+        gender: t.wallet.user.gender,
+        onboardedByAgent: t.wallet.user.onboardedByAgent,
+      },
+    }));
+
+    return {
+      status: true,
+      message: 'Advanced transactions history retrieved',
+      data: { transactions: data, total, page, limit },
+    };
+  }
+
   async getWalletOverview() {
-    const [systemBalanceResult, activeWalletCount, settlementResult, totalTxCount, failedTxCount] =
-      await Promise.all([
-        this.prisma.$queryRaw<[{ total: number }]>`
+    const [
+      systemBalanceResult,
+      activeWalletCount,
+      settlementResult,
+      totalTxCount,
+      failedTxCount,
+    ] = await Promise.all([
+      this.prisma.$queryRaw<[{ total: number }]>`
           SELECT COALESCE(SUM(w.balance), 0) AS total FROM wallet w
         `,
-        this.prisma.wallet.count({
-          where: { user: { status: USER_ACCOUNT_STATUS.active } },
-        }),
-        this.prisma.$queryRaw<[{ total: number }]>`
+      this.prisma.wallet.count({
+        where: { user: { status: USER_ACCOUNT_STATUS.active } },
+      }),
+      this.prisma.$queryRaw<[{ total: number }]>`
           SELECT COALESCE(SUM("settlementAmount"), 0) AS total FROM "paymentEvent"
         `,
-        this.prisma.transaction.count(),
-        this.prisma.transaction.count({ where: { status: TRANSACTION_STATUS.failed } }),
-      ]);
+      this.prisma.transaction.count(),
+      this.prisma.transaction.count({
+        where: { status: TRANSACTION_STATUS.failed },
+      }),
+    ]);
 
     return {
       status: true,
@@ -570,7 +729,10 @@ export class AdminDashboardService {
         systemBalance: Number(systemBalanceResult[0].total),
         activeWalletCount,
         totalSettlementValue: Number(settlementResult[0].total),
-        failureRate: totalTxCount > 0 ? Math.round((failedTxCount / totalTxCount) * 100) : 0,
+        failureRate:
+          totalTxCount > 0
+            ? Math.round((failedTxCount / totalTxCount) * 100)
+            : 0,
       },
     };
   }
@@ -669,7 +831,8 @@ export class AdminDashboardService {
       data: {
         transferVolume: Number(volumeResult[0].volume),
         activeVelocityCount: pendingCount,
-        successRatePercentage: totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0,
+        successRatePercentage:
+          totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0,
         failedTaskCount: failedCount,
       },
     };
@@ -761,48 +924,50 @@ export class AdminDashboardService {
       data: {
         totalSettlementsSum: Number(settlementResult[0].total),
         totalTransactionCount: total,
-        reliabilityPercentage: total > 0 ? Math.round((success / total) * 100) : 0,
+        reliabilityPercentage:
+          total > 0 ? Math.round((success / total) * 100) : 0,
       },
     };
   }
 
   async getBillPaymentsAirtimeOverview() {
-    const [airtimeVolume, dataVolume, avgResult, totalCount, successCount] = await Promise.all([
-      this.prisma.$queryRaw<[{ volume: number }]>`
+    const [airtimeVolume, dataVolume, avgResult, totalCount, successCount] =
+      await Promise.all([
+        this.prisma.$queryRaw<[{ volume: number }]>`
         SELECT COALESCE(SUM(("billDetails"->>'amountPaid')::numeric), 0) AS volume
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
           AND ("billDetails"->>'type') = 'airtime'
           AND status = 'success'
       `,
-      this.prisma.$queryRaw<[{ volume: number }]>`
+        this.prisma.$queryRaw<[{ volume: number }]>`
         SELECT COALESCE(SUM(("billDetails"->>'amountPaid')::numeric), 0) AS volume
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
           AND ("billDetails"->>'type') = 'data'
           AND status = 'success'
       `,
-      this.prisma.$queryRaw<[{ avg: number }]>`
+        this.prisma.$queryRaw<[{ avg: number }]>`
         SELECT COALESCE(AVG(("billDetails"->>'amountPaid')::numeric), 0) AS avg
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
           AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
-      this.prisma.$queryRaw<[{ count: bigint }]>`
+        this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
           AND ("billDetails"->>'type') IN ('airtime', 'data')
       `,
-      this.prisma.$queryRaw<[{ count: bigint }]>`
+        this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
         FROM transaction
         WHERE category = 'BILL_PAYMENT'
           AND ("billDetails"->>'type') IN ('airtime', 'data')
           AND status = 'success'
       `,
-    ]);
+      ]);
 
     const total = Number(totalCount[0].count);
     const success = Number(successCount[0].count);
@@ -813,7 +978,8 @@ export class AdminDashboardService {
       data: {
         airtimeVolume: Number(airtimeVolume[0].volume),
         dataVolume: Number(dataVolume[0].volume),
-        averageTransactionAmount: Math.round(Number(avgResult[0].avg) * 100) / 100,
+        averageTransactionAmount:
+          Math.round(Number(avgResult[0].avg) * 100) / 100,
         uptimePercentage: total > 0 ? Math.round((success / total) * 100) : 0,
       },
     };
@@ -826,26 +992,42 @@ export class AdminDashboardService {
     });
     const verifiedTierLevels = verifiedTiers.map((t) => t.level);
 
-    const [totalCustomers, totalVerifiedCustomers, totalKycPending, totalActiveCustomers] =
-      await Promise.all([
-        this.prisma.user.count({ where: { role: USER_ROLE.USER } }),
-        verifiedTierLevels.length > 0
-          ? this.prisma.user.count({
-              where: { role: USER_ROLE.USER, tierLevel: { in: verifiedTierLevels } },
-            })
-          : Promise.resolve(0),
-        this.prisma.user.count({
-          where: { role: USER_ROLE.USER, bvn: { not: null }, isBvnVerified: false },
-        }),
-        this.prisma.user.count({
-          where: { role: USER_ROLE.USER, status: USER_ACCOUNT_STATUS.active },
-        }),
-      ]);
+    const [
+      totalCustomers,
+      totalVerifiedCustomers,
+      totalKycPending,
+      totalActiveCustomers,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { role: USER_ROLE.USER } }),
+      verifiedTierLevels.length > 0
+        ? this.prisma.user.count({
+            where: {
+              role: USER_ROLE.USER,
+              tierLevel: { in: verifiedTierLevels },
+            },
+          })
+        : Promise.resolve(0),
+      this.prisma.user.count({
+        where: {
+          role: USER_ROLE.USER,
+          bvn: { not: null },
+          isBvnVerified: false,
+        },
+      }),
+      this.prisma.user.count({
+        where: { role: USER_ROLE.USER, status: USER_ACCOUNT_STATUS.active },
+      }),
+    ]);
 
     return {
       status: true,
       message: 'KYC overview retrieved',
-      data: { totalCustomers, totalVerifiedCustomers, totalKycPending, totalActiveCustomers },
+      data: {
+        totalCustomers,
+        totalVerifiedCustomers,
+        totalKycPending,
+        totalActiveCustomers,
+      },
     };
   }
 
@@ -1001,8 +1183,12 @@ export class AdminDashboardService {
   async getDisputesOverview() {
     const [totalTickets, openTickets, closedTickets] = await Promise.all([
       this.prisma.scamTicket.count(),
-      this.prisma.scamTicket.count({ where: { status: SCAM_TICKET_STATUS.opened } }),
-      this.prisma.scamTicket.count({ where: { status: SCAM_TICKET_STATUS.closed } }),
+      this.prisma.scamTicket.count({
+        where: { status: SCAM_TICKET_STATUS.opened },
+      }),
+      this.prisma.scamTicket.count({
+        where: { status: SCAM_TICKET_STATUS.closed },
+      }),
     ]);
 
     return {
@@ -1012,7 +1198,10 @@ export class AdminDashboardService {
         totalTickets,
         openTickets,
         closedTickets,
-        successRatePercentage: totalTickets > 0 ? Math.round((closedTickets / totalTickets) * 100) : 0,
+        successRatePercentage:
+          totalTickets > 0
+            ? Math.round((closedTickets / totalTickets) * 100)
+            : 0,
       },
     };
   }
@@ -1079,10 +1268,18 @@ export class AdminDashboardService {
 
     const { from, to } = this.parseDateRange(query);
 
-    const laFromFilter = from ? Prisma.sql`AND la."createdAt" >= ${from}` : Prisma.empty;
-    const laToFilter = to ? Prisma.sql`AND la."createdAt" <= ${to}` : Prisma.empty;
-    const ldFromFilter = from ? Prisma.sql`AND ld."decidedAt" >= ${from}` : Prisma.empty;
-    const ldToFilter = to ? Prisma.sql`AND ld."decidedAt" <= ${to}` : Prisma.empty;
+    const laFromFilter = from
+      ? Prisma.sql`AND la."createdAt" >= ${from}`
+      : Prisma.empty;
+    const laToFilter = to
+      ? Prisma.sql`AND la."createdAt" <= ${to}`
+      : Prisma.empty;
+    const ldFromFilter = from
+      ? Prisma.sql`AND ld."decidedAt" >= ${from}`
+      : Prisma.empty;
+    const ldToFilter = to
+      ? Prisma.sql`AND ld."decidedAt" <= ${to}`
+      : Prisma.empty;
 
     const rows = await this.prisma.$queryRaw<AgentRow[]>`
       SELECT

@@ -8,7 +8,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanEligibilityService } from 'src/loan-eligibility/loan-eligibility.service';
 import { LoanNotificationService } from './loan-notification.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { CreateLoanApplicationDto, QueryLoanApplicationDto } from './dto';
+import {
+  CreateLoanApplicationDto,
+  CreateMarketplaceLoanApplicationDto,
+  QueryLoanApplicationDto,
+} from './dto';
 import {
   LOAN_APPLICATION_STATUS,
   NOTIFICATION_TYPE,
@@ -74,7 +78,10 @@ export class LoanApplicationService {
     return `UBI-${year}-${unique}`;
   }
 
-  async submitApplication(body: CreateLoanApplicationDto, user: User) {
+  async submitApplicationFromMarketplace(
+    body: CreateMarketplaceLoanApplicationDto,
+    user: User,
+  ) {
     // Run eligibility checks
     const eligResult = await this.eligibility.runChecks(user, {
       farmId: body.farmId,
@@ -219,6 +226,12 @@ export class LoanApplicationService {
     };
   }
 
+  async submitApplication(body: CreateLoanApplicationDto, user: User) {
+    // Backward compatibility path:
+    // legacy loan form submission still routes through marketplace-selected cart items.
+    return this.submitApplicationFromMarketplace(body, user);
+  }
+
   async getMyApplications(user: User, query: QueryLoanApplicationDto) {
     const { status, page = 1, limit = 20 } = query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -239,6 +252,38 @@ export class LoanApplicationService {
     return {
       status: true,
       message: 'Applications retrieved',
+      data: items,
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+    };
+  }
+
+  async getPreviousLoansHistory(user: User, query: QueryLoanApplicationDto) {
+    const { page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where = {
+      userId: user.id,
+      repaymentPlan: { isNot: null },
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.loanApplication.findMany({
+        where,
+        include: {
+          farm: true,
+          items: true,
+          repaymentPlan: true,
+        },
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.loanApplication.count({ where }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Previous loans history retrieved',
       data: items,
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };

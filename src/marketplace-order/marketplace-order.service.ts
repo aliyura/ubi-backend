@@ -7,7 +7,11 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { PlaceMarketplaceOrderDto, QueryMarketplaceOrderDto } from './dto';
+import {
+  PlaceMarketplaceOrderDto,
+  QueryMarketplaceOrderDto,
+  MARKETPLACE_PAYMENT_METHOD,
+} from './dto';
 import {
   LOAN_APPLICATION_STATUS,
   MARKETPLACE_ORDER_STATUS,
@@ -15,6 +19,8 @@ import {
   User,
 } from '@prisma/client';
 import { Helpers } from 'src/helpers';
+import { ApiProviderService } from 'src/api-providers/api-providers.service';
+import { ConfigService } from '@nestjs/config';
 
 const USER_SELECT = {
   id: true,
@@ -50,6 +56,8 @@ export class MarketplaceOrderService {
     private readonly prisma: PrismaService,
     private readonly notifications: LoanNotificationService,
     private readonly notificationService: NotificationService,
+    private readonly apiProviderService: ApiProviderService,
+    private readonly configService: ConfigService,
   ) {}
 
   private generateOrderRef(): string {
@@ -69,7 +77,10 @@ export class MarketplaceOrderService {
       where: { applicationId, decision: 'approved' },
       orderBy: { decidedAt: 'desc' },
     });
-    if (!decision) throw new BadRequestException('No approved decision found for this application');
+    if (!decision)
+      throw new BadRequestException(
+        'No approved decision found for this application',
+      );
 
     const aggregate = await this.prisma.marketplaceOrder.aggregate({
       where: {
@@ -94,37 +105,69 @@ export class MarketplaceOrderService {
     };
   }
 
-  async placeOrder(applicationId: string, body: PlaceMarketplaceOrderDto, user: User) {
+  async placeOrder(
+    applicationId: string,
+    body: PlaceMarketplaceOrderDto,
+    user: User,
+  ) {
+    const paymentMethod =
+      body.paymentMethod ?? MARKETPLACE_PAYMENT_METHOD.credit;
     const order = await this.prisma.$transaction(
       async (tx) => {
         const app = await tx.loanApplication.findUnique({
           where: { id: applicationId },
         });
         if (!app) throw new NotFoundException('Application not found');
-        if (app.userId !== user.id) throw new ForbiddenException();
-        if (app.status !== LOAN_APPLICATION_STATUS.Approved) {
+        const validActors = [app.userId, app.agentId];
+        if (!validActors.includes(user.id)) throw new ForbiddenException();
+        const allowedCheckoutStatuses: LOAN_APPLICATION_STATUS[] = [
+          LOAN_APPLICATION_STATUS.Submitted,
+          LOAN_APPLICATION_STATUS.EligibilityReview,
+          LOAN_APPLICATION_STATUS.UnderReview,
+          LOAN_APPLICATION_STATUS.PendingFieldVerification,
+          LOAN_APPLICATION_STATUS.MoreInfoRequired,
+          LOAN_APPLICATION_STATUS.Approved,
+        ];
+
+        if (
+          paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit &&
+          app.status !== LOAN_APPLICATION_STATUS.Approved
+        ) {
           throw new BadRequestException(
-            'Marketplace orders can only be placed on an Approved loan',
+            'Credit checkout requires an Approved loan application',
           );
         }
 
-        const decision = await tx.loanDecision.findFirst({
-          where: { applicationId, decision: 'approved' },
-          orderBy: { decidedAt: 'desc' },
-        });
-        if (!decision) throw new BadRequestException('No approved decision found');
+        if (
+          paymentMethod !== MARKETPLACE_PAYMENT_METHOD.credit &&
+          !allowedCheckoutStatuses.includes(app.status)
+        ) {
+          throw new BadRequestException(
+            `Checkout is not allowed while application is in ${app.status} status`,
+          );
+        }
 
-        const aggregate = await tx.marketplaceOrder.aggregate({
-          where: {
-            applicationId,
-            status: { notIn: [MARKETPLACE_ORDER_STATUS.cancelled] },
-          },
-          _sum: { totalAmount: true },
-        });
+        let availableCredit = 0;
+        if (paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit) {
+          const decision = await tx.loanDecision.findFirst({
+            where: { applicationId, decision: 'approved' },
+            orderBy: { decidedAt: 'desc' },
+          });
+          if (!decision)
+            throw new BadRequestException('No approved decision found');
 
-        const approved = decision.approvedTotalValue ?? 0;
-        const alreadySpent = aggregate._sum.totalAmount ?? 0;
-        const availableCredit = Helpers.round2(approved - alreadySpent);
+          const aggregate = await tx.marketplaceOrder.aggregate({
+            where: {
+              applicationId,
+              status: { notIn: [MARKETPLACE_ORDER_STATUS.cancelled] },
+            },
+            _sum: { totalAmount: true },
+          });
+
+          const approved = decision.approvedTotalValue ?? 0;
+          const alreadySpent = aggregate._sum.totalAmount ?? 0;
+          availableCredit = Helpers.round2(approved - alreadySpent);
+        }
 
         const resolvedItems: Array<{
           resourceId: string;
@@ -164,8 +207,13 @@ export class MarketplaceOrderService {
           });
         }
 
-        const orderTotal = Helpers.round2(resolvedItems.reduce((sum, i) => sum + i.totalAmount, 0));
-        if (orderTotal > availableCredit) {
+        const orderTotal = Helpers.round2(
+          resolvedItems.reduce((sum, i) => sum + i.totalAmount, 0),
+        );
+        if (
+          paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit &&
+          orderTotal > availableCredit
+        ) {
           throw new BadRequestException(
             `Order total (${orderTotal.toFixed(2)}) exceeds remaining loan credit (${availableCredit.toFixed(2)})`,
           );
@@ -194,11 +242,11 @@ export class MarketplaceOrderService {
             action: 'MARKETPLACE_ORDER_PLACED',
             performedById: user.id,
             performedByRole: user.role,
-            details: { orderRef, totalAmount: orderTotal },
+            details: { orderRef, totalAmount: orderTotal, paymentMethod },
           },
         });
 
-        return { created, app };
+        return { created, app, paymentMethod };
       },
       { isolationLevel: 'Serializable' },
     );
@@ -230,18 +278,136 @@ export class MarketplaceOrderService {
       resourceType: 'marketplace_order',
     });
 
-    await this.notificationService.notifyAdmins({
-      type: NOTIFICATION_TYPE.NEW_MARKETPLACE_ORDER,
-      title: 'New Marketplace Order',
-      message: `A new marketplace order ${order.created.orderRef} has been placed and requires confirmation.`,
-      resourceId: order.created.id,
-      resourceType: 'marketplace_order',
-    });
+    if (paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit) {
+      await this.notificationService.notifyAdmins({
+        type: NOTIFICATION_TYPE.NEW_MARKETPLACE_ORDER,
+        title: 'New Marketplace Order',
+        message: `A new marketplace order ${order.created.orderRef} has been placed and requires confirmation.`,
+        resourceId: order.created.id,
+        resourceType: 'marketplace_order',
+      });
+    }
 
     return {
       status: true,
       message: 'Marketplace order placed successfully',
-      data: { ...order.created, user: userInfo },
+      data: {
+        ...order.created,
+        paymentMethod: order.paymentMethod,
+        user: userInfo,
+      },
+    };
+  }
+
+  async checkout(
+    applicationId: string,
+    body: PlaceMarketplaceOrderDto,
+    user: User,
+  ) {
+    const paymentMethod =
+      body.paymentMethod ?? MARKETPLACE_PAYMENT_METHOD.credit;
+    const response = await this.placeOrder(
+      applicationId,
+      { ...body, paymentMethod },
+      user,
+    );
+
+    const totalAmount = response?.data?.totalAmount ?? 0;
+    const checkoutData: any = {
+      ...response.data,
+      checkout: {
+        paymentMethod,
+        amount: totalAmount,
+        status:
+          paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit
+            ? 'completed'
+            : 'pending_payment',
+      },
+    };
+
+    if (paymentMethod !== MARKETPLACE_PAYMENT_METHOD.credit) {
+      const redirectUrl =
+        this.configService.get<string>('MARKETPLACE_PAYMENT_REDIRECT_URL') ||
+        this.configService.get<string>('WEB_BASE_URL') ||
+        'https://example_company.com/success';
+
+      const flutterwavePayment =
+        await this.apiProviderService.createFlutterwavePaymentLink({
+          tx_ref: response.data.orderRef,
+          amount: String(totalAmount),
+          currency: user.currency ?? 'NGN',
+          redirect_url: redirectUrl,
+          customer: {
+            email: user.email,
+            name: user.fullname ?? user.username,
+            phonenumber: user.phoneNumber,
+          },
+          customizations: {
+            title: 'UBI Marketplace Checkout Payment',
+          },
+          meta: {
+            checkoutType: 'marketplace_order_checkout',
+            orderId: response.data.id,
+            orderRef: response.data.orderRef,
+            applicationId,
+            userId: user.id,
+            paymentMethod,
+          },
+        });
+
+      const existingPayment = await this.prisma.paymentEvent.findFirst({
+        where: { refId: response.data.orderRef },
+      });
+      if (existingPayment) {
+        await this.prisma.paymentEvent.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: 'pending',
+            currency: user.currency ?? 'NGN',
+            amountPaid: totalAmount,
+            settlementAmount: 0,
+            fee: 0,
+          },
+        });
+      } else {
+        await this.prisma.paymentEvent.create({
+          data: {
+            refId: response.data.orderRef,
+            status: 'pending',
+            currency: user.currency ?? 'NGN',
+            amountPaid: totalAmount,
+            settlementAmount: 0,
+            fee: 0,
+          },
+        });
+      }
+
+      await this.notificationService.create({
+        userId: user.id,
+        type: NOTIFICATION_TYPE.ORDER_PLACED,
+        title: 'Checkout Pending Payment',
+        message: `Your checkout for order ${response.data.orderRef} is pending payment. Complete payment to continue processing.`,
+        resourceId: response.data.id,
+        resourceType: 'marketplace_order',
+      });
+
+      checkoutData.checkout.nextAction =
+        'Open payment link and complete payment. Order will continue after webhook confirms payment.';
+      checkoutData.checkout.paymentStatus = 'pending';
+      checkoutData.checkout.paymentLink = flutterwavePayment?.data?.link;
+      checkoutData.checkout.provider = 'flutterwave';
+    }
+
+    if (paymentMethod === MARKETPLACE_PAYMENT_METHOD.credit) {
+      checkoutData.checkout.nextAction =
+        'Order has been charged against your approved loan credit';
+      checkoutData.checkout.paymentStatus = 'successful';
+    }
+
+    return {
+      ...response,
+      message: 'Checkout initiated successfully',
+      data: checkoutData,
     };
   }
 
@@ -274,13 +440,35 @@ export class MarketplaceOrderService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.marketplaceOrder.count({ where: orderWhere }),
-      this.prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT }),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: USER_SELECT,
+      }),
     ]);
+
+    const paymentRefs = items.map((item) => item.orderRef);
+    const paymentEvents =
+      paymentRefs.length > 0
+        ? await this.prisma.paymentEvent.findMany({
+            where: { refId: { in: paymentRefs } },
+            orderBy: { createdAt: 'desc' },
+          })
+        : [];
+    const paymentStatusMap = new Map<string, string>();
+    for (const event of paymentEvents) {
+      if (!paymentStatusMap.has(event.refId)) {
+        paymentStatusMap.set(event.refId, event.status);
+      }
+    }
 
     return {
       status: true,
       message: 'Orders retrieved',
-      data: items.map((item) => ({ ...item, user: userInfo })),
+      data: items.map((item) => ({
+        ...item,
+        user: userInfo,
+        checkoutPaymentStatus: paymentStatusMap.get(item.orderRef) ?? null,
+      })),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
@@ -291,13 +479,64 @@ export class MarketplaceOrderService {
         where: { id: orderId },
         include: { items: { include: { resource: true } }, supplier: true },
       }),
-      this.prisma.user.findUnique({ where: { id: user.id }, select: USER_SELECT }),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: USER_SELECT,
+      }),
     ]);
     if (!order || order.applicationId !== applicationId)
       throw new NotFoundException('Order not found');
     if (order.userId !== user.id) throw new ForbiddenException();
 
-    return { status: true, message: 'Order retrieved', data: { ...order, user: userInfo } };
+    const paymentEvent = await this.prisma.paymentEvent.findFirst({
+      where: { refId: order.orderRef },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      status: true,
+      message: 'Order retrieved',
+      data: {
+        ...order,
+        user: userInfo,
+        checkoutPaymentStatus: paymentEvent?.status ?? null,
+      },
+    };
+  }
+
+  async getOrderPaymentStatus(
+    applicationId: string,
+    orderId: string,
+    user: User,
+  ) {
+    const order = await this.prisma.marketplaceOrder.findUnique({
+      where: { id: orderId },
+    });
+    if (!order || order.applicationId !== applicationId) {
+      throw new NotFoundException('Order not found');
+    }
+    if (order.userId !== user.id) throw new ForbiddenException();
+
+    const paymentEvent = await this.prisma.paymentEvent.findFirst({
+      where: { refId: order.orderRef },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      status: true,
+      message: 'Order payment status retrieved',
+      data: {
+        orderId: order.id,
+        orderRef: order.orderRef,
+        paymentStatus: paymentEvent?.status ?? 'not_started',
+        amount: paymentEvent?.amountPaid ?? order.totalAmount,
+        currency: paymentEvent?.currency ?? user.currency ?? 'NGN',
+        settlementAmount: paymentEvent?.settlementAmount ?? 0,
+        paymentFee: paymentEvent?.fee ?? 0,
+        paymentEventId: paymentEvent?.id ?? null,
+        updatedAt: paymentEvent?.updatedAt ?? order.updatedAt,
+      },
+    };
   }
 
   async cancelMyOrder(applicationId: string, orderId: string, user: User) {

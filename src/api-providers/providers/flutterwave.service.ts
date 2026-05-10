@@ -6,14 +6,40 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  NOTIFICATION_TYPE,
   TRANSACTION_CATEGORY,
   TRANSACTION_STATUS,
   TRANSACTION_TYPE,
+  USER_ROLE,
   USER_ACCOUNT_STATUS,
 } from '@prisma/client';
 import axios from 'axios';
 import { Helpers } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
+
+export type FlutterwaveCreatePaymentRequest = {
+  tx_ref: string;
+  amount: string;
+  currency: string;
+  redirect_url: string;
+  customer: {
+    email: string;
+    name: string;
+    phonenumber: string;
+  };
+  customizations: {
+    title: string;
+  };
+  meta?: Record<string, any>;
+};
+
+export type FlutterwaveCreatePaymentResponse = {
+  status: string;
+  message: string;
+  data: {
+    link: string;
+  };
+};
 
 @Injectable()
 export class FlutterwaveService {
@@ -120,6 +146,31 @@ export class FlutterwaveService {
     }
 
     return response?.data;
+  }
+
+  async createPayment(
+    payload: FlutterwaveCreatePaymentRequest,
+  ): Promise<FlutterwaveCreatePaymentResponse> {
+    const url =
+      this.configService.get<string>('FLUTTERWAVE_BASE_URL') + '/v3/payments';
+
+    try {
+      const response = await axios.post(url, payload, {
+        headers: this.getHeaders(),
+      });
+
+      if (response.status !== 200) {
+        this.logger.error('[Flutterwave] createPayment failed', response?.data);
+        throw new InternalServerErrorException('Failed to create payment link');
+      }
+
+      return response?.data;
+    } catch (err: any) {
+      this.logger.error('[Flutterwave] createPayment error', err?.response?.data || err?.message);
+      throw new InternalServerErrorException(
+        err?.response?.data?.message || 'Failed to create payment link',
+      );
+    }
   }
 
   async getCategories() {
@@ -336,6 +387,10 @@ export class FlutterwaveService {
   async handlePaymentSuccess(body: any) {
     const data = body?.data;
     const metaData = body?.meta_data;
+    const txRef = String(data?.tx_ref ?? '');
+    const checkoutType =
+      data?.meta?.checkoutType ||
+      metaData?.checkoutType;
 
     this.logger.log(
       `[Flutterwave] handlePaymentSuccess — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,
@@ -343,6 +398,100 @@ export class FlutterwaveService {
 
     return this.prisma.$transaction(
       async (trx) => {
+        if (checkoutType === 'marketplace_order_checkout' && txRef) {
+          const existing = await trx.paymentEvent.findFirst({
+            where: { refId: txRef },
+          });
+
+          if (existing?.status === 'successful') {
+            this.logger.log(
+              `[Flutterwave] duplicate marketplace payment success skipped — tx_ref: ${txRef}`,
+            );
+            return;
+          }
+
+          const order = await trx.marketplaceOrder.findUnique({
+            where: { orderRef: txRef },
+          });
+          if (!order) {
+            throw new InternalServerErrorException(
+              `Marketplace order with ref ${txRef} not found`,
+            );
+          }
+
+          if (existing) {
+            await trx.paymentEvent.update({
+              where: { id: existing.id },
+              data: {
+                status: 'successful',
+                currency: data?.currency,
+                amountPaid: Number(data?.amount ?? existing.amountPaid ?? 0),
+                settlementAmount: Number(data?.amount ?? existing.amountPaid ?? 0),
+                fee: Number(data?.app_fee ?? existing.fee ?? 0),
+              },
+            });
+          } else {
+            await trx.paymentEvent.create({
+              data: {
+                refId: txRef,
+                status: 'successful',
+                currency: data?.currency ?? 'NGN',
+                fee: Number(data?.app_fee ?? 0),
+                amountPaid: Number(data?.amount ?? 0),
+                settlementAmount: Number(data?.amount ?? 0),
+              },
+            });
+          }
+
+          await trx.loanAuditLog.create({
+            data: {
+              applicationId: order.applicationId,
+              action: 'MARKETPLACE_ORDER_PAYMENT_SUCCESS',
+              performedById: order.userId,
+              performedByRole: 'FARMER',
+              details: {
+                orderRef: order.orderRef,
+                amount: data?.amount,
+                currency: data?.currency,
+                providerRef: data?.id,
+              },
+            },
+          });
+
+          await trx.notification.create({
+            data: {
+              userId: order.userId,
+              type: NOTIFICATION_TYPE.ORDER_PLACED,
+              title: 'Checkout Payment Successful',
+              message: `Payment received for order ${order.orderRef}. Your order is now awaiting confirmation.`,
+              resourceId: order.id,
+              resourceType: 'marketplace_order',
+            },
+          });
+
+          const admins = await trx.user.findMany({
+            where: { role: USER_ROLE.ADMIN },
+            select: { id: true },
+          });
+          if (admins.length > 0) {
+            await trx.notification.createMany({
+              data: admins.map((admin) => ({
+                userId: admin.id,
+                type: NOTIFICATION_TYPE.NEW_MARKETPLACE_ORDER,
+                title: 'New Marketplace Order',
+                message: `A paid marketplace order ${order.orderRef} is awaiting confirmation.`,
+                resourceId: order.id,
+                resourceType: 'marketplace_order',
+              })),
+            });
+          }
+
+          this.logger.log(
+            `[Flutterwave] marketplace checkout payment success processed — tx_ref: ${txRef}`,
+          );
+          return;
+        }
+
         const { isVerified, data: trxData } = await this.verifyTransaction(
           data?.id,
           data?.amount,
@@ -499,6 +648,10 @@ export class FlutterwaveService {
   async handlePaymentFailure(body: any) {
     const data = body?.data;
     const metaData = body?.meta_data;
+    const txRef = String(data?.tx_ref ?? '');
+    const checkoutType =
+      data?.meta?.checkoutType ||
+      metaData?.checkoutType;
 
     this.logger.log(
       `[Flutterwave] handlePaymentFailure — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,
@@ -506,6 +659,83 @@ export class FlutterwaveService {
 
     return this.prisma.$transaction(
       async (trx) => {
+        if (checkoutType === 'marketplace_order_checkout' && txRef) {
+          const existing = await trx.paymentEvent.findFirst({
+            where: { refId: txRef },
+          });
+
+          if (existing?.status === 'failed') {
+            this.logger.log(
+              `[Flutterwave] duplicate marketplace payment failure skipped — tx_ref: ${txRef}`,
+            );
+            return;
+          }
+
+          const order = await trx.marketplaceOrder.findUnique({
+            where: { orderRef: txRef },
+          });
+          if (!order) {
+            throw new InternalServerErrorException(
+              `Marketplace order with ref ${txRef} not found`,
+            );
+          }
+
+          if (existing) {
+            await trx.paymentEvent.update({
+              where: { id: existing.id },
+              data: {
+                status: 'failed',
+                currency: data?.currency,
+                amountPaid: Number(data?.amount ?? existing.amountPaid ?? 0),
+                settlementAmount: 0,
+                fee: Number(data?.app_fee ?? existing.fee ?? 0),
+              },
+            });
+          } else {
+            await trx.paymentEvent.create({
+              data: {
+                refId: txRef,
+                status: 'failed',
+                currency: data?.currency ?? 'NGN',
+                fee: Number(data?.app_fee ?? 0),
+                amountPaid: Number(data?.amount ?? 0),
+                settlementAmount: 0,
+              },
+            });
+          }
+
+          await trx.loanAuditLog.create({
+            data: {
+              applicationId: order.applicationId,
+              action: 'MARKETPLACE_ORDER_PAYMENT_FAILED',
+              performedById: order.userId,
+              performedByRole: 'FARMER',
+              details: {
+                orderRef: order.orderRef,
+                amount: data?.amount,
+                currency: data?.currency,
+                providerRef: data?.id,
+              },
+            },
+          });
+
+          await trx.notification.create({
+            data: {
+              userId: order.userId,
+              type: NOTIFICATION_TYPE.ORDER_PLACED,
+              title: 'Checkout Payment Failed',
+              message: `Payment failed for order ${order.orderRef}. Please try again to continue checkout.`,
+              resourceId: order.id,
+              resourceType: 'marketplace_order',
+            },
+          });
+
+          this.logger.log(
+            `[Flutterwave] marketplace checkout payment failure processed — tx_ref: ${txRef}`,
+          );
+          return;
+        }
+
         const existimgPaymentEvent = await trx.paymentEvent.findFirst({
           where: {
             refId: String(data?.id),

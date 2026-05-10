@@ -335,4 +335,43 @@ export const adminDashboardResponse = {
       limit: 20,
     },
   },
+  transactionsAdvanced: {
+    status: true,
+    message: 'Advanced transactions history retrieved',
+    data: {
+      transactions: [
+        {
+          status: 'success',
+          reference: 'TXN-20260428-001',
+          type: 'DEBIT',
+          category: 'TRANSFER',
+          description: 'Transfer to Chidi Nwosu',
+          amount: 15000,
+          timestamp: '2026-04-28T10:23:00.000Z',
+          customer: {
+            fullname: 'Amara Okafor',
+            accountNumber: '0123456789',
+          },
+          user: {
+            id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            fullname: 'Amara Okafor',
+            email: 'amara.okafor@example.com',
+            phoneNumber: '+2348012345678',
+            role: 'FARMER',
+            state: 'Lagos',
+            city: 'Ikeja',
+            country: 'NG',
+            gender: 'F',
+            onboardedByAgent: {
+              id: 'agent-123-456-789',
+              fullname: 'Ibrahim Musa',
+            },
+          },
+        },
+      ],
+      total: 1240,
+      page: 1,
+      limit: 20,
+    },
+  },
 } as const;

@@ -30,7 +30,7 @@ export class RepaymentController {
   @ApiOperation({ summary: 'Admin: list all repayment plans' })
   @ApiResponse({ status: HttpStatus.OK, example: repaymentResponse.adminList })
   @UseGuards(RolesGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   async adminList(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,

@@ -34,6 +34,7 @@ import { RepaymentModule } from './repayment/repayment.module';
 import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.module';
 import { NotificationModule } from './notification/notification.module';
 import { StatementModule } from './statement/statement.module';
+import { WarehouseModule } from './warehouse/warehouse.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { StatementModule } from './statement/statement.module';
     MarketplaceOrderModule,
     NotificationModule,
     StatementModule,
+    WarehouseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

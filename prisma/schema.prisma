@@ -1146,3 +1146,28 @@ model Notification {
   @@index([userId, createdAt])
   @@map("notifications")
 }
+
+model Warehouse {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  address   String
+  state     String
+  lga       String?
+  
+  latitude  Float
+  longitude Float
+  
+  capacity      Float?  @default(0)
+  contactPerson String?
+  contactPhone  String?
+  contactEmail  String?
+  
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([state])
+  @@index([isActive])
+  @@map("warehouse")
+}

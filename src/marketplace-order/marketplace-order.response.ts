@@ -121,6 +121,7 @@ export const marketplaceOrderResponse = {
         items: [
           {
             id: 'item-uuid-001',
+            resourceId: 'resource-uuid-001',
             itemName: 'Maize Seeds (OPV)',
             quantity: 5,
             unitPrice: 3500,

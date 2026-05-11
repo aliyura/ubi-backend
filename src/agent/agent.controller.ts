@@ -195,6 +195,23 @@ export class AgentController {
     return this.service.getOnboardedFarmers(query, (req as any).user);
   }
 
+  @Get('onboarded-farmers/:farmerId/details')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Get comprehensive details for a specific onboarded farmer including loan history',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: agentResponse.getOnboardedFarmerDetails,
+  })
+  async getOnboardedFarmerDetails(
+    @Param('farmerId', ParseUUIDPipe) farmerId: string,
+    @Req() req: Request,
+  ) {
+    return this.service.getOnboardedFarmerDetails(farmerId, (req as any).user);
+  }
+
   @Get('onboarded-farmers/loan-applications')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -276,7 +293,9 @@ export class AgentController {
 
   @Patch('farmers/:farmerId/loan-cart/items/:itemId')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Update item quantity in an onboarded farmer's loan cart" })
+  @ApiOperation({
+    summary: "Update item quantity in an onboarded farmer's loan cart",
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     example: agentResponse.updateFarmerCartItem,

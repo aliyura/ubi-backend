@@ -5,12 +5,28 @@ export const loanApplicationResponse = {
     data: {
       eligible: 'pass',
       checks: [
-        { checkName: 'KYC Verification', result: 'pass', note: 'KYC tier is sufficient' },
-        { checkName: 'Active Loan Conflict', result: 'pass', note: 'No conflicting loan found' },
+        {
+          checkName: 'KYC Verification',
+          result: 'pass',
+          note: 'KYC tier is sufficient',
+        },
+        {
+          checkName: 'Active Loan Conflict',
+          result: 'pass',
+          note: 'No conflicting loan found',
+        },
         { checkName: 'Farm Exists', result: 'pass', note: 'Farm record found' },
         { checkName: 'Cart Not Empty', result: 'pass', note: 'Cart has items' },
-        { checkName: 'Repayment History', result: 'pass', note: 'No overdue repayments' },
-        { checkName: 'Contact Verification', result: 'pass', note: 'Phone and email are verified' },
+        {
+          checkName: 'Repayment History',
+          result: 'pass',
+          note: 'No overdue repayments',
+        },
+        {
+          checkName: 'Contact Verification',
+          result: 'pass',
+          note: 'Phone and email are verified',
+        },
       ],
       blockingIssues: [],
       warnings: [],
@@ -21,7 +37,11 @@ export const loanApplicationResponse = {
     message: 'Eligibility check failed',
     errors: [
       { field: 'eligibility', message: 'Please complete KYC tier 2 or higher' },
-      { field: 'eligibility', message: 'You have an active application UBI-2026-XYZ that must be resolved first' },
+      {
+        field: 'eligibility',
+        message:
+          'You have an active application UBI-2026-XYZ that must be resolved first',
+      },
     ],
     data: {
       eligible: 'fail',
@@ -78,8 +98,22 @@ export const loanApplicationResponse = {
         submittedAt: '2026-04-18T10:30:00.000Z',
         farm: { name: 'Abubakar North Farm', state: 'Katsina' },
         items: [
-          { itemName: 'Maize Seeds (OPV)', quantity: 5, unitPrice: 3500, totalAmount: 17500 },
-          { itemName: 'Urea Fertilizer', quantity: 2, unitPrice: 22000, totalAmount: 44000 },
+          {
+            id: 'item-uuid-001',
+            resourceId: 'resource-uuid-001',
+            itemName: 'Maize Seeds (OPV)',
+            quantity: 5,
+            unitPrice: 3500,
+            totalAmount: 17500,
+          },
+          {
+            id: 'item-uuid-002',
+            resourceId: 'resource-uuid-002',
+            itemName: 'Urea Fertilizer',
+            quantity: 2,
+            unitPrice: 22000,
+            totalAmount: 44000,
+          },
         ],
       },
     ],
@@ -98,8 +132,22 @@ export const loanApplicationResponse = {
         submittedAt: '2026-01-12T08:30:00.000Z',
         farm: { name: 'Abubakar North Farm', state: 'Katsina' },
         items: [
-          { itemName: 'Hybrid Maize Seeds', quantity: 10, unitPrice: 4000, totalAmount: 40000 },
-          { itemName: 'NPK Fertilizer', quantity: 4, unitPrice: 20000, totalAmount: 80000 },
+          {
+            id: 'item-uuid-003',
+            resourceId: 'resource-uuid-003',
+            itemName: 'Hybrid Maize Seeds',
+            quantity: 10,
+            unitPrice: 4000,
+            totalAmount: 40000,
+          },
+          {
+            id: 'item-uuid-004',
+            resourceId: 'resource-uuid-004',
+            itemName: 'NPK Fertilizer',
+            quantity: 4,
+            unitPrice: 20000,
+            totalAmount: 80000,
+          },
         ],
         repaymentPlan: {
           totalRepaymentAmount: 126000,
@@ -136,8 +184,22 @@ export const loanApplicationResponse = {
         photos: [],
       },
       items: [
-        { itemName: 'Maize Seeds (OPV)', quantity: 5, unitPrice: 3500, totalAmount: 17500 },
-        { itemName: 'Urea Fertilizer', quantity: 2, unitPrice: 22000, totalAmount: 44000 },
+        {
+          id: 'item-uuid-001',
+          resourceId: 'resource-uuid-001',
+          itemName: 'Maize Seeds (OPV)',
+          quantity: 5,
+          unitPrice: 3500,
+          totalAmount: 17500,
+        },
+        {
+          id: 'item-uuid-002',
+          resourceId: 'resource-uuid-002',
+          itemName: 'Urea Fertilizer',
+          quantity: 2,
+          unitPrice: 22000,
+          totalAmount: 44000,
+        },
       ],
       eligibilityChecks: [
         { checkName: 'KYC Verification', result: 'pass' },
@@ -145,9 +207,21 @@ export const loanApplicationResponse = {
       ],
       decisions: [],
       statusHistory: [
-        { toStatus: 'Submitted', changedBy: 'user-uuid-001', createdAt: '2026-04-18T10:30:00.000Z' },
-        { toStatus: 'EligibilityReview', changedBy: 'system', createdAt: '2026-04-18T10:31:00.000Z' },
-        { toStatus: 'UnderReview', changedBy: 'admin-uuid-001', createdAt: '2026-04-18T11:00:00.000Z' },
+        {
+          toStatus: 'Submitted',
+          changedBy: 'user-uuid-001',
+          createdAt: '2026-04-18T10:30:00.000Z',
+        },
+        {
+          toStatus: 'EligibilityReview',
+          changedBy: 'system',
+          createdAt: '2026-04-18T10:31:00.000Z',
+        },
+        {
+          toStatus: 'UnderReview',
+          changedBy: 'admin-uuid-001',
+          createdAt: '2026-04-18T11:00:00.000Z',
+        },
       ],
       fulfillment: null,
       repaymentPlan: null,
@@ -157,9 +231,30 @@ export const loanApplicationResponse = {
     statusCode: 200,
     message: 'Timeline retrieved',
     data: [
-      { id: 'hist-001', fromStatus: null, toStatus: 'Submitted', changedBy: 'user-uuid-001', reason: 'Application submitted by farmer', createdAt: '2026-04-18T10:30:00.000Z' },
-      { id: 'hist-002', fromStatus: 'Submitted', toStatus: 'EligibilityReview', changedBy: 'system', reason: null, createdAt: '2026-04-18T10:31:00.000Z' },
-      { id: 'hist-003', fromStatus: 'EligibilityReview', toStatus: 'UnderReview', changedBy: 'admin-uuid-001', reason: 'Passed eligibility checks', createdAt: '2026-04-18T11:00:00.000Z' },
+      {
+        id: 'hist-001',
+        fromStatus: null,
+        toStatus: 'Submitted',
+        changedBy: 'user-uuid-001',
+        reason: 'Application submitted by farmer',
+        createdAt: '2026-04-18T10:30:00.000Z',
+      },
+      {
+        id: 'hist-002',
+        fromStatus: 'Submitted',
+        toStatus: 'EligibilityReview',
+        changedBy: 'system',
+        reason: null,
+        createdAt: '2026-04-18T10:31:00.000Z',
+      },
+      {
+        id: 'hist-003',
+        fromStatus: 'EligibilityReview',
+        toStatus: 'UnderReview',
+        changedBy: 'admin-uuid-001',
+        reason: 'Passed eligibility checks',
+        createdAt: '2026-04-18T11:00:00.000Z',
+      },
     ],
   },
   getRepaymentSchedule: {
@@ -179,12 +274,42 @@ export const loanApplicationResponse = {
       outstandingBalance: 64575,
       status: 'pending',
       repayments: [
-        { installmentNumber: 1, dueDate: '2026-10-01', amount: 10762.5, status: 'pending' },
-        { installmentNumber: 2, dueDate: '2026-11-01', amount: 10762.5, status: 'pending' },
-        { installmentNumber: 3, dueDate: '2026-12-01', amount: 10762.5, status: 'pending' },
-        { installmentNumber: 4, dueDate: '2027-01-01', amount: 10762.5, status: 'pending' },
-        { installmentNumber: 5, dueDate: '2027-02-01', amount: 10762.5, status: 'pending' },
-        { installmentNumber: 6, dueDate: '2027-03-01', amount: 10762.5, status: 'pending' },
+        {
+          installmentNumber: 1,
+          dueDate: '2026-10-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
+        {
+          installmentNumber: 2,
+          dueDate: '2026-11-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
+        {
+          installmentNumber: 3,
+          dueDate: '2026-12-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
+        {
+          installmentNumber: 4,
+          dueDate: '2027-01-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
+        {
+          installmentNumber: 5,
+          dueDate: '2027-02-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
+        {
+          installmentNumber: 6,
+          dueDate: '2027-03-01',
+          amount: 10762.5,
+          status: 'pending',
+        },
       ],
     },
   },

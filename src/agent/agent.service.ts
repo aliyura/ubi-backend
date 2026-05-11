@@ -954,6 +954,194 @@ export class AgentService {
     return response;
   }
 
+  async getOnboardedFarmerDetails(farmerId: string, agent: User) {
+    // Verify farmer exists and was onboarded by this agent
+    const farmer = await this.prisma.user.findFirst({
+      where: {
+        id: farmerId,
+        role: USER_ROLE.FARMER,
+        onboardedByAgentId: agent.id,
+      },
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        username: true,
+        phoneNumber: true,
+        gender: true,
+        country: true,
+        state: true,
+        city: true,
+        address: true,
+        dateOfBirth: true,
+        profileImageUrl: true,
+        status: true,
+        tierLevel: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        isBvnVerified: true,
+        isNinVerified: true,
+        isAddressVerified: true,
+        bvn: true,
+        nin: true,
+        referralCode: true,
+        currency: true,
+        dailyCummulativeTransactionLimit: true,
+        cummulativeBalanceLimit: true,
+        createdAt: true,
+        updatedAt: true,
+        onboardedByAgentId: true,
+      },
+    });
+
+    if (!farmer) {
+      throw new NotFoundException('Farmer not found or not onboarded by you');
+    }
+
+    // Fetch all related data in parallel
+    const [farms, wallet, loanApplications, agentActivityLogs] =
+      await Promise.all([
+        // Farms with photos
+        this.prisma.farm.findMany({
+          where: { userId: farmerId },
+          include: {
+            photos: true,
+            applications: {
+              select: { id: true, applicationRef: true, status: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+
+        // Wallet info
+        this.prisma.wallet.findFirst({
+          where: { userId: farmerId },
+          select: {
+            id: true,
+            balance: true,
+            currency: true,
+            accountNumber: true,
+            accountName: true,
+            bankName: true,
+            bankCode: true,
+            createdAt: true,
+          },
+        }),
+
+        // All loan applications with full details
+        this.prisma.loanApplication.findMany({
+          where: { userId: farmerId },
+          include: {
+            farm: {
+              select: {
+                id: true,
+                name: true,
+                address: true,
+                state: true,
+                mainCropType: true,
+                sizeValue: true,
+                sizeUnit: true,
+              },
+            },
+            items: true,
+            eligibilityChecks: true,
+            agentRecommendation: true,
+            fieldVerification: true,
+            decisions: {
+              orderBy: { decidedAt: 'desc' },
+            },
+            statusHistory: {
+              orderBy: { createdAt: 'asc' },
+            },
+            fulfillment: {
+              include: {
+                items: true,
+              },
+            },
+            repaymentPlan: {
+              include: {
+                repayments: {
+                  orderBy: { dueDate: 'asc' },
+                },
+              },
+            },
+            marketplaceOrders: {
+              include: {
+                items: true,
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+
+        // Agent activity logs related to this farmer
+        this.prisma.agentActivityLog.findMany({
+          where: {
+            OR: [
+              { metadata: { path: ['farmerId'], equals: farmerId } },
+              { application: { userId: farmerId } },
+            ],
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        }),
+      ]);
+
+    // Calculate loan statistics
+    const loanStats = {
+      totalApplications: loanApplications.length,
+      totalValueRequested: loanApplications.reduce(
+        (sum, app) => sum + (app.totalEstimatedValue || 0),
+        0,
+      ),
+      activeLoans: loanApplications.filter(
+        (app) =>
+          app.status === LOAN_APPLICATION_STATUS.Active ||
+          app.status === LOAN_APPLICATION_STATUS.PartiallyRepaid,
+      ).length,
+      completedLoans: loanApplications.filter(
+        (app) => app.status === LOAN_APPLICATION_STATUS.Completed,
+      ).length,
+      pendingApplications: loanApplications.filter(
+        (app) =>
+          app.status === LOAN_APPLICATION_STATUS.Submitted ||
+          app.status === LOAN_APPLICATION_STATUS.UnderReview ||
+          app.status === LOAN_APPLICATION_STATUS.EligibilityReview ||
+          app.status === LOAN_APPLICATION_STATUS.PendingFieldVerification ||
+          app.status === LOAN_APPLICATION_STATUS.MoreInfoRequired,
+      ).length,
+      rejectedApplications: loanApplications.filter(
+        (app) => app.status === LOAN_APPLICATION_STATUS.Rejected,
+      ).length,
+    };
+
+    // Log activity
+    this.prisma.agentActivityLog
+      .create({
+        data: {
+          agentId: agent.id,
+          action: AGENT_ACTION.VIEW_FARMER_DETAILS,
+          description: `Viewed detailed profile for farmer: ${farmer.fullname}`,
+          metadata: { farmerId: farmer.id },
+        },
+      })
+      .catch(() => {});
+
+    return {
+      status: true,
+      message: 'Farmer details retrieved',
+      data: {
+        farmer,
+        farms,
+        wallet,
+        loanApplications,
+        loanStats,
+        agentActivityLogs,
+      },
+    };
+  }
+
   // ─── Private Helpers ───────────────────────────────────────────────────────
 
   private generateReferralCode(): Promise<string> {

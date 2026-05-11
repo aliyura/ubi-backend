@@ -15,7 +15,13 @@ export const marketplaceOrderAdminResponse = {
         deliveryAddress: 'No 4 Kankia Road, Katsina',
         createdAt: '2026-04-24T10:30:00.000Z',
         items: [
-          { id: 'item-uuid-001', itemName: 'Maize Seeds (OPV)', quantity: 5, unitPrice: 3500, totalAmount: 17500 },
+          {
+            id: 'item-uuid-001',
+            itemName: 'Maize Seeds (OPV)',
+            quantity: 5,
+            unitPrice: 3500,
+            totalAmount: 17500,
+          },
         ],
         supplier: null,
         application: {
@@ -66,7 +72,11 @@ export const marketplaceOrderAdminResponse = {
           },
         },
       ],
-      supplier: { id: 'supplier-uuid-001', name: 'AgroSupply Ltd', contactEmail: 'supply@agro.com' },
+      supplier: {
+        id: 'supplier-uuid-001',
+        name: 'AgroSupply Ltd',
+        contactEmail: 'supply@agro.com',
+      },
       application: {
         id: 'app-uuid-001',
         applicationRef: 'UBI-2026-AB3CD7E',

@@ -76,7 +76,10 @@ export class UserController {
   @Post('register-agent')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register as an agent using an invitation token' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.registerAgent })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.registerAgent,
+  })
   async registerAgent(@Body() body: RegisterAgentDto) {
     return this.userService.registerAgent(body);
   }

@@ -27,8 +27,18 @@ export const fulfillmentResponse = {
       deliveryMethod: 'delivery',
       deliveryAddress: 'No 4 Kankia Road, Katsina',
       items: [
-        { itemName: 'Maize Seeds (OPV)', quantity: 5, unitOfMeasure: 'bag', stockAvailable: true },
-        { itemName: 'Urea Fertilizer', quantity: 2, unitOfMeasure: 'bag', stockAvailable: true },
+        {
+          itemName: 'Maize Seeds (OPV)',
+          quantity: 5,
+          unitOfMeasure: 'bag',
+          stockAvailable: true,
+        },
+        {
+          itemName: 'Urea Fertilizer',
+          quantity: 2,
+          unitOfMeasure: 'bag',
+          stockAvailable: true,
+        },
       ],
     },
   },

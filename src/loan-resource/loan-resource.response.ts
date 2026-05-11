@@ -3,14 +3,32 @@ export const loanResourceResponse = {
     statusCode: 200,
     message: 'Categories retrieved',
     data: [
-      { id: 'cat-uuid-001', name: 'Seeds', description: 'Crop seeds for planting', imageUrl: null, isActive: true },
-      { id: 'cat-uuid-002', name: 'Fertilizers', description: 'Soil enrichment products', imageUrl: null, isActive: true },
+      {
+        id: 'cat-uuid-001',
+        name: 'Seeds',
+        description: 'Crop seeds for planting',
+        imageUrl: null,
+        isActive: true,
+      },
+      {
+        id: 'cat-uuid-002',
+        name: 'Fertilizers',
+        description: 'Soil enrichment products',
+        imageUrl: null,
+        isActive: true,
+      },
     ],
   },
   createCategory: {
     statusCode: 201,
     message: 'Category created',
-    data: { id: 'cat-uuid-003', name: 'Irrigation', description: 'Irrigation materials', imageUrl: null, isActive: true },
+    data: {
+      id: 'cat-uuid-003',
+      name: 'Irrigation',
+      description: 'Irrigation materials',
+      imageUrl: null,
+      isActive: true,
+    },
   },
   getResources: {
     statusCode: 200,
@@ -20,7 +38,8 @@ export const loanResourceResponse = {
         id: 'res-uuid-001',
         categoryId: 'cat-uuid-001',
         name: 'Maize Seeds (OPV)',
-        description: 'Open-pollinated variety maize seeds suitable for tropical climates',
+        description:
+          'Open-pollinated variety maize seeds suitable for tropical climates',
         imageUrl: null,
         unitPrice: 3500,
         unitOfMeasure: 'bag',
@@ -42,7 +61,8 @@ export const loanResourceResponse = {
       id: 'res-uuid-001',
       categoryId: 'cat-uuid-001',
       name: 'Maize Seeds (OPV)',
-      description: 'Open-pollinated variety maize seeds suitable for tropical climates',
+      description:
+        'Open-pollinated variety maize seeds suitable for tropical climates',
       imageUrl: null,
       unitPrice: 3500,
       unitOfMeasure: 'bag',

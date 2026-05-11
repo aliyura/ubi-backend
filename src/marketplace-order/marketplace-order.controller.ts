@@ -24,16 +24,29 @@ export class MarketplaceOrderController {
 
   @Get('credit-summary')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get approved credit, total spent, and remaining balance' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getCreditSummary })
-  getCreditSummary(@Param('applicationId', ParseUUIDPipe) applicationId: string, @Req() req: Request) {
+  @ApiOperation({
+    summary: 'Get approved credit, total spent, and remaining balance',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderResponse.getCreditSummary,
+  })
+  getCreditSummary(
+    @Param('applicationId', ParseUUIDPipe) applicationId: string,
+    @Req() req: Request,
+  ) {
     return this.service.getCreditSummary(applicationId, (req as any).user);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Place a marketplace order using credit, transfer, or card' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: marketplaceOrderResponse.placeOrder })
+  @ApiOperation({
+    summary: 'Place a marketplace order using credit, transfer, or card',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: marketplaceOrderResponse.placeOrder,
+  })
   placeOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Body() body: PlaceMarketplaceOrderDto,
@@ -48,7 +61,10 @@ export class MarketplaceOrderController {
     summary:
       'Checkout directly and proceed to payment via credit, bank transfer, or card',
   })
-  @ApiResponse({ status: HttpStatus.CREATED, example: marketplaceOrderResponse.checkout })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: marketplaceOrderResponse.checkout,
+  })
   checkout(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Body() body: PlaceMarketplaceOrderDto,
@@ -60,7 +76,10 @@ export class MarketplaceOrderController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List my marketplace orders for this application' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.listMyOrders })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderResponse.listMyOrders,
+  })
   listMyOrders(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Query() query: QueryMarketplaceOrderDto,
@@ -72,7 +91,10 @@ export class MarketplaceOrderController {
   @Get(':orderId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a single marketplace order detail' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getMyOrder })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderResponse.getMyOrder,
+  })
   getMyOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -83,8 +105,13 @@ export class MarketplaceOrderController {
 
   @Get(':orderId/payment-status')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get checkout payment status for a marketplace order' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.getOrderPaymentStatus })
+  @ApiOperation({
+    summary: 'Get checkout payment status for a marketplace order',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderResponse.getOrderPaymentStatus,
+  })
   getOrderPaymentStatus(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -100,12 +127,19 @@ export class MarketplaceOrderController {
   @Post(':orderId/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a pending marketplace order' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderResponse.cancelMyOrder })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderResponse.cancelMyOrder,
+  })
   cancelMyOrder(
     @Param('applicationId', ParseUUIDPipe) applicationId: string,
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Req() req: Request,
   ) {
-    return this.service.cancelMyOrder(applicationId, orderId, (req as any).user);
+    return this.service.cancelMyOrder(
+      applicationId,
+      orderId,
+      (req as any).user,
+    );
   }
 }

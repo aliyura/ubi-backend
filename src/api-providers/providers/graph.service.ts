@@ -97,7 +97,7 @@ export class GraphService {
   }
 
   private getHeaders() {
-    const secretKey = this.configService.get<String>('GRAPH_API_KEY');
+    const secretKey = this.configService.get<string>('GRAPH_API_KEY');
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${secretKey}`,

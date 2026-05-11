@@ -16,7 +16,7 @@ export class SmileIdService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   private getHeaders() {
     return {

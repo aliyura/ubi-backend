@@ -1,8 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  Length,
-} from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 import { Match } from 'src/decorators/match.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 

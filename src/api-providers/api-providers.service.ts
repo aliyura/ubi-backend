@@ -398,7 +398,7 @@ export class ApiProviderService {
     bill_type: BILL_TYPE | string,
     trx_ref?: string,
   ) {
-    let amountToUse = body.amount;
+    const amountToUse = body.amount;
     // if (bill_type === 'data') {
     // const operator = await this.flutterwaveService.purchaseBill(
     //   body.itemCode,

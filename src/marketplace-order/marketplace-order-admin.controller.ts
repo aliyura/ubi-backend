@@ -36,7 +36,10 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all marketplace orders' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.listOrders })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.listOrders,
+  })
   listOrders(@Query() query: QueryMarketplaceOrderDto) {
     return this.service.listOrders(query);
   }
@@ -45,7 +48,10 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get full marketplace order detail' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.getOrderDetail })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.getOrderDetail,
+  })
   getOrderDetail(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.service.getOrderDetail(orderId);
   }
@@ -54,7 +60,10 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm order and deduct stock from inventory' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.confirmOrder })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.confirmOrder,
+  })
   confirmOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminConfirmOrderDto,
@@ -67,8 +76,14 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as packed' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.packOrder })
-  packOrder(@Param('orderId', ParseUUIDPipe) orderId: string, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.packOrder,
+  })
+  packOrder(
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Req() req: Request,
+  ) {
     return this.service.packOrder(orderId, (req as any).user);
   }
 
@@ -76,7 +91,10 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark order as dispatched' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.dispatchOrder })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.dispatchOrder,
+  })
   dispatchOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminDispatchOrderDto,
@@ -89,7 +107,10 @@ export class MarketplaceOrderAdminController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Record delivery and upload proof' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.deliverOrder })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.deliverOrder,
+  })
   deliverOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminDeliverOrderDto,
@@ -101,8 +122,13 @@ export class MarketplaceOrderAdminController {
   @Post(':orderId/cancel')
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Admin cancel order (re-credits stock if confirmed)' })
-  @ApiResponse({ status: HttpStatus.OK, example: marketplaceOrderAdminResponse.cancelOrder })
+  @ApiOperation({
+    summary: 'Admin cancel order (re-credits stock if confirmed)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: marketplaceOrderAdminResponse.cancelOrder,
+  })
   cancelOrder(
     @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: AdminCancelOrderDto,

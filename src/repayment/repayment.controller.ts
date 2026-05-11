@@ -36,7 +36,11 @@ export class RepaymentController {
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('overdueOnly') overdueOnly?: string,
   ) {
-    return this.service.adminListRepayments(page, limit, overdueOnly === 'true');
+    return this.service.adminListRepayments(
+      page,
+      limit,
+      overdueOnly === 'true',
+    );
   }
 
   @Post('admin/repayments/:applicationId/record')
@@ -55,7 +59,10 @@ export class RepaymentController {
   @Post('admin/repayments/jobs/process-overdue')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin: trigger overdue repayment processing job' })
-  @ApiResponse({ status: HttpStatus.OK, example: repaymentResponse.processOverdue })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: repaymentResponse.processOverdue,
+  })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async processOverdue() {
@@ -65,7 +72,10 @@ export class RepaymentController {
   @Post('admin/repayments/jobs/send-reminders')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Admin: trigger repayment reminder SMS job' })
-  @ApiResponse({ status: HttpStatus.OK, example: repaymentResponse.sendReminders })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: repaymentResponse.sendReminders,
+  })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async sendReminders() {
@@ -75,7 +85,10 @@ export class RepaymentController {
   @Get('loan-applications/:id/repayment-schedule')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Farmer: view repayment schedule for a loan' })
-  @ApiResponse({ status: HttpStatus.OK, example: repaymentResponse.getSchedule })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: repaymentResponse.getSchedule,
+  })
   async getSchedule(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getRepaymentSchedule(id);
   }

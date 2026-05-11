@@ -33,7 +33,10 @@ export class FileService {
     signatureVersion: 'v4',
   });
 
-  async compressImage(imageBuffer: Buffer, fileSizeKb: number): Promise<Buffer> {
+  async compressImage(
+    imageBuffer: Buffer,
+    fileSizeKb: number,
+  ): Promise<Buffer> {
     let newQuality = Math.round(fileSizeKb / 2);
     if (fileSizeKb > 20) {
       newQuality = 10;
@@ -151,7 +154,9 @@ export class FileService {
         success: true,
         message: Messages.RequestSuccessful,
         data: {
-          url: this.baseUrl ? `${this.baseUrl}/${this.bucket}/${s3Response.Key}` : s3Response.Location,
+          url: this.baseUrl
+            ? `${this.baseUrl}/${this.bucket}/${s3Response.Key}`
+            : s3Response.Location,
           fileName: s3Response.Key,
         },
       };

@@ -185,10 +185,13 @@ export class UserService {
             );
           }
 
-          const uploadResponse = await this.fileService.uploadFile(policeReport, {
-            folder: FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
-            prefix: newUser.id,
-          });
+          const uploadResponse = await this.fileService.uploadFile(
+            policeReport,
+            {
+              folder: FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
+              prefix: newUser.id,
+            },
+          );
 
           if (!uploadResponse.success || !uploadResponse.data) {
             throw new BadRequestException(
@@ -765,7 +768,8 @@ export class UserService {
         userId: user.id,
         type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
         title: 'KYC Level Upgraded',
-        message: 'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
+        message:
+          'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
       });
 
       return {
@@ -799,7 +803,8 @@ export class UserService {
       userId: user.id,
       type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
       title: 'KYC Level Upgraded',
-      message: 'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
+      message:
+        'Your KYC has been upgraded to Tier 2. You now have higher transaction limits.',
     });
 
     return {
@@ -831,7 +836,8 @@ export class UserService {
         userId: user.id,
         type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
         title: 'KYC Level Upgraded',
-        message: 'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
+        message:
+          'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
       });
 
       return {
@@ -878,7 +884,8 @@ export class UserService {
       userId: user.id,
       type: NOTIFICATION_TYPE.KYC_TIER_UPGRADED,
       title: 'KYC Level Upgraded',
-      message: 'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
+      message:
+        'Your KYC has been upgraded to Tier 3. You now have the highest transaction limits.',
     });
 
     return {

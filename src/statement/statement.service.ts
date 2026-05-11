@@ -70,8 +70,13 @@ export class StatementService {
     let repayments: any[] = [];
     let wallet: any = null;
 
-    if (section === StatementSection.ALL || section === StatementSection.TRANSACTIONS) {
-      wallet = await this.prisma.wallet.findFirst({ where: { userId: user.id } });
+    if (
+      section === StatementSection.ALL ||
+      section === StatementSection.TRANSACTIONS
+    ) {
+      wallet = await this.prisma.wallet.findFirst({
+        where: { userId: user.id },
+      });
       if (wallet) {
         transactions = await this.prisma.transaction.findMany({
           where: {
@@ -83,7 +88,10 @@ export class StatementService {
       }
     }
 
-    if (section === StatementSection.ALL || section === StatementSection.LOANS) {
+    if (
+      section === StatementSection.ALL ||
+      section === StatementSection.LOANS
+    ) {
       loans = await this.prisma.loanApplication.findMany({
         where: isAgent
           ? { agentId: user.id, createdAt: { gte: startDate, lte: endDate } }
@@ -101,7 +109,11 @@ export class StatementService {
       });
     }
 
-    if (!isAgent && (section === StatementSection.ALL || section === StatementSection.REPAYMENTS)) {
+    if (
+      !isAgent &&
+      (section === StatementSection.ALL ||
+        section === StatementSection.REPAYMENTS)
+    ) {
       repayments = await this.prisma.repayment.findMany({
         where: {
           plan: { application: { userId: user.id } },
@@ -121,23 +133,32 @@ export class StatementService {
 
   // ── CSV ────────────────────────────────────────────────────────────────────
 
-  private buildCsvContent(data: any, query: StatementQueryDto, user: any): string {
+  private buildCsvContent(
+    data: any,
+    query: StatementQueryDto,
+    user: any,
+  ): string {
     const { transactions, loans, repayments, wallet } = data;
     const lines: string[] = [];
 
     lines.push('Account Statement');
     lines.push(`Name,${this.csvEscape(user.fullname)}`);
     lines.push(`Username,${this.csvEscape(user.username)}`);
-    if (wallet?.accountNumber) lines.push(`Account Number,${wallet.accountNumber}`);
+    if (wallet?.accountNumber)
+      lines.push(`Account Number,${wallet.accountNumber}`);
     lines.push(`Statement Period,${query.startDate} to ${query.endDate}`);
     lines.push(`Generated On,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`);
     lines.push('');
 
     if (transactions.length > 0) {
       lines.push('WALLET TRANSACTIONS');
-      lines.push('Date,Reference,Type,Category,Description,Amount,Currency,Previous Balance,Current Balance,Status');
+      lines.push(
+        'Date,Reference,Type,Category,Description,Amount,Currency,Previous Balance,Current Balance,Status',
+      );
       for (const t of transactions) {
-        const amount = Math.abs(t.currentBalance - t.previousBalance).toFixed(2);
+        const amount = Math.abs(t.currentBalance - t.previousBalance).toFixed(
+          2,
+        );
         lines.push(
           [
             format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm:ss'),
@@ -158,7 +179,9 @@ export class StatementService {
 
     if (loans.length > 0) {
       lines.push('LOAN APPLICATIONS');
-      lines.push('Date,Reference,Purpose,Status,Total Value,Currency,Submitted At');
+      lines.push(
+        'Date,Reference,Purpose,Status,Total Value,Currency,Submitted At',
+      );
       for (const l of loans) {
         lines.push(
           [
@@ -177,7 +200,9 @@ export class StatementService {
 
     if (repayments.length > 0) {
       lines.push('REPAYMENT HISTORY');
-      lines.push('Date,Loan Reference,Installment #,Due Date,Amount Due,Amount Paid,Status,Reference');
+      lines.push(
+        'Date,Loan Reference,Installment #,Due Date,Amount Due,Amount Paid,Status,Reference',
+      );
       for (const r of repayments) {
         lines.push(
           [
@@ -207,7 +232,11 @@ export class StatementService {
 
   // ── PDF ────────────────────────────────────────────────────────────────────
 
-  private buildPdfContent(data: any, query: StatementQueryDto, user: any): Promise<Buffer> {
+  private buildPdfContent(
+    data: any,
+    query: StatementQueryDto,
+    user: any,
+  ): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
       const chunks: Buffer[] = [];
@@ -221,7 +250,12 @@ export class StatementService {
     });
   }
 
-  private renderPdfBody(doc: any, data: any, query: StatementQueryDto, user: any) {
+  private renderPdfBody(
+    doc: any,
+    data: any,
+    query: StatementQueryDto,
+    user: any,
+  ) {
     const { transactions, loans, repayments, wallet } = data;
     const currency = wallet?.currency || 'NGN';
 
@@ -234,7 +268,9 @@ export class StatementService {
       .fontSize(9)
       .font('Helvetica')
       .fillColor('#888888')
-      .text(`Generated: ${format(new Date(), 'MMMM dd, yyyy  HH:mm')}`, { align: 'center' });
+      .text(`Generated: ${format(new Date(), 'MMMM dd, yyyy  HH:mm')}`, {
+        align: 'center',
+      });
     doc.fillColor('#000000').moveDown(0.8);
 
     doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#cccccc');
@@ -256,22 +292,38 @@ export class StatementService {
       const successTx = transactions.filter((t: any) => t.status === 'success');
       const totalCredits = successTx
         .filter((t: any) => t.type === 'CREDIT')
-        .reduce((s: number, t: any) => s + Math.abs(t.currentBalance - t.previousBalance), 0);
+        .reduce(
+          (s: number, t: any) =>
+            s + Math.abs(t.currentBalance - t.previousBalance),
+          0,
+        );
       const totalDebits = successTx
         .filter((t: any) => t.type === 'DEBIT')
-        .reduce((s: number, t: any) => s + Math.abs(t.currentBalance - t.previousBalance), 0);
+        .reduce(
+          (s: number, t: any) =>
+            s + Math.abs(t.currentBalance - t.previousBalance),
+          0,
+        );
 
       doc.fontSize(10).font('Helvetica-Bold').text('Transaction Summary');
       doc.fontSize(9).font('Helvetica');
-      doc.text(`  Credits:       ${currency} ${totalCredits.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`);
-      doc.text(`  Debits:        ${currency} ${totalDebits.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`);
+      doc.text(
+        `  Credits:       ${currency} ${totalCredits.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+      );
+      doc.text(
+        `  Debits:        ${currency} ${totalDebits.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+      );
       doc.text(`  Transactions:  ${transactions.length}`);
       doc.moveDown(0.8);
     }
 
     // Transactions table
     if (transactions.length > 0) {
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text('Wallet Transactions');
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Wallet Transactions');
       doc.moveDown(0.3);
 
       const txRows = transactions.map((t: any) => {
@@ -306,7 +358,11 @@ export class StatementService {
     // Loan applications
     if (loans.length > 0) {
       if (doc.y > 650) doc.addPage();
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text('Loan Applications', 50, doc.y);
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Loan Applications', 50, doc.y);
       doc.moveDown(0.3);
 
       const loanRows = loans.map((l: any) => [
@@ -336,7 +392,11 @@ export class StatementService {
     // Repayments
     if (repayments.length > 0) {
       if (doc.y > 650) doc.addPage();
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text('Repayment History', 50, doc.y);
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .text('Repayment History', 50, doc.y);
       doc.moveDown(0.3);
 
       const repRows = repayments.map((r: any) => [
@@ -392,7 +452,10 @@ export class StatementService {
     doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold');
     let cx = x;
     for (const col of cols) {
-      doc.text(col.label, cx + 3, startY + 5, { width: col.width - 6, ellipsis: true });
+      doc.text(col.label, cx + 3, startY + 5, {
+        width: col.width - 6,
+        ellipsis: true,
+      });
       cx += col.width;
     }
 
@@ -411,7 +474,10 @@ export class StatementService {
       }
       cx = x;
       for (let j = 0; j < cols.length; j++) {
-        doc.text(rows[i][j] || '', cx + 3, rowY + 3, { width: cols[j].width - 6, ellipsis: true });
+        doc.text(rows[i][j] || '', cx + 3, rowY + 3, {
+          width: cols[j].width - 6,
+          ellipsis: true,
+        });
         cx += cols[j].width;
       }
       rowY += rowH;

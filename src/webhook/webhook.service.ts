@@ -19,24 +19,34 @@ export class WebhookService {
     const event = body?.event;
     const data: any = body?.data;
 
-    this.logger.log(`Flutterwave routing event: ${event}, status: ${data?.status}`);
+    this.logger.log(
+      `Flutterwave routing event: ${event}, status: ${data?.status}`,
+    );
 
     switch (event) {
       case 'charge.completed':
         if (data?.status === 'successful') {
-          this.logger.log(`Flutterwave charge.completed — dispatching handlePaymentSuccess, ref: ${data?.id}`);
+          this.logger.log(
+            `Flutterwave charge.completed — dispatching handlePaymentSuccess, ref: ${data?.id}`,
+          );
           this.flutterwaveService.handlePaymentSuccess(body);
         } else if (data?.status === 'failed') {
-          this.logger.log(`Flutterwave charge.completed — dispatching handlePaymentFailure, ref: ${data?.id}`);
+          this.logger.log(
+            `Flutterwave charge.completed — dispatching handlePaymentFailure, ref: ${data?.id}`,
+          );
           this.flutterwaveService.handlePaymentFailure(body);
         }
         break;
       case 'transfer.completed':
         if (data?.status === 'SUCCESSFUL') {
-          this.logger.log(`Flutterwave transfer.completed — dispatching handleTransferSuccess, ref: ${data?.reference}`);
+          this.logger.log(
+            `Flutterwave transfer.completed — dispatching handleTransferSuccess, ref: ${data?.reference}`,
+          );
           this.flutterwaveService.handleTransferSuccess(body);
         } else if (data?.status === 'FAILED') {
-          this.logger.log(`Flutterwave transfer.completed — dispatching handleTransferFailure, ref: ${data?.reference}`);
+          this.logger.log(
+            `Flutterwave transfer.completed — dispatching handleTransferFailure, ref: ${data?.reference}`,
+          );
           this.flutterwaveService.handleTransferFailure(body);
         }
         break;
@@ -46,12 +56,16 @@ export class WebhookService {
   }
 
   async resolveVFDWebhook(body: any) {
-    this.logger.log(`VFD routing payment — ref: ${body?.reference}, account: ${body?.account_number}`);
+    this.logger.log(
+      `VFD routing payment — ref: ${body?.reference}, account: ${body?.account_number}`,
+    );
     this.VFDBankService.handlePaymentSuccess(body);
   }
 
   async resolveSafeHavenWebhook(body: any) {
-    this.logger.log(`SafeHaven routing event — type: ${body?.type}, ref: ${body?.reference}`);
+    this.logger.log(
+      `SafeHaven routing event — type: ${body?.type}, ref: ${body?.reference}`,
+    );
 
     switch (body?.type) {
       case 'transfer':
@@ -63,7 +77,9 @@ export class WebhookService {
   }
 
   async resolveBellBankWebhook(request: any) {
-    this.logger.log(`BellMFB routing event — event: ${request?.event}, ref: ${request?.reference}`);
+    this.logger.log(
+      `BellMFB routing event — event: ${request?.event}, ref: ${request?.reference}`,
+    );
 
     switch (request?.event) {
       case 'collection':

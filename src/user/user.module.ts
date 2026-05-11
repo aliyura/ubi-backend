@@ -8,7 +8,13 @@ import { FileModule } from 'src/file/file.module';
 import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [PrismaModule, ApiProvidersModule, EmailModule, FileModule, NotificationModule],
+  imports: [
+    PrismaModule,
+    ApiProvidersModule,
+    EmailModule,
+    FileModule,
+    NotificationModule,
+  ],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

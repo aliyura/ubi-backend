@@ -17,7 +17,7 @@ export class ApiKeyMiddleware implements NestMiddleware {
     const configApiKey = this.configService.get<string>('API_KEY');
 
     if (!this.whitelistedUrls.includes(req.baseUrl)) {
-     if (!apiKey) {
+      if (!apiKey) {
         throw new UnauthorizedException('API key is missing');
       }
       if (apiKey !== configApiKey) {

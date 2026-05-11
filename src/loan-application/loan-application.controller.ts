@@ -33,9 +33,18 @@ export class LoanApplicationController {
   @Post('eligibility-check')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Run eligibility check before applying' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.eligibilityCheck })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, example: loanApplicationResponse.eligibilityCheckFailed })
-  async runEligibilityCheck(@Body() body: EligibilityCheckDto, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.eligibilityCheck,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    example: loanApplicationResponse.eligibilityCheckFailed,
+  })
+  async runEligibilityCheck(
+    @Body() body: EligibilityCheckDto,
+    @Req() req: Request,
+  ) {
     return this.service.runEligibilityCheck(body, (req as any).user);
   }
 
@@ -53,7 +62,10 @@ export class LoanApplicationController {
     @Body() body: CreateMarketplaceLoanApplicationDto,
     @Req() req: Request,
   ) {
-    return this.service.submitApplicationFromMarketplace(body, (req as any).user);
+    return this.service.submitApplicationFromMarketplace(
+      body,
+      (req as any).user,
+    );
   }
 
   @Post()
@@ -62,7 +74,10 @@ export class LoanApplicationController {
     summary:
       'Legacy: Submit a farm input loan application (kept for backward compatibility)',
   })
-  @ApiResponse({ status: HttpStatus.CREATED, example: loanApplicationResponse.submit })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: loanApplicationResponse.submit,
+  })
   async submit(@Body() body: CreateLoanApplicationDto, @Req() req: Request) {
     return this.service.submitApplication(body, (req as any).user);
   }
@@ -70,8 +85,14 @@ export class LoanApplicationController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get my loan applications' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.getMyApplications })
-  async getMyApplications(@Query() query: QueryLoanApplicationDto, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.getMyApplications,
+  })
+  async getMyApplications(
+    @Query() query: QueryLoanApplicationDto,
+    @Req() req: Request,
+  ) {
     return this.service.getMyApplications((req as any).user, query);
   }
 
@@ -80,7 +101,10 @@ export class LoanApplicationController {
   @Roles(USER_ROLE.FARMER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get my previous loans history' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.getPreviousLoansHistory })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.getPreviousLoansHistory,
+  })
   async getPreviousLoansHistory(
     @Query() query: QueryLoanApplicationDto,
     @Req() req: Request,
@@ -91,31 +115,54 @@ export class LoanApplicationController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get application detail' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.getApplication })
-  async getApplication(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.getApplication,
+  })
+  async getApplication(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
     return this.service.getApplication(id, (req as any).user);
   }
 
   @Get(':id/timeline')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get application status timeline' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.getTimeline })
-  async getTimeline(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.getTimeline,
+  })
+  async getTimeline(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
     return this.service.getTimeline(id, (req as any).user);
   }
 
   @Get(':id/repayment-schedule')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get repayment schedule for an active loan' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.getRepaymentSchedule })
-  async getRepaymentSchedule(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.getRepaymentSchedule,
+  })
+  async getRepaymentSchedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
     return this.service.getRepaymentSchedule(id, (req as any).user);
   }
 
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Cancel a loan application (Draft or Submitted only)' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanApplicationResponse.cancel })
+  @ApiOperation({
+    summary: 'Cancel a loan application (Draft or Submitted only)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanApplicationResponse.cancel,
+  })
   async cancel(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     return this.service.cancelApplication(id, (req as any).user);
   }

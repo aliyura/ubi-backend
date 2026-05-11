@@ -6,8 +6,12 @@ export class CreateFarmerAccountDto {
   @ApiProperty({ example: 'RC1234567' })
   @IsNotEmpty()
   @IsString()
-  @Length(6, 14, { message: 'Company registration number must be 6–14 characters' })
-  @Matches(/^[A-Za-z0-9]+$/, { message: 'Company registration number must be alphanumeric' })
+  @Length(6, 14, {
+    message: 'Company registration number must be 6–14 characters',
+  })
+  @Matches(/^[A-Za-z0-9]+$/, {
+    message: 'Company registration number must be alphanumeric',
+  })
   @Transform(({ value }) => value?.trim())
   companyRegistrationNumber: string;
 

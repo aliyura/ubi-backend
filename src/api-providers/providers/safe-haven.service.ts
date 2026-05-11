@@ -314,10 +314,14 @@ export class SafeHavenService {
   async handleTransferWebhook(body: any) {
     const eventData = body?.data;
 
-    this.logger.log(`[SafeHaven] handleTransferWebhook — ref: ${body?.reference}, type: ${eventData?.type}`);
+    this.logger.log(
+      `[SafeHaven] handleTransferWebhook — ref: ${body?.reference}, type: ${eventData?.type}`,
+    );
 
     if (eventData?.type === 'Outwards') {
-      this.logger.log(`[SafeHaven] outward transfer skipped — ref: ${body?.reference}`);
+      this.logger.log(
+        `[SafeHaven] outward transfer skipped — ref: ${body?.reference}`,
+      );
       return;
     }
 
@@ -326,7 +330,9 @@ export class SafeHavenService {
         body?.reference,
       );
 
-      this.logger.log(`[SafeHaven] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`);
+      this.logger.log(
+        `[SafeHaven] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`,
+      );
 
       if (!isVerified)
         throw new InternalServerErrorException('Error verifying transaction');
@@ -338,7 +344,9 @@ export class SafeHavenService {
       });
 
       if (existimgPaymentEvent) {
-        this.logger.log(`[SafeHaven] duplicate payment event skipped — ref: ${eventData?.paymentReference}`);
+        this.logger.log(
+          `[SafeHaven] duplicate payment event skipped — ref: ${eventData?.paymentReference}`,
+        );
         return;
       }
 
@@ -358,7 +366,9 @@ export class SafeHavenService {
       const oldBalance = wallet?.balance;
       const newBalance = oldBalance + Number(eventData?.amount);
 
-      this.logger.log(`[SafeHaven] wallet found — account: ${eventData?.creditAccountNumber}, balance: ${oldBalance} → ${newBalance}`);
+      this.logger.log(
+        `[SafeHaven] wallet found — account: ${eventData?.creditAccountNumber}, balance: ${oldBalance} → ${newBalance}`,
+      );
 
       const senderBankCode = eventData?.sessionId?.substring(0, 6);
 
@@ -481,12 +491,20 @@ export class SafeHavenService {
           'dojah',
         );
       } catch (error) {
-        this.logger.error(`[SafeHaven] error sending credit alert — ref: ${eventData?.paymentReference}`, error?.message);
+        this.logger.error(
+          `[SafeHaven] error sending credit alert — ref: ${eventData?.paymentReference}`,
+          error?.message,
+        );
       }
 
-      this.logger.log(`[SafeHaven] handleTransferWebhook complete — ref: ${eventData?.paymentReference}, amount: ${eventData?.amount}`);
+      this.logger.log(
+        `[SafeHaven] handleTransferWebhook complete — ref: ${eventData?.paymentReference}, amount: ${eventData?.amount}`,
+      );
     } catch (error) {
-      this.logger.error(`[SafeHaven] error processing transfer webhook — ref: ${body?.reference}`, error?.message);
+      this.logger.error(
+        `[SafeHaven] error processing transfer webhook — ref: ${body?.reference}`,
+        error?.message,
+      );
       throw error;
     }
   }

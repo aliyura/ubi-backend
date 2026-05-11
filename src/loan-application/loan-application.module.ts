@@ -8,7 +8,12 @@ import { ApiProvidersModule } from 'src/api-providers/api-providers.module';
 import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [PrismaModule, LoanEligibilityModule, ApiProvidersModule, NotificationModule],
+  imports: [
+    PrismaModule,
+    LoanEligibilityModule,
+    ApiProvidersModule,
+    NotificationModule,
+  ],
   controllers: [LoanApplicationController],
   providers: [LoanApplicationService, LoanNotificationService],
   exports: [LoanApplicationService, LoanNotificationService],

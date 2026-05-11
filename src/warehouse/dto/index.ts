@@ -143,7 +143,10 @@ export class UpdateWarehouseDto {
 }
 
 export class GetClosestWarehouseQueryDto {
-  @ApiPropertyOptional({ description: 'Maximum number of warehouses to return', default: 5 })
+  @ApiPropertyOptional({
+    description: 'Maximum number of warehouses to return',
+    default: 5,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)

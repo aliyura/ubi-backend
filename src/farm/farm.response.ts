@@ -49,7 +49,9 @@ export const farmResponse = {
       farmingSeason: '2026 Wet Season',
       hasIrrigation: false,
       isVerified: false,
-      photos: [{ id: 'photo-uuid-001', url: 'https://cdn.ubi.ng/farms/photo1.jpg' }],
+      photos: [
+        { id: 'photo-uuid-001', url: 'https://cdn.ubi.ng/farms/photo1.jpg' },
+      ],
     },
   },
   createFarm: {
@@ -83,6 +85,11 @@ export const farmResponse = {
   addPhoto: {
     statusCode: 201,
     message: 'Photo added',
-    data: { id: 'photo-uuid-002', farmId: 'farm-uuid-001', url: 'https://cdn.ubi.ng/farms/photo2.jpg', filename: 'field-view.jpg' },
+    data: {
+      id: 'photo-uuid-002',
+      farmId: 'farm-uuid-001',
+      url: 'https://cdn.ubi.ng/farms/photo2.jpg',
+      filename: 'field-view.jpg',
+    },
   },
 } as const;

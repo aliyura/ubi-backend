@@ -1,7 +1,11 @@
-import { ResponseDto } from "./dto/response.dto";
+import { ResponseDto } from './dto/response.dto';
 
 export class ResponseUtil {
-  static success<T>(statusCode: number, message: string, data?: T): ResponseDto<T> {
+  static success<T>(
+    statusCode: number,
+    message: string,
+    data?: T,
+  ): ResponseDto<T> {
     return new ResponseDto(statusCode, message, data);
   }
 

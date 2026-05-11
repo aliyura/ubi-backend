@@ -166,7 +166,10 @@ export class FlutterwaveService {
 
       return response?.data;
     } catch (err: any) {
-      this.logger.error('[Flutterwave] createPayment error', err?.response?.data || err?.message);
+      this.logger.error(
+        '[Flutterwave] createPayment error',
+        err?.response?.data || err?.message,
+      );
       throw new InternalServerErrorException(
         err?.response?.data?.message || 'Failed to create payment link',
       );
@@ -377,7 +380,7 @@ export class FlutterwaveService {
   }
 
   private getHeaders() {
-    const secretKey = this.configService.get<String>('FLUTTERWAVE_SECRET_KEY');
+    const secretKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY');
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${secretKey}`,
@@ -388,9 +391,7 @@ export class FlutterwaveService {
     const data = body?.data;
     const metaData = body?.meta_data;
     const txRef = String(data?.tx_ref ?? '');
-    const checkoutType =
-      data?.meta?.checkoutType ||
-      metaData?.checkoutType;
+    const checkoutType = data?.meta?.checkoutType || metaData?.checkoutType;
 
     this.logger.log(
       `[Flutterwave] handlePaymentSuccess — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,
@@ -426,7 +427,9 @@ export class FlutterwaveService {
                 status: 'successful',
                 currency: data?.currency,
                 amountPaid: Number(data?.amount ?? existing.amountPaid ?? 0),
-                settlementAmount: Number(data?.amount ?? existing.amountPaid ?? 0),
+                settlementAmount: Number(
+                  data?.amount ?? existing.amountPaid ?? 0,
+                ),
                 fee: Number(data?.app_fee ?? existing.fee ?? 0),
               },
             });
@@ -649,9 +652,7 @@ export class FlutterwaveService {
     const data = body?.data;
     const metaData = body?.meta_data;
     const txRef = String(data?.tx_ref ?? '');
-    const checkoutType =
-      data?.meta?.checkoutType ||
-      metaData?.checkoutType;
+    const checkoutType = data?.meta?.checkoutType || metaData?.checkoutType;
 
     this.logger.log(
       `[Flutterwave] handlePaymentFailure — ref: ${data?.id}, amount: ${data?.amount} ${data?.currency}`,

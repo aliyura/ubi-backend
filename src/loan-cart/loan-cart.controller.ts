@@ -54,7 +54,10 @@ export class LoanCartController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove item from cart' })
   @ApiResponse({ status: HttpStatus.OK, example: loanCartResponse.removeItem })
-  async removeItem(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+  async removeItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
     return this.service.removeItem(id, (req as any).user);
   }
 

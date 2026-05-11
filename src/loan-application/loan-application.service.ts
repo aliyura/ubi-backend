@@ -26,10 +26,21 @@ const CANCELLABLE_STATUSES: LOAN_APPLICATION_STATUS[] = [
 ];
 
 // Valid status transitions map
-const VALID_TRANSITIONS: Partial<Record<LOAN_APPLICATION_STATUS, LOAN_APPLICATION_STATUS[]>> = {
-  [LOAN_APPLICATION_STATUS.Draft]: [LOAN_APPLICATION_STATUS.Submitted, LOAN_APPLICATION_STATUS.Cancelled],
-  [LOAN_APPLICATION_STATUS.Submitted]: [LOAN_APPLICATION_STATUS.EligibilityReview, LOAN_APPLICATION_STATUS.Cancelled],
-  [LOAN_APPLICATION_STATUS.EligibilityReview]: [LOAN_APPLICATION_STATUS.UnderReview, LOAN_APPLICATION_STATUS.Rejected],
+const VALID_TRANSITIONS: Partial<
+  Record<LOAN_APPLICATION_STATUS, LOAN_APPLICATION_STATUS[]>
+> = {
+  [LOAN_APPLICATION_STATUS.Draft]: [
+    LOAN_APPLICATION_STATUS.Submitted,
+    LOAN_APPLICATION_STATUS.Cancelled,
+  ],
+  [LOAN_APPLICATION_STATUS.Submitted]: [
+    LOAN_APPLICATION_STATUS.EligibilityReview,
+    LOAN_APPLICATION_STATUS.Cancelled,
+  ],
+  [LOAN_APPLICATION_STATUS.EligibilityReview]: [
+    LOAN_APPLICATION_STATUS.UnderReview,
+    LOAN_APPLICATION_STATUS.Rejected,
+  ],
   [LOAN_APPLICATION_STATUS.UnderReview]: [
     LOAN_APPLICATION_STATUS.PendingFieldVerification,
     LOAN_APPLICATION_STATUS.Approved,
@@ -40,8 +51,14 @@ const VALID_TRANSITIONS: Partial<Record<LOAN_APPLICATION_STATUS, LOAN_APPLICATIO
     LOAN_APPLICATION_STATUS.UnderReview,
     LOAN_APPLICATION_STATUS.Rejected,
   ],
-  [LOAN_APPLICATION_STATUS.MoreInfoRequired]: [LOAN_APPLICATION_STATUS.UnderReview, LOAN_APPLICATION_STATUS.Cancelled],
-  [LOAN_APPLICATION_STATUS.Approved]: [LOAN_APPLICATION_STATUS.FulfillmentInProgress, LOAN_APPLICATION_STATUS.Cancelled],
+  [LOAN_APPLICATION_STATUS.MoreInfoRequired]: [
+    LOAN_APPLICATION_STATUS.UnderReview,
+    LOAN_APPLICATION_STATUS.Cancelled,
+  ],
+  [LOAN_APPLICATION_STATUS.Approved]: [
+    LOAN_APPLICATION_STATUS.FulfillmentInProgress,
+    LOAN_APPLICATION_STATUS.Cancelled,
+  ],
   [LOAN_APPLICATION_STATUS.FulfillmentInProgress]: [
     LOAN_APPLICATION_STATUS.ReadyForPickup,
     LOAN_APPLICATION_STATUS.OutForDelivery,
@@ -49,9 +66,19 @@ const VALID_TRANSITIONS: Partial<Record<LOAN_APPLICATION_STATUS, LOAN_APPLICATIO
   [LOAN_APPLICATION_STATUS.ReadyForPickup]: [LOAN_APPLICATION_STATUS.Delivered],
   [LOAN_APPLICATION_STATUS.OutForDelivery]: [LOAN_APPLICATION_STATUS.Delivered],
   [LOAN_APPLICATION_STATUS.Delivered]: [LOAN_APPLICATION_STATUS.Active],
-  [LOAN_APPLICATION_STATUS.Active]: [LOAN_APPLICATION_STATUS.PartiallyRepaid, LOAN_APPLICATION_STATUS.Overdue, LOAN_APPLICATION_STATUS.Completed],
-  [LOAN_APPLICATION_STATUS.PartiallyRepaid]: [LOAN_APPLICATION_STATUS.Completed, LOAN_APPLICATION_STATUS.Overdue],
-  [LOAN_APPLICATION_STATUS.Overdue]: [LOAN_APPLICATION_STATUS.PartiallyRepaid, LOAN_APPLICATION_STATUS.Completed],
+  [LOAN_APPLICATION_STATUS.Active]: [
+    LOAN_APPLICATION_STATUS.PartiallyRepaid,
+    LOAN_APPLICATION_STATUS.Overdue,
+    LOAN_APPLICATION_STATUS.Completed,
+  ],
+  [LOAN_APPLICATION_STATUS.PartiallyRepaid]: [
+    LOAN_APPLICATION_STATUS.Completed,
+    LOAN_APPLICATION_STATUS.Overdue,
+  ],
+  [LOAN_APPLICATION_STATUS.Overdue]: [
+    LOAN_APPLICATION_STATUS.PartiallyRepaid,
+    LOAN_APPLICATION_STATUS.Completed,
+  ],
 };
 
 @Injectable()
@@ -63,7 +90,10 @@ export class LoanApplicationService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  validateTransition(from: LOAN_APPLICATION_STATUS, to: LOAN_APPLICATION_STATUS) {
+  validateTransition(
+    from: LOAN_APPLICATION_STATUS,
+    to: LOAN_APPLICATION_STATUS,
+  ) {
     const allowed = VALID_TRANSITIONS[from] ?? [];
     if (!allowed.includes(to)) {
       throw new BadRequestException(
@@ -94,7 +124,10 @@ export class LoanApplicationService {
       throw new BadRequestException({
         status: false,
         message: 'Eligibility check failed',
-        errors: eligResult.blockingIssues.map((issue) => ({ field: 'eligibility', message: issue })),
+        errors: eligResult.blockingIssues.map((issue) => ({
+          field: 'eligibility',
+          message: issue,
+        })),
         data: eligResult,
       });
     }
@@ -102,7 +135,9 @@ export class LoanApplicationService {
     // Snapshot cart
     const cart = await this.prisma.cart.findUnique({
       where: { userId: user.id },
-      include: { items: { include: { resource: { include: { category: true } } } } },
+      include: {
+        items: { include: { resource: { include: { category: true } } } },
+      },
     });
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
@@ -110,7 +145,8 @@ export class LoanApplicationService {
 
     const totalEstimatedValue = Helpers.round2(
       cart.items.reduce(
-        (sum, item) => sum + Helpers.round2(item.resource.unitPrice * item.quantity),
+        (sum, item) =>
+          sum + Helpers.round2(item.resource.unitPrice * item.quantity),
         0,
       ),
     );
@@ -325,7 +361,9 @@ export class LoanApplicationService {
     if (!app) throw new NotFoundException('Application not found');
     if (app.userId !== user.id) throw new ForbiddenException('Access denied');
     if (!CANCELLABLE_STATUSES.includes(app.status)) {
-      throw new BadRequestException(`Application in status ${app.status} cannot be cancelled`);
+      throw new BadRequestException(
+        `Application in status ${app.status} cannot be cancelled`,
+      );
     }
 
     await this.prisma.$transaction([
@@ -382,6 +420,10 @@ export class LoanApplicationService {
       where: { applicationId: id },
       include: { repayments: { orderBy: { installmentNumber: 'asc' } } },
     });
-    return { status: true, message: 'Repayment schedule retrieved', data: plan };
+    return {
+      status: true,
+      message: 'Repayment schedule retrieved',
+      data: plan,
+    };
   }
 }

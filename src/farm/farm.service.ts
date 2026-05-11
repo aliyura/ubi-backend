@@ -68,7 +68,12 @@ export class FarmService {
     return { status: true, message: 'Farm updated', data: updated };
   }
 
-  async addFarmPhoto(farmId: string, url: string, filename: string, user: User) {
+  async addFarmPhoto(
+    farmId: string,
+    url: string,
+    filename: string,
+    user: User,
+  ) {
     const farm = await this.prisma.farm.findUnique({ where: { id: farmId } });
     if (!farm) throw new NotFoundException('Farm not found');
     if (farm.userId !== user.id) throw new ForbiddenException('Access denied');
@@ -80,6 +85,9 @@ export class FarmService {
   }
 
   async getFarmById(id: string) {
-    return this.prisma.farm.findUnique({ where: { id }, include: { photos: true } });
+    return this.prisma.farm.findUnique({
+      where: { id },
+      include: { photos: true },
+    });
   }
 }

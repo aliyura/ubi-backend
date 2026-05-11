@@ -36,7 +36,10 @@ export class FulfillmentController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all fulfillments' })
-  @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.listFulfillments })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: fulfillmentResponse.listFulfillments,
+  })
   async list(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -48,7 +51,10 @@ export class FulfillmentController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create fulfillment for an approved application' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: fulfillmentResponse.createFulfillment })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: fulfillmentResponse.createFulfillment,
+  })
   async create(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateFulfillmentDto,
@@ -60,7 +66,10 @@ export class FulfillmentController {
   @Post('fulfillments/:id/dispatch')
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Mark fulfillment as dispatched (ReadyForPickup or OutForDelivery)' })
+  @ApiOperation({
+    summary:
+      'Mark fulfillment as dispatched (ReadyForPickup or OutForDelivery)',
+  })
   @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.dispatch })
   async dispatch(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     return this.service.dispatch(id, (req as any).user);
@@ -83,7 +92,10 @@ export class FulfillmentController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all active suppliers' })
-  @ApiResponse({ status: HttpStatus.OK, example: fulfillmentResponse.listSuppliers })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: fulfillmentResponse.listSuppliers,
+  })
   async listSuppliers() {
     return this.service.listSuppliers();
   }
@@ -92,7 +104,10 @@ export class FulfillmentController {
   @Roles(USER_ROLE.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new supplier' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: fulfillmentResponse.createSupplier })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: fulfillmentResponse.createSupplier,
+  })
   async createSupplier(@Body() body: CreateSupplierDto) {
     return this.service.createSupplier(body);
   }

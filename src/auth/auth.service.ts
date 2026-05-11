@@ -163,13 +163,15 @@ export class AuthService {
     });
 
     if (user.role === USER_ROLE.AGENT) {
-      this.prisma.agentActivityLog.create({
-        data: {
-          agentId: user.id,
-          action: 'LOGIN',
-          description: 'Agent logged in',
-        },
-      }).catch(() => {});
+      this.prisma.agentActivityLog
+        .create({
+          data: {
+            agentId: user.id,
+            action: 'LOGIN',
+            description: 'Agent logged in',
+          },
+        })
+        .catch(() => {});
     }
 
     const payload = {

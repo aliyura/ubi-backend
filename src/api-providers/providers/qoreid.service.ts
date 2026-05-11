@@ -76,9 +76,7 @@ export class QoreIdService {
       return result;
     } catch (error) {
       const errorMessage =
-        error?.response?.message ||
-        error?.message ||
-        'Verification failed';
+        error?.response?.message || error?.message || 'Verification failed';
 
       console.error('BVN Face Verification Error:', errorMessage);
 

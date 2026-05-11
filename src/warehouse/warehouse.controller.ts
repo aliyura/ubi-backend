@@ -10,13 +10,15 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
-import { Request } from 'express';
 import { WarehouseService } from './warehouse.service';
-import { CreateWarehouseDto, UpdateWarehouseDto, GetClosestWarehouseQueryDto } from './dto';
+import {
+  CreateWarehouseDto,
+  UpdateWarehouseDto,
+  GetClosestWarehouseQueryDto,
+} from './dto';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
@@ -32,7 +34,10 @@ export class WarehouseController {
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'Create a new warehouse (Admin only)' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: warehouseResponse.createWarehouse })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: warehouseResponse.createWarehouse,
+  })
   async createWarehouse(@Body() body: CreateWarehouseDto) {
     return this.service.createWarehouse(body);
   }
@@ -41,7 +46,10 @@ export class WarehouseController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all warehouses' })
   @ApiQuery({ name: 'activeOnly', required: false, type: Boolean })
-  @ApiResponse({ status: HttpStatus.OK, example: warehouseResponse.getAllWarehouses })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: warehouseResponse.getAllWarehouses,
+  })
   async getAllWarehouses(@Query('activeOnly') activeOnly?: boolean) {
     return this.service.getAllWarehouses(activeOnly);
   }
@@ -49,7 +57,10 @@ export class WarehouseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get warehouse by ID' })
-  @ApiResponse({ status: HttpStatus.OK, example: warehouseResponse.getWarehouse })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: warehouseResponse.getWarehouse,
+  })
   async getWarehouse(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getWarehouse(id);
   }
@@ -59,7 +70,10 @@ export class WarehouseController {
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'Update warehouse (Admin only)' })
-  @ApiResponse({ status: HttpStatus.OK, example: warehouseResponse.updateWarehouse })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: warehouseResponse.updateWarehouse,
+  })
   async updateWarehouse(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateWarehouseDto,
@@ -79,7 +93,10 @@ export class WarehouseController {
   @Get('closest-to-farm/:farmId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get closest warehouses to a farm location' })
-  @ApiResponse({ status: HttpStatus.OK, example: warehouseResponse.getClosestWarehouse })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: warehouseResponse.getClosestWarehouse,
+  })
   async getClosestWarehouses(
     @Param('farmId', ParseUUIDPipe) farmId: string,
     @Query() query: GetClosestWarehouseQueryDto,

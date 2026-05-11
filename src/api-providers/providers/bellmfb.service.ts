@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { EmailService } from 'src/email/email.service';
@@ -143,7 +147,9 @@ export class BellAccountService {
   }
 
   async handleFundingWebhook(eventData: any) {
-    this.logger.log(`[BellMFB] handleFundingWebhook — ref: ${eventData?.reference}, account: ${eventData?.virtualAccount}, amount: ${eventData?.netAmount}`);
+    this.logger.log(
+      `[BellMFB] handleFundingWebhook — ref: ${eventData?.reference}, account: ${eventData?.virtualAccount}, amount: ${eventData?.netAmount}`,
+    );
     try {
       const wallet = await this.prisma.wallet.findFirst({
         where: {
@@ -160,7 +166,9 @@ export class BellAccountService {
       const oldBalance = wallet?.balance;
       const newBalance = oldBalance + Number(eventData?.netAmount);
 
-      this.logger.log(`[BellMFB] wallet found — account: ${eventData?.virtualAccount}, balance: ${oldBalance} → ${newBalance}`);
+      this.logger.log(
+        `[BellMFB] wallet found — account: ${eventData?.virtualAccount}, balance: ${oldBalance} → ${newBalance}`,
+      );
 
       await Promise.all([
         // update the user wallet balance
@@ -276,12 +284,20 @@ export class BellAccountService {
           'sendar',
         );
       } catch (error) {
-        this.logger.error(`[BellMFB] error sending credit alert — ref: ${eventData?.reference}`, error?.message);
+        this.logger.error(
+          `[BellMFB] error sending credit alert — ref: ${eventData?.reference}`,
+          error?.message,
+        );
       }
 
-      this.logger.log(`[BellMFB] handleFundingWebhook complete — ref: ${eventData?.reference}, amount: ${eventData?.netAmount}`);
+      this.logger.log(
+        `[BellMFB] handleFundingWebhook complete — ref: ${eventData?.reference}, amount: ${eventData?.netAmount}`,
+      );
     } catch (error) {
-      this.logger.error(`[BellMFB] error processing funding webhook — ref: ${eventData?.reference}`, error?.message);
+      this.logger.error(
+        `[BellMFB] error processing funding webhook — ref: ${eventData?.reference}`,
+        error?.message,
+      );
       throw error;
     }
   }

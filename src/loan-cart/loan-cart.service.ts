@@ -15,12 +15,16 @@ export class LoanCartService {
   private async getOrCreateCart(userId: string) {
     let cart = await this.prisma.cart.findUnique({
       where: { userId },
-      include: { items: { include: { resource: { include: { category: true } } } } },
+      include: {
+        items: { include: { resource: { include: { category: true } } } },
+      },
     });
     if (!cart) {
       cart = await this.prisma.cart.create({
         data: { userId },
-        include: { items: { include: { resource: { include: { category: true } } } } },
+        include: {
+          items: { include: { resource: { include: { category: true } } } },
+        },
       });
     }
     return cart;
@@ -29,7 +33,8 @@ export class LoanCartService {
   private computeTotals(items: any[]) {
     return Helpers.round2(
       items.reduce(
-        (acc, item) => acc + Helpers.round2(item.resource.unitPrice * item.quantity),
+        (acc, item) =>
+          acc + Helpers.round2(item.resource.unitPrice * item.quantity),
         0,
       ),
     );
@@ -49,7 +54,10 @@ export class LoanCartService {
     const resource = await this.prisma.loanResource.findFirst({
       where: { id: body.resourceId, isActive: true, isEligibleForLoan: true },
     });
-    if (!resource) throw new NotFoundException('Resource not found or not eligible for loan');
+    if (!resource)
+      throw new NotFoundException(
+        'Resource not found or not eligible for loan',
+      );
     if (body.quantity > resource.stockQuantity) {
       throw new BadRequestException(
         `Requested quantity exceeds available stock (${resource.stockQuantity} ${resource.unitOfMeasure})`,
@@ -70,7 +78,11 @@ export class LoanCartService {
       });
     } else {
       await this.prisma.cartItem.create({
-        data: { cartId: cart.id, resourceId: body.resourceId, quantity: body.quantity },
+        data: {
+          cartId: cart.id,
+          resourceId: body.resourceId,
+          quantity: body.quantity,
+        },
       });
     }
 
@@ -108,7 +120,9 @@ export class LoanCartService {
   }
 
   async clearCart(user: User) {
-    const cart = await this.prisma.cart.findUnique({ where: { userId: user.id } });
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId: user.id },
+    });
     if (cart) {
       await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     }

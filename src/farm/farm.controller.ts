@@ -80,7 +80,9 @@ export class FarmController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
   ) {
-    const uploaded = await this.fileService.uploadFile(file, { folder: 'farm-photos' });
+    const uploaded = await this.fileService.uploadFile(file, {
+      folder: 'farm-photos',
+    });
     return this.farmService.addFarmPhoto(
       id,
       uploaded.data?.url ?? '',

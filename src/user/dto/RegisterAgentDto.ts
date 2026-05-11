@@ -1,9 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  Length,
-  Matches,
-} from 'class-validator';
+import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterAgentDto {
@@ -26,7 +21,9 @@ export class RegisterAgentDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^[0-9]+$/, { message: 'Phone number must contain only digits' })
-  @Length(10, 15, { message: 'Phone number must be between 10 and 15 digits long' })
+  @Length(10, 15, {
+    message: 'Phone number must be between 10 and 15 digits long',
+  })
   phoneNumber: string;
 
   @ApiProperty({ example: '8-Mar-1995' })
@@ -34,7 +31,10 @@ export class RegisterAgentDto {
   @IsString()
   @Matches(
     /^(0?[1-9]|[12][0-9]|3[01])-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{4}$/,
-    { message: 'Date of birth must be in format: DD-MMM-YYYY (e.g., 8-Mar-1995)' },
+    {
+      message:
+        'Date of birth must be in format: DD-MMM-YYYY (e.g., 8-Mar-1995)',
+    },
   )
   dateOfBirth: string;
 

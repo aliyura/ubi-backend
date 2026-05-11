@@ -32,7 +32,10 @@ export class LoanResourceController {
   @Get('loan-resource-categories')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all resource categories' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanResourceResponse.getCategories })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanResourceResponse.getCategories,
+  })
   async getCategories() {
     return this.service.getCategories();
   }
@@ -40,7 +43,10 @@ export class LoanResourceController {
   @Post('admin/loan-resource-categories')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a resource category (admin)' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: loanResourceResponse.createCategory })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: loanResourceResponse.createCategory,
+  })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async createCategory(@Body() body: CreateResourceCategoryDto) {
@@ -50,7 +56,10 @@ export class LoanResourceController {
   @Get('loan-resources')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List loan resources' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanResourceResponse.getResources })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanResourceResponse.getResources,
+  })
   async getResources(@Query() query: QueryLoanResourceDto) {
     return this.service.getResources(query);
   }
@@ -58,7 +67,10 @@ export class LoanResourceController {
   @Get('loan-resources/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a single loan resource' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanResourceResponse.getResource })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanResourceResponse.getResource,
+  })
   async getResource(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getResource(id);
   }
@@ -66,7 +78,10 @@ export class LoanResourceController {
   @Post('admin/loan-resources')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a loan resource (admin)' })
-  @ApiResponse({ status: HttpStatus.CREATED, example: loanResourceResponse.createResource })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: loanResourceResponse.createResource,
+  })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async createResource(@Body() body: CreateLoanResourceDto) {
@@ -76,7 +91,10 @@ export class LoanResourceController {
   @Patch('admin/loan-resources/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a loan resource (admin)' })
-  @ApiResponse({ status: HttpStatus.OK, example: loanResourceResponse.updateResource })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: loanResourceResponse.updateResource,
+  })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN)
   async updateResource(

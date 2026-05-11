@@ -9,7 +9,10 @@ export class InviteAgentDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ enum: [USER_ROLE.AGENT, USER_ROLE.CUSTOMER_SUPPORT], example: USER_ROLE.AGENT })
+  @ApiProperty({
+    enum: [USER_ROLE.AGENT, USER_ROLE.CUSTOMER_SUPPORT],
+    example: USER_ROLE.AGENT,
+  })
   @IsIn([USER_ROLE.AGENT, USER_ROLE.CUSTOMER_SUPPORT], {
     message: `Role must be one of: ${USER_ROLE.AGENT}, ${USER_ROLE.CUSTOMER_SUPPORT}`,
   })

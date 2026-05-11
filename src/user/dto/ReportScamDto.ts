@@ -7,7 +7,9 @@ export class ReportScamDto {
   @IsNotEmpty({ message: 'Title is required' })
   title: string;
 
-  @ApiProperty({ example: 'I was debited but did not authorize this transfer.' })
+  @ApiProperty({
+    example: 'I was debited but did not authorize this transfer.',
+  })
   @IsString({ message: 'Description must be a string' })
   @IsNotEmpty({ message: 'Description is required' })
   description: string;

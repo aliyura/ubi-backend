@@ -29,14 +29,18 @@ export class DojahService {
       sender_id: 'UBI',
     };
 
-    this.logger.debug(`Sending SMS via Dojah to: ${data.phoneNumber.slice(-4).padStart(data.phoneNumber.length, '*')}`);
+    this.logger.debug(
+      `Sending SMS via Dojah to: ${data.phoneNumber.slice(-4).padStart(data.phoneNumber.length, '*')}`,
+    );
     try {
       const response = await axios.post(url, payload, {
         headers: this.getHeaders(),
       });
 
       if (response.status !== 200) {
-        this.logger.error(`Dojah SMS failed [status=${response.status}]: ${JSON.stringify(response?.data)}`);
+        this.logger.error(
+          `Dojah SMS failed [status=${response.status}]: ${JSON.stringify(response?.data)}`,
+        );
         throw new InternalServerErrorException('Failed to send sms');
       }
 
@@ -49,7 +53,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to send sms',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to send sms',
       );
     }
   }
@@ -66,7 +73,9 @@ export class DojahService {
       });
 
       if (response.status !== 200) {
-        this.logger.error(`Dojah BVN lookup failed [status=${response.status}]: ${JSON.stringify(response?.data)}`);
+        this.logger.error(
+          `Dojah BVN lookup failed [status=${response.status}]: ${JSON.stringify(response?.data)}`,
+        );
         throw new InternalServerErrorException('Failed to validate BVN');
       }
 
@@ -79,7 +88,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to validate BVN',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to validate BVN',
       );
     }
   }
@@ -96,7 +108,9 @@ export class DojahService {
       });
 
       if (response.status !== 200) {
-        this.logger.error(`Dojah BVN validation failed [status=${response.status}]: ${JSON.stringify(response?.data)}`);
+        this.logger.error(
+          `Dojah BVN validation failed [status=${response.status}]: ${JSON.stringify(response?.data)}`,
+        );
         throw new InternalServerErrorException('Failed to validate BVN');
       }
 
@@ -109,7 +123,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to validate BVN',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to validate BVN',
       );
     }
   }
@@ -134,8 +151,12 @@ export class DojahService {
       });
 
       if (response?.status !== 200) {
-        this.logger.error(`Dojah address verification failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`);
-        throw new InternalServerErrorException('Failed to verify address details');
+        this.logger.error(
+          `Dojah address verification failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`,
+        );
+        throw new InternalServerErrorException(
+          'Failed to verify address details',
+        );
       }
 
       return response?.data;
@@ -147,7 +168,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to verify address details',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to verify address details',
       );
     }
   }
@@ -164,8 +188,12 @@ export class DojahService {
       });
 
       if (response?.status !== 200) {
-        this.logger.error(`Dojah NIN+selfie verification failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`);
-        throw new InternalServerErrorException('Failed to verify nin and face image');
+        this.logger.error(
+          `Dojah NIN+selfie verification failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`,
+        );
+        throw new InternalServerErrorException(
+          'Failed to verify nin and face image',
+        );
       }
 
       return response?.data;
@@ -177,7 +205,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to verify nin and face image',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to verify nin and face image',
       );
     }
   }
@@ -194,7 +225,9 @@ export class DojahService {
       });
 
       if (response?.status !== 200) {
-        this.logger.error(`Dojah NIN lookup failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`);
+        this.logger.error(
+          `Dojah NIN lookup failed [status=${response?.status}]: ${JSON.stringify(response?.data)}`,
+        );
         throw new InternalServerErrorException('Failed to get nin details');
       }
 
@@ -207,7 +240,10 @@ export class DojahService {
         error?.stack,
       );
       throw new InternalServerErrorException(
-        responseData?.message || responseData?.error || error?.message || 'Failed to get nin details',
+        responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          'Failed to get nin details',
       );
     }
   }

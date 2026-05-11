@@ -31,7 +31,9 @@ export class NotificationService {
     }
   }
 
-  async notifyAdmins(payload: Omit<CreateNotificationPayload, 'userId'>): Promise<void> {
+  async notifyAdmins(
+    payload: Omit<CreateNotificationPayload, 'userId'>,
+  ): Promise<void> {
     try {
       const admins = await this.prisma.user.findMany({
         where: { role: USER_ROLE.ADMIN },
@@ -39,7 +41,9 @@ export class NotificationService {
       });
       await Promise.all(
         admins.map((admin) =>
-          this.prisma.notification.create({ data: { ...payload, userId: admin.id } }),
+          this.prisma.notification.create({
+            data: { ...payload, userId: admin.id },
+          }),
         ),
       );
     } catch (err) {

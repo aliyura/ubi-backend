@@ -1,12 +1,12 @@
 import { NETWORK } from '@prisma/client';
-import { 
-  IsEnum, 
-  IsNotEmpty, 
-  IsNumber, 
-  IsString, 
-  MaxLength, 
-  Matches, 
-  IsInt 
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  MaxLength,
+  Matches,
+  IsInt,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 

@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
@@ -74,7 +78,10 @@ export class SendarSmsService {
       });
 
       if (response?.status !== 200) {
-        this.logger.error(`Sendar SMS failed with status ${response?.status}`, response?.data);
+        this.logger.error(
+          `Sendar SMS failed with status ${response?.status}`,
+          response?.data,
+        );
         throw new InternalServerErrorException('Failed to send SMS');
       }
 

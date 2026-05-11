@@ -83,7 +83,8 @@ export class RegisterDto {
   accountType: ACCOUNT_TYPE = ACCOUNT_TYPE.USER;
 
   @ApiPropertyOptional({
-    description: 'Farm details — all required farm fields must be provided if this object is included',
+    description:
+      'Farm details — all required farm fields must be provided if this object is included',
     type: () => RegisterFarmDto,
   })
   @IsOptional()

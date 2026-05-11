@@ -11,16 +11,18 @@ export class HelperService {
     private readonly dojahService: DojahService,
     private readonly termiiService: TermiiService,
     private readonly sendarService: SendarSmsService,
-  ) { }
+  ) {}
 
   async sendSms(
     phoneNumber: string,
     message: string,
-    type: 'dojah' | 'termii' |  'sendar',
+    type: 'dojah' | 'termii' | 'sendar',
     channel: 'sms' | 'whatsapp' = 'sms',
   ) {
     const formattedPhone = this.addCountryCode(phoneNumber);
-    this.logger.debug(`Routing SMS via ${type} to: ${formattedPhone.slice(-4).padStart(formattedPhone.length, '*')}`);
+    this.logger.debug(
+      `Routing SMS via ${type} to: ${formattedPhone.slice(-4).padStart(formattedPhone.length, '*')}`,
+    );
 
     if (type === 'dojah') {
       return this.dojahService.sendSms({
@@ -35,11 +37,13 @@ export class HelperService {
       });
     } else if (type === 'sendar') {
       return this.sendarService.sendSMS({
-        contact: [{
-          number: formattedPhone,
-          body: message,
-          sms_type: 'plain',
-        }],
+        contact: [
+          {
+            number: formattedPhone,
+            body: message,
+            sms_type: 'plain',
+          },
+        ],
       });
     } else {
       this.logger.warn(`Unrecognised SMS provider type: ${type}`);
@@ -49,7 +53,7 @@ export class HelperService {
   addCountryCode(phoneNumber: string) {
     // Check if the phone number already starts with '+234'
     if (phoneNumber?.startsWith('234')) {
-      return "+" + phoneNumber;
+      return '+' + phoneNumber;
     }
     // Check if the phone number already starts with '+234'
     if (phoneNumber?.startsWith('+234')) {

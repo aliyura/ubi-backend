@@ -13,7 +13,11 @@ import {
   AdminDispatchOrderDto,
   QueryMarketplaceOrderDto,
 } from './dto';
-import { MARKETPLACE_ORDER_STATUS, NOTIFICATION_TYPE, User } from '@prisma/client';
+import {
+  MARKETPLACE_ORDER_STATUS,
+  NOTIFICATION_TYPE,
+  User,
+} from '@prisma/client';
 
 const USER_SELECT = {
   id: true,
@@ -82,7 +86,10 @@ export class MarketplaceOrderAdminService {
     return {
       status: true,
       message: 'Orders retrieved',
-      data: items.map((item) => ({ ...item, user: userMap[item.userId] ?? null })),
+      data: items.map((item) => ({
+        ...item,
+        user: userMap[item.userId] ?? null,
+      })),
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     };
   }
@@ -103,7 +110,11 @@ export class MarketplaceOrderAdminService {
       select: USER_SELECT,
     });
 
-    return { status: true, message: 'Order retrieved', data: { ...order, user } };
+    return {
+      status: true,
+      message: 'Order retrieved',
+      data: { ...order, user },
+    };
   }
 
   async confirmOrder(orderId: string, body: AdminConfirmOrderDto, admin: User) {
@@ -183,7 +194,11 @@ export class MarketplaceOrderAdminService {
       resourceType: 'marketplace_order',
     });
 
-    return { status: true, message: 'Order confirmed and stock reserved', data: null };
+    return {
+      status: true,
+      message: 'Order confirmed and stock reserved',
+      data: null,
+    };
   }
 
   async packOrder(orderId: string, admin: User) {
@@ -192,7 +207,9 @@ export class MarketplaceOrderAdminService {
     });
     if (!order) throw new NotFoundException('Order not found');
     if (order.status !== MARKETPLACE_ORDER_STATUS.confirmed) {
-      throw new BadRequestException('Only confirmed orders can be marked as packed');
+      throw new BadRequestException(
+        'Only confirmed orders can be marked as packed',
+      );
     }
 
     await this.prisma.$transaction([
@@ -223,7 +240,11 @@ export class MarketplaceOrderAdminService {
     return { status: true, message: 'Order marked as packed', data: null };
   }
 
-  async dispatchOrder(orderId: string, body: AdminDispatchOrderDto, admin: User) {
+  async dispatchOrder(
+    orderId: string,
+    body: AdminDispatchOrderDto,
+    admin: User,
+  ) {
     const order = await this.prisma.marketplaceOrder.findUnique({
       where: { id: orderId },
     });
@@ -282,7 +303,9 @@ export class MarketplaceOrderAdminService {
     });
     if (!order) throw new NotFoundException('Order not found');
     if (order.status !== MARKETPLACE_ORDER_STATUS.dispatched) {
-      throw new BadRequestException('Only dispatched orders can be marked as delivered');
+      throw new BadRequestException(
+        'Only dispatched orders can be marked as delivered',
+      );
     }
 
     await this.prisma.$transaction([
@@ -343,7 +366,9 @@ export class MarketplaceOrderAdminService {
       MARKETPLACE_ORDER_STATUS.confirmed,
     ];
     if (!cancellable.includes(order.status)) {
-      throw new BadRequestException('Only pending or confirmed orders can be cancelled');
+      throw new BadRequestException(
+        'Only pending or confirmed orders can be cancelled',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {

@@ -7,7 +7,12 @@ import { AgentModule } from 'src/agent/agent.module';
 import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [PrismaModule, LoanApplicationModule, AgentModule, NotificationModule],
+  imports: [
+    PrismaModule,
+    LoanApplicationModule,
+    AgentModule,
+    NotificationModule,
+  ],
   controllers: [AdminLoanController],
   providers: [AdminLoanService],
   exports: [AdminLoanService],

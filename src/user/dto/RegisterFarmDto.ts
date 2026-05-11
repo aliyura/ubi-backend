@@ -32,7 +32,10 @@ export class RegisterFarmDto {
   @IsString()
   lga: string;
 
-  @ApiProperty({ enum: FARM_OWNERSHIP_TYPE, example: FARM_OWNERSHIP_TYPE.owned })
+  @ApiProperty({
+    enum: FARM_OWNERSHIP_TYPE,
+    example: FARM_OWNERSHIP_TYPE.owned,
+  })
   @IsEnum(FARM_OWNERSHIP_TYPE)
   ownershipType: FARM_OWNERSHIP_TYPE;
 

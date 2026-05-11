@@ -14,7 +14,11 @@ export class WarehouseService {
     const warehouse = await this.prisma.warehouse.create({
       data: body,
     });
-    return { status: true, message: 'Warehouse created successfully', data: warehouse };
+    return {
+      status: true,
+      message: 'Warehouse created successfully',
+      data: warehouse,
+    };
   }
 
   async getAllWarehouses(activeOnly?: boolean) {
@@ -42,7 +46,11 @@ export class WarehouseService {
       where: { id },
       data: body,
     });
-    return { status: true, message: 'Warehouse updated successfully', data: updated };
+    return {
+      status: true,
+      message: 'Warehouse updated successfully',
+      data: updated,
+    };
   }
 
   async deleteWarehouse(id: string) {

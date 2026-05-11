@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   TRANSACTION_CATEGORY,
@@ -356,7 +360,9 @@ export class VFDBankService {
 
   // handle payment success webhok;
   async handlePaymentSuccess(body: any) {
-    this.logger.log(`[VFD] handlePaymentSuccess — ref: ${body?.reference}, account: ${body?.account_number}`);
+    this.logger.log(
+      `[VFD] handlePaymentSuccess — ref: ${body?.reference}, account: ${body?.account_number}`,
+    );
 
     return await this.prisma.$transaction(
       async (trx) => {
@@ -364,7 +370,9 @@ export class VFDBankService {
           body?.reference,
         );
 
-        this.logger.log(`[VFD] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`);
+        this.logger.log(
+          `[VFD] transaction verification — ref: ${body?.reference}, isVerified: ${isVerified}`,
+        );
 
         if (!isVerified)
           throw new InternalServerErrorException('Error verifying transaction');
@@ -376,7 +384,9 @@ export class VFDBankService {
         });
 
         if (existimgPaymentEvent) {
-          this.logger.log(`[VFD] duplicate payment event skipped — ref: ${body?.reference}`);
+          this.logger.log(
+            `[VFD] duplicate payment event skipped — ref: ${body?.reference}`,
+          );
           return;
         }
 
@@ -391,7 +401,9 @@ export class VFDBankService {
         const oldBalance = wallet?.balance;
         const newBalance = oldBalance + Number(data?.amount);
 
-        this.logger.log(`[VFD] wallet found — account: ${body?.account_number}, balance: ${oldBalance} → ${newBalance}`);
+        this.logger.log(
+          `[VFD] wallet found — account: ${body?.account_number}, balance: ${oldBalance} → ${newBalance}`,
+        );
 
         // get user object
         const user = await trx.user.findFirst({
@@ -441,7 +453,9 @@ export class VFDBankService {
           },
         });
 
-        this.logger.log(`[VFD] handlePaymentSuccess complete — ref: ${body?.reference}, amount: ${data?.amount}`);
+        this.logger.log(
+          `[VFD] handlePaymentSuccess complete — ref: ${body?.reference}, amount: ${data?.amount}`,
+        );
       },
       {
         isolationLevel: 'Serializable',

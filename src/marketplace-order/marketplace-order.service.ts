@@ -328,8 +328,9 @@ export class MarketplaceOrderService {
     if (paymentMethod !== MARKETPLACE_PAYMENT_METHOD.credit) {
       const redirectUrl =
         this.configService.get<string>('MARKETPLACE_PAYMENT_REDIRECT_URL') ||
-        this.configService.get<string>('WEB_BASE_URL') ||
-        'https://example_company.com/success';
+        this.configService.get<string>('FRONTEND_URL') + '/user/dashboard';
+
+      console.log('redirect url', redirectUrl);
 
       const flutterwavePayment =
         await this.apiProviderService.createFlutterwavePaymentLink({

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
@@ -306,5 +310,107 @@ export class FulfillmentService {
       orderBy: { name: 'asc' },
     });
     return { status: true, message: 'Suppliers retrieved', data: suppliers };
+  }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   * @returns distance in kilometers
+   */
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
+        Math.cos(this.toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRad(value: number): number {
+    return (value * Math.PI) / 180;
+  }
+
+  async getClosestSuppliers(farmId: string, limit: number = 5) {
+    // Get farm with location data
+    const farm = await this.prisma.farm.findUnique({
+      where: { id: farmId },
+      select: { id: true, name: true, latitude: true, longitude: true },
+    });
+
+    if (!farm) throw new NotFoundException('Farm not found');
+    if (!farm.latitude || !farm.longitude) {
+      throw new ConflictException('Farm location coordinates not available');
+    }
+
+    // Get all active suppliers with coordinates
+    const suppliers = await this.prisma.supplier.findMany({
+      where: {
+        isActive: true,
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+    });
+
+    if (suppliers.length === 0) {
+      return {
+        status: true,
+        message: 'No active suppliers with location data available',
+        data: {
+          farm: {
+            id: farm.id,
+            name: farm.name,
+            latitude: farm.latitude,
+            longitude: farm.longitude,
+          },
+          suppliers: [],
+        },
+      };
+    }
+
+    // Calculate distances and sort
+    const suppliersWithDistance = suppliers
+      .map((supplier) => ({
+        id: supplier.id,
+        name: supplier.name,
+        location: supplier.location,
+        latitude: supplier.latitude,
+        longitude: supplier.longitude,
+        distance: this.calculateDistance(
+          farm.latitude,
+          farm.longitude,
+          supplier.latitude!,
+          supplier.longitude!,
+        ),
+        distanceUnit: 'km',
+        contactPerson: supplier.contactPerson,
+        contactPhone: supplier.contactPhone,
+        contactEmail: supplier.contactEmail,
+        deliveryCoverage: supplier.deliveryCoverage,
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, limit);
+
+    return {
+      status: true,
+      message: 'Closest suppliers retrieved',
+      data: {
+        farm: {
+          id: farm.id,
+          name: farm.name,
+          latitude: farm.latitude,
+          longitude: farm.longitude,
+        },
+        suppliers: suppliersWithDistance,
+      },
+    };
   }
 }

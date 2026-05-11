@@ -632,6 +632,8 @@ model Supplier {
   id            String  @id @default(uuid()) @db.Uuid
   name          String
   location      String?
+  latitude      Float?
+  longitude     Float?
   contactPerson String?
   contactPhone  String?
   contactEmail  String?

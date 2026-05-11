@@ -105,6 +105,16 @@ export class CreateSupplierDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   contactPerson?: string;
 

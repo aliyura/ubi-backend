@@ -111,4 +111,24 @@ export class FulfillmentController {
   async createSupplier(@Body() body: CreateSupplierDto) {
     return this.service.createSupplier(body);
   }
+
+  @Get('farms/:farmId/suppliers/closest')
+  @Roles(
+    USER_ROLE.ADMIN,
+    USER_ROLE.CUSTOMER_SUPPORT,
+    USER_ROLE.FARMER,
+    USER_ROLE.AGENT,
+  )
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get suppliers closest to a farm location' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: fulfillmentResponse.getClosestSuppliers,
+  })
+  async getClosestSuppliers(
+    @Param('farmId', ParseUUIDPipe) farmId: string,
+    @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number,
+  ) {
+    return this.service.getClosestSuppliers(farmId, limit);
+  }
 }

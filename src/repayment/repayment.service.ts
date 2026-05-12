@@ -7,11 +7,12 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { RecordRepaymentDto } from './dto';
+import { RecordRepaymentDto, AgentRepaymentQueryDto } from './dto';
 import {
   LOAN_APPLICATION_STATUS,
   NOTIFICATION_TYPE,
   REPAYMENT_STATUS,
+  User,
 } from '@prisma/client';
 import { Helpers } from 'src/helpers';
 
@@ -318,6 +319,172 @@ export class RepaymentService {
       status: true,
       message: `Sent ${upcoming.length} reminders`,
       data: null,
+    };
+  }
+
+  async farmerGetAllRepaymentSchedules(farmerId: string) {
+    const repaymentPlans = await this.prisma.repaymentPlan.findMany({
+      where: {
+        application: {
+          userId: farmerId,
+        },
+      },
+      include: {
+        application: {
+          select: {
+            id: true,
+            applicationRef: true,
+            status: true,
+            totalEstimatedValue: true,
+            createdAt: true,
+          },
+        },
+        repayments: {
+          orderBy: { installmentNumber: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (repaymentPlans.length === 0) {
+      return {
+        status: true,
+        message: 'No repayment schedules found',
+        data: [],
+        statistics: {
+          totalOutstanding: 0,
+          totalOverdue: 0,
+          totalApplications: 0,
+        },
+      };
+    }
+
+    let totalOutstanding = 0;
+    let totalOverdue = 0;
+
+    const enrichedPlans = repaymentPlans.map((plan) => {
+      const overdueAmount = plan.repayments
+        .filter((r) => r.status === REPAYMENT_STATUS.overdue)
+        .reduce((sum, r) => Helpers.round2(sum + (r.amount - r.amountPaid)), 0);
+
+      totalOutstanding += plan.outstandingBalance;
+      totalOverdue += overdueAmount;
+
+      return {
+        ...plan,
+        overdueAmount,
+      };
+    });
+
+    return {
+      status: true,
+      message: 'Repayment schedules retrieved',
+      data: enrichedPlans,
+      statistics: {
+        totalOutstanding: Helpers.round2(totalOutstanding),
+        totalOverdue: Helpers.round2(totalOverdue),
+        totalApplications: repaymentPlans.length,
+      },
+    };
+  }
+
+  async agentGetAllRepaymentSchedules(
+    agent: User,
+    query: AgentRepaymentQueryDto,
+  ) {
+    const {
+      page = 1,
+      limit = 20,
+      farmerId,
+      loanStatus,
+      repaymentPlanStatus,
+    } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = {
+      application: {
+        user: {
+          OR: [{ onboardedByAgentId: agent.id }, { assignedAgentId: agent.id }],
+        },
+      },
+    };
+
+    if (farmerId) {
+      where.application.user.id = farmerId;
+    }
+
+    if (loanStatus) {
+      where.application.status = loanStatus;
+    }
+
+    if (repaymentPlanStatus) {
+      where.status = repaymentPlanStatus;
+    }
+
+    const [plans, total] = await Promise.all([
+      this.prisma.repaymentPlan.findMany({
+        where,
+        include: {
+          application: {
+            select: {
+              id: true,
+              applicationRef: true,
+              status: true,
+              totalEstimatedValue: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  email: true,
+                  phoneNumber: true,
+                },
+              },
+            },
+          },
+          repayments: {
+            orderBy: { installmentNumber: 'asc' },
+          },
+        },
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.repaymentPlan.count({ where }),
+    ]);
+
+    let totalOutstanding = 0;
+    let totalOverdue = 0;
+
+    const enrichedPlans = plans.map((plan) => {
+      const overdueAmount = plan.repayments
+        .filter((r) => r.status === REPAYMENT_STATUS.overdue)
+        .reduce((sum, r) => Helpers.round2(sum + (r.amount - r.amountPaid)), 0);
+
+      totalOutstanding += plan.outstandingBalance;
+      totalOverdue += overdueAmount;
+
+      return {
+        ...plan,
+        overdueAmount,
+      };
+    });
+
+    return {
+      status: true,
+      message: 'Repayment schedules retrieved',
+      data: enrichedPlans,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit),
+      },
+      statistics: {
+        totalOutstanding: Helpers.round2(totalOutstanding),
+        totalOverdue: Helpers.round2(totalOverdue),
+        totalApplications: plans.length,
+      },
     };
   }
 }

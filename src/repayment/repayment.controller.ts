@@ -10,15 +10,17 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RepaymentService } from './repayment.service';
-import { RecordRepaymentDto } from './dto';
+import { RecordRepaymentDto, AgentRepaymentQueryDto } from './dto';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
 import { repaymentResponse } from './repayment.response';
+import { Request } from 'express';
 
 @ApiTags('Repayment')
 @Controller('v1')
@@ -91,5 +93,39 @@ export class RepaymentController {
   })
   async getSchedule(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getRepaymentSchedule(id);
+  }
+
+  @Get('farmer/repayment-schedules')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Farmer: view all repayment schedules across all loan applications',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: repaymentResponse.farmerGetAllSchedules,
+  })
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.FARMER)
+  async farmerGetAllSchedules(@Req() req: Request) {
+    return this.service.farmerGetAllRepaymentSchedules((req as any).user.id);
+  }
+
+  @Get('agent/repayment-schedules')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Agent: view repayment schedules for assigned/onboarded farmers',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: repaymentResponse.agentGetAllSchedules,
+  })
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.AGENT)
+  async agentGetAllSchedules(
+    @Query() query: AgentRepaymentQueryDto,
+    @Req() req: Request,
+  ) {
+    return this.service.agentGetAllRepaymentSchedules((req as any).user, query);
   }
 }

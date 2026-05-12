@@ -106,7 +106,7 @@ export class RepaymentController {
     example: repaymentResponse.farmerGetAllSchedules,
   })
   @UseGuards(RolesGuard)
-  @Roles(USER_ROLE.FARMER)
+  @Roles(USER_ROLE.FARMER, USER_ROLE.USER)
   async farmerGetAllSchedules(@Req() req: Request) {
     return this.service.farmerGetAllRepaymentSchedules((req as any).user.id);
   }

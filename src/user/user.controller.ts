@@ -66,11 +66,49 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
+  @UseInterceptors(
+    FileInterceptor('policeReport', multerOptions('farmer-police-report')),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: [
+        'username',
+        'fullname',
+        'email',
+        'phoneNumber',
+        'dateOfBirth',
+        'password',
+      ],
+      properties: {
+        username: { type: 'string', example: 'johndoe' },
+        fullname: { type: 'string', example: 'John Doe' },
+        email: { type: 'string', example: 'john@example.com' },
+        phoneNumber: { type: 'string', example: '08012345678' },
+        dateOfBirth: { type: 'string', example: '8-Mar-1995' },
+        password: { type: 'string', example: 'StrongPass123!' },
+        countryCode: { type: 'string', example: 'NG' },
+        referralCode: { type: 'string', example: 'UBIREF123' },
+        currency: { type: 'string', example: 'NGN' },
+        isBusinessRegistered: { type: 'boolean', example: false },
+        accountType: { type: 'string', example: 'USER' },
+        policeReport: {
+          type: 'string',
+          format: 'binary',
+          description: 'Required when accountType is FARMER',
+        },
+      },
+    },
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register' })
   @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.register })
-  async register(@Body() body: RegisterDto) {
-    return this.userService.register(body);
+  async register(
+    @Body() body: RegisterDto,
+    @UploadedFile() policeReport?: Express.Multer.File,
+  ) {
+    return this.userService.register(body, policeReport);
   }
 
   @Post('register-agent')

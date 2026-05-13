@@ -284,6 +284,7 @@ export const adminDashboardResponse = {
             country: 'NG',
             status: 'active',
             tierLevel: 'two',
+            policeReportUrl: 'https://example.com/police-report.pdf',
             isBvnVerified: true,
             isNinVerified: false,
             isEmailVerified: true,

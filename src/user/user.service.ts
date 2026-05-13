@@ -97,10 +97,7 @@ export class UserService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async register(
-    body: RegisterDto | RegisterFarmerDto,
-    policeReport?: Express.Multer.File,
-  ) {
+  async register(body: RegisterDto | RegisterFarmerDto) {
     let user: User;
     try {
       user = await this.prisma.$transaction(async (tx) => {
@@ -178,36 +175,6 @@ export class UserService {
 
         const newUser = await tx.user.create({ data: payload });
 
-        if (body.accountType === ACCOUNT_TYPE.FARMER) {
-          if (!policeReport) {
-            throw new BadRequestException(
-              'Police report file is required for farmer registration',
-            );
-          }
-
-          const uploadResponse = await this.fileService.uploadFile(
-            policeReport,
-            {
-              folder: FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
-              prefix: newUser.id,
-            },
-          );
-
-          if (!uploadResponse.success || !uploadResponse.data) {
-            throw new BadRequestException(
-              uploadResponse.message || 'Unable to upload police report',
-            );
-          }
-
-          await tx.user.update({
-            where: { id: newUser.id },
-            data: {
-              policeReportUrl: uploadResponse.data.url,
-              policeReportFilename: uploadResponse.data.fileName,
-            },
-          });
-        }
-
         const farmData = (body as RegisterDto).farm;
         if (farmData) {
           await tx.farm.create({
@@ -267,6 +234,37 @@ export class UserService {
     return {
       message: 'User created successfully',
       user: plainToInstance(UserEntity, user),
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  async uploadPoliceReport(policeReport: Express.Multer.File, user: User) {
+    if (user.accountType !== ACCOUNT_TYPE.FARMER)
+      throw new BadRequestException('Only farmer accounts can upload a police report');
+
+    if (!policeReport)
+      throw new BadRequestException('Police report file is required');
+
+    const uploadResponse = await this.fileService.uploadFile(policeReport, {
+      folder: FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
+      prefix: user.id,
+    });
+
+    if (!uploadResponse.success || !uploadResponse.data)
+      throw new BadRequestException(
+        uploadResponse.message || 'Unable to upload police report',
+      );
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        policeReportUrl: uploadResponse.data.url,
+        policeReportFilename: uploadResponse.data.fileName,
+      },
+    });
+
+    return {
+      message: 'Police report uploaded successfully',
       statusCode: HttpStatus.OK,
     };
   }

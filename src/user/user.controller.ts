@@ -66,49 +66,11 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
-  @UseInterceptors(
-    FileInterceptor('policeReport', multerOptions('farmer-police-report')),
-  )
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: [
-        'username',
-        'fullname',
-        'email',
-        'phoneNumber',
-        'dateOfBirth',
-        'password',
-      ],
-      properties: {
-        username: { type: 'string', example: 'johndoe' },
-        fullname: { type: 'string', example: 'John Doe' },
-        email: { type: 'string', example: 'john@example.com' },
-        phoneNumber: { type: 'string', example: '08012345678' },
-        dateOfBirth: { type: 'string', example: '8-Mar-1995' },
-        password: { type: 'string', example: 'StrongPass123!' },
-        countryCode: { type: 'string', example: 'NG' },
-        referralCode: { type: 'string', example: 'UBIREF123' },
-        currency: { type: 'string', example: 'NGN' },
-        isBusinessRegistered: { type: 'boolean', example: false },
-        accountType: { type: 'string', example: 'USER' },
-        policeReport: {
-          type: 'string',
-          format: 'binary',
-          description: 'Required when accountType is FARMER',
-        },
-      },
-    },
-  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register' })
   @ApiResponse({ status: HttpStatus.CREATED, example: userResponse.register })
-  async register(
-    @Body() body: RegisterDto,
-    @UploadedFile() policeReport?: Express.Multer.File,
-  ) {
-    return this.userService.register(body, policeReport);
+  async register(@Body() body: RegisterDto) {
+    return this.userService.register(body);
   }
 
   @Post('register-agent')
@@ -123,6 +85,17 @@ export class UserController {
   }
 
   @Post('register-farmer')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register Farmer Account' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: userResponse.registerFarmerAccount,
+  })
+  async registerFarmerAccount(@Body() body: RegisterFarmerDto) {
+    return this.userService.register(body);
+  }
+
+  @Post('police-report')
   @UseInterceptors(
     FileInterceptor('policeReport', multerOptions('farmer-police-report')),
   )
@@ -130,44 +103,20 @@ export class UserController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: [
-        'username',
-        'fullname',
-        'email',
-        'phoneNumber',
-        'dateOfBirth',
-        'companyRegistrationNumber',
-        'password',
-        'policeReport',
-      ],
+      required: ['policeReport'],
       properties: {
-        username: { type: 'string', example: 'acmecorp' },
-        fullname: { type: 'string', example: 'Acme Corporation' },
-        email: { type: 'string', example: 'admin@acme.com' },
-        phoneNumber: { type: 'string', example: '08012345678' },
-        dateOfBirth: { type: 'string', example: '8-Mar-1995' },
-        companyRegistrationNumber: { type: 'string', example: 'RC1234567' },
-        password: { type: 'string', example: 'StrongPass123!' },
-        countryCode: { type: 'string', example: 'NG' },
-        referralCode: { type: 'string', example: 'UBIREF123' },
-        currency: { type: 'string', example: 'NGN' },
-        isBusinessRegistered: { type: 'boolean', example: true },
-        accountType: { type: 'string', example: 'FARMER' },
         policeReport: { type: 'string', format: 'binary' },
       },
     },
   })
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register Farmer Account' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    example: userResponse.registerFarmerAccount,
-  })
-  async registerFarmerAccount(
-    @Body() body: RegisterFarmerDto,
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload Police Report (Farmer only)' })
+  async uploadPoliceReport(
     @UploadedFile() policeReport: Express.Multer.File,
+    @Req() req: Request,
   ) {
-    return this.userService.register(body, policeReport);
+    const user = req['user'];
+    return this.userService.uploadPoliceReport(policeReport, user);
   }
   @Post('create-passcode')
   @ApiOperation({ summary: 'Create Passcode' })

@@ -118,6 +118,7 @@ export class FulfillmentController {
     USER_ROLE.CUSTOMER_SUPPORT,
     USER_ROLE.FARMER,
     USER_ROLE.AGENT,
+    USER_ROLE.USER,
   )
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get suppliers closest to a farm location' })

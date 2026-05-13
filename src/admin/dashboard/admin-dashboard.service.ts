@@ -1066,6 +1066,7 @@ export class AdminDashboardService {
       bankName: string | null;
       bankCode: string | null;
       currency: string | null;
+      policeReportUrl: string | null;
     };
 
     const searchFilter = search
@@ -1113,7 +1114,8 @@ export class AdminDashboardService {
           w."accountName"       AS "accountName",
           w."bankName"          AS "bankName",
           w."bankCode"          AS "bankCode",
-          w.currency            AS "currency"
+          w.currency            AS "currency",
+          u."policeReportUrl"   AS "policeReportUrl"
         FROM users u
         LEFT JOIN tier t ON t.level = u."tierLevel"
         LEFT JOIN wallet w ON w."userId" = u.id
@@ -1154,6 +1156,7 @@ export class AdminDashboardService {
         isAddressVerified: row.isAddressVerified,
         dateOfBirth: row.dateOfBirth,
         createdAt: row.createdAt,
+        policeReportUrl: row.policeReportUrl,
       },
       wallet: row.walletId
         ? {

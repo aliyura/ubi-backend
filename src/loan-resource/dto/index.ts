@@ -22,7 +22,10 @@ export class CreateResourceCategoryDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  image?: any;
+
   @IsOptional()
   @IsString()
   imageUrl?: string;
@@ -43,7 +46,10 @@ export class CreateLoanResourceDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  image?: any;
+
   @IsOptional()
   @IsString()
   imageUrl?: string;
@@ -99,7 +105,10 @@ export class UpdateLoanResourceDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  image?: any;
+
   @IsOptional()
   @IsString()
   imageUrl?: string;
@@ -144,6 +153,31 @@ export class UpdateLoanResourceDto {
   @IsOptional()
   @IsBoolean()
   isEligibleForLoan?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdateResourceCategoryDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  @IsOptional()
+  image?: any;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

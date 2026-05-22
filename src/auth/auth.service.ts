@@ -127,6 +127,18 @@ export class AuthService {
     };
   }
 
+  async logout(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: this.incrementTokenVersion(user) },
+    });
+
+    return { message: 'Logout successful', statusCode: HttpStatus.OK };
+  }
+
   /* =====================
      PRIVATE HELPERS
      ===================== */

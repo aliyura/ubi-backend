@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/LoginDto';
@@ -6,6 +6,7 @@ import { PasscodeLoginDto } from './dto/PasscodeLoginDto';
 import { ValidateTwoFaDto } from 'src/user/dto/ValidateTwoFaDto';
 import { VerifyTwoFaDto } from 'src/user/dto/VerifyTwoFaDto';
 import { authResponse } from './auth.response';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('v1/auth')
 export class AuthController {
@@ -49,5 +50,13 @@ export class AuthController {
   })
   async verifyTwoFaCode(@Body() body: VerifyTwoFaDto) {
     return this.authService.verifyTwoFaCode(body);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Logout current user' })
+  @ApiResponse({ status: HttpStatus.OK, example: { message: 'Logout successful', statusCode: 200 } })
+  async logout(@Request() req: any) {
+    return this.authService.logout(req.user.id);
   }
 }

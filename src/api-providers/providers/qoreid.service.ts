@@ -36,7 +36,7 @@ export class QoreIdService {
       return response.data;
     } catch (error) {
       const errorMessage =
-        error.response?.message || error.data.message || error.message;
+        error?.response?.data?.message || error?.response?.message || error?.message;
       console.error('Error getting QoreID token:', errorMessage);
       throw new InternalServerErrorException(
         errorMessage || 'Unable to fetch QoreID access token',

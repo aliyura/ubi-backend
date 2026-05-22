@@ -586,8 +586,8 @@ export class WalletService {
         }
 
         if (
-          bvnVerificationResponse?.metadata?.match == true &&
-          bvnVerificationResponse?.metadata?.match_score > 0
+          bvnVerificationResponse?.summary?.face_verification_check?.match == true &&
+          bvnVerificationResponse?.summary?.face_verification_check?.match_score > 0
         ) {
           walletSetupRequest = {
             bvn: bvnVerificationResponse.bvn.bvn,

@@ -218,6 +218,7 @@ export class AdminDashboardService {
       this.prisma.farm.groupBy({
         by: ['mainCropType'],
         _count: { mainCropType: true },
+        _sum: { sizeValue: true },
         where,
       }),
       this.prisma.farm.aggregate({
@@ -227,11 +228,26 @@ export class AdminDashboardService {
     ]);
 
     const total = cropGroups.reduce((sum, g) => sum + g._count.mainCropType, 0);
-    const crops = cropGroups
-      .map((g) => ({
+
+    // Largest-remainder method so percentages always sum to 100
+    const withRemainders = cropGroups.map((g) => {
+      const exact = total > 0 ? (g._count.mainCropType / total) * 100 : 0;
+      return {
         crop: g.mainCropType,
-        per: total > 0 ? Math.round((g._count.mainCropType / total) * 100) : 0,
-      }))
+        hectares: g._sum.sizeValue ?? 0,
+        floor: Math.floor(exact),
+        remainder: exact - Math.floor(exact),
+      };
+    });
+
+    let remainder = 100 - withRemainders.reduce((s, c) => s + c.floor, 0);
+    const crops = withRemainders
+      .sort((a, b) => b.remainder - a.remainder)
+      .map((c) => {
+        const extra = remainder > 0 ? 1 : 0;
+        remainder -= extra;
+        return { crop: c.crop, hectares: c.hectares, per: c.floor + extra };
+      })
       .sort((a, b) => b.per - a.per);
 
     return {

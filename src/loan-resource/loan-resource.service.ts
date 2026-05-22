@@ -9,6 +9,7 @@ import {
   CreateResourceCategoryDto,
   QueryLoanResourceDto,
   UpdateLoanResourceDto,
+  UpdateResourceCategoryDto,
 } from './dto';
 
 @Injectable()
@@ -33,6 +34,78 @@ export class LoanResourceService {
       data: body,
     });
     return { status: true, message: 'Category created', data: category };
+  }
+
+  async adminGetCategories() {
+    const categories = await this.prisma.loanResourceCategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+    return { status: true, message: 'Categories retrieved', data: categories };
+  }
+
+  async updateCategory(id: string, body: UpdateResourceCategoryDto) {
+    const category = await this.prisma.loanResourceCategory.findUnique({
+      where: { id },
+    });
+    if (!category) throw new NotFoundException('Category not found');
+
+    if (body.name && body.name !== category.name) {
+      const exists = await this.prisma.loanResourceCategory.findUnique({
+        where: { name: body.name },
+      });
+      if (exists) throw new ConflictException('Category name already exists');
+    }
+
+    const updated = await this.prisma.loanResourceCategory.update({
+      where: { id },
+      data: body,
+    });
+    return { status: true, message: 'Category updated', data: updated };
+  }
+
+  async deactivateCategory(id: string) {
+    const category = await this.prisma.loanResourceCategory.findUnique({
+      where: { id },
+    });
+    if (!category) throw new NotFoundException('Category not found');
+
+    await this.prisma.loanResourceCategory.update({
+      where: { id },
+      data: { isActive: false },
+    });
+    return { status: true, message: 'Category deactivated' };
+  }
+
+  async adminGetResources(query: QueryLoanResourceDto) {
+    const { categoryId, search, page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.loanResource.findMany({
+        where,
+        include: { category: true },
+        skip,
+        take: Number(limit),
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.loanResource.count({ where }),
+    ]);
+
+    return {
+      status: true,
+      message: 'Resources retrieved',
+      data: items,
+      meta: { total, page, limit, pages: Math.ceil(total / limit) },
+    };
   }
 
   async getResources(query: QueryLoanResourceDto) {

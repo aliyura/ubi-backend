@@ -21,6 +21,7 @@ export class FileService {
   private readonly logger = new Logger(FileService.name);
   private readonly bucket = process.env.AWS_S3_BUCKET;
   private readonly baseUrl = process.env.AWS_S3_BASEURL;
+  private readonly cdnUrl = process.env.CDN_BASEURL;
 
   private readonly s3 = new AWS.S3({
     endpoint: process.env.AWS_S3_ENDPOINT,
@@ -154,9 +155,11 @@ export class FileService {
         success: true,
         message: Messages.RequestSuccessful,
         data: {
-          url: this.baseUrl
-            ? `${this.baseUrl}/${this.bucket}/${s3Response.Key}`
-            : s3Response.Location,
+          url: this.cdnUrl
+            ? `${this.cdnUrl}/${s3Response.Key}`
+            : this.baseUrl
+              ? `${this.baseUrl}/${this.bucket}/${s3Response.Key}`
+              : s3Response.Location,
           fileName: s3Response.Key,
         },
       };

@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateResourceCategoryDto {
   @ApiProperty()
@@ -90,6 +90,7 @@ export class CreateLoanResourceDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isEligibleForLoan?: boolean;
 }
@@ -151,11 +152,13 @@ export class UpdateLoanResourceDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isEligibleForLoan?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isActive?: boolean;
 }
@@ -181,6 +184,7 @@ export class UpdateResourceCategoryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isActive?: boolean;
 }

@@ -57,6 +57,7 @@ import { WarehouseModule } from './warehouse/warehouse.module';
         AWS_S3_KEY_SECRET: Joi.string().required(),
         AWS_S3_BASEURL: Joi.string().required(),
         AWS_S3_ENDPOINT: Joi.string().required(),
+        CDN_BASEURL: Joi.string().required(),
         FLUTTERWAVE_PUBLIC_KEY: Joi.string().required(),
         FLUTTERWAVE_SECRET_KEY: Joi.string().required(),
         FLUTTERWAVE_BASE_URL: Joi.string().required(),

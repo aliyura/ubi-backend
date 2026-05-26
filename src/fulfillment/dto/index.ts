@@ -12,7 +12,28 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { FULFILLMENT_METHOD } from '@prisma/client';
+import { FULFILLMENT_METHOD, FULFILLMENT_STATUS } from '@prisma/client';
+
+export class ListFulfillmentsQueryDto {
+  @ApiPropertyOptional({ description: 'Page number for pagination' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: 'Number of items per page' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  limit?: number = 20;
+
+  @ApiPropertyOptional({ enum: FULFILLMENT_STATUS, description: 'Filter by fulfillment status' })
+  @IsOptional()
+  @IsEnum(FULFILLMENT_STATUS)
+  status?: FULFILLMENT_STATUS;
+}
 
 export class FulfillmentItemDto {
   @ApiProperty()

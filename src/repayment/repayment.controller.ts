@@ -1,12 +1,10 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Query,
@@ -15,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RepaymentService } from './repayment.service';
-import { RecordRepaymentDto, AgentRepaymentQueryDto } from './dto';
+import { RecordRepaymentDto, AgentRepaymentQueryDto, AdminRepaymentQueryDto } from './dto';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
@@ -33,16 +31,8 @@ export class RepaymentController {
   @ApiResponse({ status: HttpStatus.OK, example: repaymentResponse.adminList })
   @UseGuards(RolesGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
-  async adminList(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-    @Query('overdueOnly') overdueOnly?: string,
-  ) {
-    return this.service.adminListRepayments(
-      page,
-      limit,
-      overdueOnly === 'true',
-    );
+  async adminList(@Query() query: AdminRepaymentQueryDto) {
+    return this.service.adminListRepayments(query);
   }
 
   @Post('admin/repayments/:applicationId/record')

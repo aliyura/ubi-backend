@@ -4,10 +4,12 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { MARKETPLACE_ORDER_STATUS, FULFILLMENT_STATUS } from '@prisma/client';
 import {
   CreateLoanResourceDto,
   CreateResourceCategoryDto,
   QueryLoanResourceDto,
+  ResourceInventoryQueryDto,
   UpdateLoanResourceDto,
   UpdateResourceCategoryDto,
 } from './dto';
@@ -170,5 +172,173 @@ export class LoanResourceService {
       data: body,
     });
     return { status: true, message: 'Resource updated', data: updated };
+  }
+
+  async getResourceInventory(id: string, query: ResourceInventoryQueryDto) {
+    const resource = await this.prisma.loanResource.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        unitOfMeasure: true,
+        stockQuantity: true,
+        category: { select: { id: true, name: true } },
+      },
+    });
+    if (!resource) throw new NotFoundException('Resource not found');
+
+    const dateFilter = this.buildDateFilter(query);
+    const stats = await this.aggregateInventoryStats(id, dateFilter);
+
+    return {
+      status: true,
+      message: 'Resource inventory retrieved',
+      data: {
+        resource,
+        dateRange: { from: query.from ?? null, to: query.to ?? null },
+        stockBalance: resource.stockQuantity,
+        ...stats,
+      },
+    };
+  }
+
+  async getInventorySummary(query: ResourceInventoryQueryDto) {
+    const resources = await this.prisma.loanResource.findMany({
+      select: {
+        id: true,
+        name: true,
+        unitOfMeasure: true,
+        stockQuantity: true,
+        category: { select: { id: true, name: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const dateFilter = this.buildDateFilter(query);
+
+    const SOLD_STATUSES = [
+      MARKETPLACE_ORDER_STATUS.confirmed,
+      MARKETPLACE_ORDER_STATUS.packed,
+      MARKETPLACE_ORDER_STATUS.dispatched,
+      MARKETPLACE_ORDER_STATUS.delivered,
+    ];
+
+    const [soldRows, distApprovedRows, distFallbackRows] = await Promise.all([
+      this.prisma.marketplaceOrderItem.groupBy({
+        by: ['resourceId'],
+        _sum: { quantity: true },
+        where: {
+          order: { status: { in: SOLD_STATUSES }, createdAt: dateFilter },
+        },
+      }),
+      this.prisma.loanApplicationItem.groupBy({
+        by: ['resourceId'],
+        _sum: { approvedQuantity: true },
+        where: {
+          approvedQuantity: { not: null },
+          application: {
+            fulfillment: {
+              status: FULFILLMENT_STATUS.delivered,
+              deliveredAt: dateFilter,
+            },
+          },
+        },
+      }),
+      this.prisma.loanApplicationItem.groupBy({
+        by: ['resourceId'],
+        _sum: { quantity: true },
+        where: {
+          approvedQuantity: null,
+          application: {
+            fulfillment: {
+              status: FULFILLMENT_STATUS.delivered,
+              deliveredAt: dateFilter,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const soldMap = new Map(soldRows.map((r) => [r.resourceId, r._sum.quantity ?? 0]));
+    const distApprovedMap = new Map(distApprovedRows.map((r) => [r.resourceId, r._sum.approvedQuantity ?? 0]));
+    const distFallbackMap = new Map(distFallbackRows.map((r) => [r.resourceId, r._sum.quantity ?? 0]));
+
+    const data = resources.map((r) => ({
+      resource: { id: r.id, name: r.name, unitOfMeasure: r.unitOfMeasure, category: r.category },
+      stockBalance: r.stockQuantity,
+      unitsSold: soldMap.get(r.id) ?? 0,
+      unitsDistributed: (distApprovedMap.get(r.id) ?? 0) + (distFallbackMap.get(r.id) ?? 0),
+    }));
+
+    return {
+      status: true,
+      message: 'Inventory summary retrieved',
+      data,
+      dateRange: { from: query.from ?? null, to: query.to ?? null },
+    };
+  }
+
+  private buildDateFilter(query: ResourceInventoryQueryDto) {
+    const filter: { gte?: Date; lte?: Date } = {};
+    if (query.from) filter.gte = new Date(query.from);
+    if (query.to) {
+      const to = new Date(query.to);
+      to.setHours(23, 59, 59, 999);
+      filter.lte = to;
+    }
+    return Object.keys(filter).length ? filter : undefined;
+  }
+
+  private async aggregateInventoryStats(
+    resourceId: string,
+    dateFilter: { gte?: Date; lte?: Date } | undefined,
+  ) {
+    const SOLD_STATUSES = [
+      MARKETPLACE_ORDER_STATUS.confirmed,
+      MARKETPLACE_ORDER_STATUS.packed,
+      MARKETPLACE_ORDER_STATUS.dispatched,
+      MARKETPLACE_ORDER_STATUS.delivered,
+    ];
+
+    const deliveredFilter = {
+      status: FULFILLMENT_STATUS.delivered,
+      ...(dateFilter ? { deliveredAt: dateFilter } : {}),
+    };
+
+    const [soldResult, distApproved, distFallback] = await Promise.all([
+      this.prisma.marketplaceOrderItem.aggregate({
+        _sum: { quantity: true },
+        where: {
+          resourceId,
+          order: {
+            status: { in: SOLD_STATUSES },
+            ...(dateFilter ? { createdAt: dateFilter } : {}),
+          },
+        },
+      }),
+      this.prisma.loanApplicationItem.aggregate({
+        _sum: { approvedQuantity: true },
+        where: {
+          resourceId,
+          approvedQuantity: { not: null },
+          application: { fulfillment: deliveredFilter },
+        },
+      }),
+      this.prisma.loanApplicationItem.aggregate({
+        _sum: { quantity: true },
+        where: {
+          resourceId,
+          approvedQuantity: null,
+          application: { fulfillment: deliveredFilter },
+        },
+      }),
+    ]);
+
+    return {
+      unitsSold: soldResult._sum.quantity ?? 0,
+      unitsDistributed:
+        (distApproved._sum.approvedQuantity ?? 0) +
+        (distFallback._sum.quantity ?? 0),
+    };
   }
 }

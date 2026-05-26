@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { VerifyAgentAddressDto, GetAgentsDto } from './dto/AgentAddressDto';
 import { AddPlanDto } from './dto/AddDataPlanDto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ApiProviderService } from 'src/api-providers/api-providers.service';
@@ -419,6 +420,73 @@ export class AdminService {
 
     return {
       message: 'Plan with id deleted successfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  async getAgents(query: GetAgentsDto) {
+    const where: any = { role: USER_ROLE.AGENT };
+
+    if (query.addressStatus === 'pending') {
+      where.address = { not: null };
+      where.isAddressVerified = false;
+    } else if (query.addressStatus === 'verified') {
+      where.isAddressVerified = true;
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [agents, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          fullname: true,
+          email: true,
+          phoneNumber: true,
+          address: true,
+          state: true,
+          city: true,
+          isAddressVerified: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      message: 'Agents fetched successfully',
+      statusCode: HttpStatus.OK,
+      data: { agents, total, page, limit },
+    };
+  }
+
+  async verifyAgentAddress(agentId: string, body: VerifyAgentAddressDto) {
+    const agent = await this.prisma.user.findFirst({
+      where: { id: agentId, role: USER_ROLE.AGENT },
+    });
+
+    if (!agent) throw new NotFoundException('Agent not found');
+
+    if (!agent.address) {
+      throw new BadRequestException('Agent has not submitted a home address yet');
+    }
+
+    await this.prisma.user.update({
+      where: { id: agentId },
+      data: { isAddressVerified: body.approved },
+    });
+
+    return {
+      message: body.approved
+        ? 'Agent home address verified successfully'
+        : 'Agent home address rejected',
       statusCode: HttpStatus.OK,
     };
   }

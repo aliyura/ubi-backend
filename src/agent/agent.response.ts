@@ -593,4 +593,8 @@ export const agentResponse = {
     message: 'Cart cleared',
     data: null,
   },
+  updateHomeAddress: {
+    statusCode: 200,
+    message: 'Home address submitted for review',
+  },
 } as const;

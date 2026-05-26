@@ -113,11 +113,11 @@ enum BENEFICIARY_TYPE {
 }
 
 model User {
-  id       String @id @default(uuid()) @db.Uuid
-  email    String @unique
-  username String @unique
+  id          String @id @default(uuid()) @db.Uuid
+  email       String @unique
+  username    String @unique
   phoneNumber String @unique
-  fullname String
+  fullname    String
 
   gender GENDER?
 
@@ -132,7 +132,7 @@ model User {
   isBusiness                Boolean? @default(false)
   companyRegistrationNumber String?
 
-  tokenVersion Int     @default(0)
+  tokenVersion Int @default(0)
 
   isPasscodeSet   Boolean @default(false)
   passcode        String?
@@ -184,15 +184,15 @@ model User {
   beneficiaries     Beneficiary[]
   scamTicket        ScamTicket[]
   agentInvitations  AgentInvitation[]
-  loanApplications  LoanApplication[] @relation("UserLoanApplications")
-  agentApplications LoanApplication[] @relation("AgentLoanApplications")
+  loanApplications  LoanApplication[]  @relation("UserLoanApplications")
+  agentApplications LoanApplication[]  @relation("AgentLoanApplications")
   agentActivityLogs AgentActivityLog[]
   notifications     Notification[]
   farms             Farm[]
 
   // Agent onboarding relationships
-  onboardedByAgent  User?  @relation("AgentOnboardedFarmers", fields: [onboardedByAgentId], references: [id])
-  onboardedFarmers  User[] @relation("AgentOnboardedFarmers")
+  onboardedByAgent User?  @relation("AgentOnboardedFarmers", fields: [onboardedByAgentId], references: [id])
+  onboardedFarmers User[] @relation("AgentOnboardedFarmers")
 
   isBusinessRegistered Boolean @default(false)
 
@@ -433,14 +433,14 @@ model ScamTicket {
 }
 
 model BankAccountCache {
-  id             String   @id @default(uuid())
-  accountNumber  String   @unique
-  accountName    String?
-  bankName       String?
-  bankCode       String?
-  routingKey     String?
-  categoryId     String?
-  verifiedAt     DateTime @default(now())
+  id            String   @id @default(uuid())
+  accountNumber String   @unique
+  accountName   String?
+  bankName      String?
+  bankCode      String?
+  routingKey    String?
+  categoryId    String?
+  verifiedAt    DateTime @default(now())
 }
 
 model BankNameCache {
@@ -449,6 +449,7 @@ model BankNameCache {
   bankName  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([bankCode])
   @@index([bankName])
 }
@@ -554,22 +555,22 @@ model LoanResource {
   description String?
   imageUrl    String?
 
-  unitPrice    Float
+  unitPrice     Float
   unitOfMeasure String
   stockQuantity Float  @default(0)
   minQuantity   Float  @default(1)
 
-  supplier    String?
-  suitableCrops String?
+  supplier          String?
+  suitableCrops     String?
   isEligibleForLoan Boolean @default(true)
-  isActive    Boolean @default(true)
+  isActive          Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  category  LoanResourceCategory @relation(fields: [categoryId], references: [id])
-  cartItems CartItem[]
-  applicationItems LoanApplicationItem[]
+  category              LoanResourceCategory   @relation(fields: [categoryId], references: [id])
+  cartItems             CartItem[]
+  applicationItems      LoanApplicationItem[]
   marketplaceOrderItems MarketplaceOrderItem[]
 
   @@index([categoryId])
@@ -580,11 +581,11 @@ model Farm {
   id     String @id @default(uuid()) @db.Uuid
   userId String @db.Uuid
 
-  name     String
-  address  String
-  state    String
-  lga      String
-  ward     String?
+  name    String
+  address String
+  state   String
+  lga     String
+  ward    String?
 
   latitude  Float?
   longitude Float?
@@ -594,21 +595,21 @@ model Farm {
 
   ownershipType FARM_OWNERSHIP_TYPE
 
-  mainCropType      String
-  secondaryCropType String?
-  farmingSeason     String?
+  mainCropType         String
+  secondaryCropType    String?
+  farmingSeason        String?
   expectedPlantingDate DateTime?
   expectedHarvestDate  DateTime?
 
   hasIrrigation Boolean @default(false)
 
-  isVerified Boolean @default(false)
+  isVerified Boolean   @default(false)
   verifiedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos       FarmPhoto[]
   applications LoanApplication[]
 
@@ -629,17 +630,17 @@ model FarmPhoto {
 }
 
 model Supplier {
-  id            String  @id @default(uuid()) @db.Uuid
-  name          String
-  location      String?
-  latitude      Float?
-  longitude     Float?
-  contactPerson String?
-  contactPhone  String?
-  contactEmail  String?
-  stockCapacity String?
+  id               String  @id @default(uuid()) @db.Uuid
+  name             String
+  location         String?
+  latitude         Float?
+  longitude        Float?
+  contactPerson    String?
+  contactPhone     String?
+  contactEmail     String?
+  stockCapacity    String?
   deliveryCoverage String?
-  isActive      Boolean @default(true)
+  isActive         Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -687,40 +688,40 @@ model LoanApplication {
 
   status LOAN_APPLICATION_STATUS @default(Draft)
 
-  purpose            String?
-  season             String?
+  purpose              String?
+  season               String?
   expectedPlantingDate DateTime?
   expectedHarvestDate  DateTime?
 
-  fulfillmentMethod  FULFILLMENT_METHOD?
-  deliveryAddress    String?
-  deliveryContact    String?
+  fulfillmentMethod FULFILLMENT_METHOD?
+  deliveryAddress   String?
+  deliveryContact   String?
 
   agentId String? @db.Uuid
 
-  totalEstimatedValue Float @default(0)
+  totalEstimatedValue Float  @default(0)
   currency            String @default("NGN")
 
   farmerNotes String?
 
   submittedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  user             User                  @relation("UserLoanApplications", fields: [userId], references: [id])
-  agent            User?                 @relation("AgentLoanApplications", fields: [agentId], references: [id])
-  farm             Farm                  @relation(fields: [farmId], references: [id])
-  items            LoanApplicationItem[]
-  eligibilityChecks EligibilityCheck[]
+  user                User                  @relation("UserLoanApplications", fields: [userId], references: [id])
+  agent               User?                 @relation("AgentLoanApplications", fields: [agentId], references: [id])
+  farm                Farm                  @relation(fields: [farmId], references: [id])
+  items               LoanApplicationItem[]
+  eligibilityChecks   EligibilityCheck[]
   agentRecommendation AgentRecommendation?
   fieldVerification   FieldVerification?
-  decisions        LoanDecision[]
-  statusHistory    LoanStatusHistory[]
-  fulfillment      Fulfillment?
-  repaymentPlan    RepaymentPlan?
-  auditLogs        LoanAuditLog[]
-  marketplaceOrders MarketplaceOrder[]
-  agentActivityLogs AgentActivityLog[]
+  decisions           LoanDecision[]
+  statusHistory       LoanStatusHistory[]
+  fulfillment         Fulfillment?
+  repaymentPlan       RepaymentPlan?
+  auditLogs           LoanAuditLog[]
+  marketplaceOrders   MarketplaceOrder[]
+  agentActivityLogs   AgentActivityLog[]
 
   @@index([userId])
   @@index([status])
@@ -756,14 +757,14 @@ model EligibilityCheck {
   id            String @id @default(uuid()) @db.Uuid
   applicationId String @db.Uuid
 
-  checkName  String
-  result     ELIGIBILITY_CHECK_RESULT
-  score      Float?
-  note       String?
-  source     String?
-  isManual   Boolean  @default(false)
-  checkedAt  DateTime @default(now())
-  checkedBy  String?
+  checkName String
+  result    ELIGIBILITY_CHECK_RESULT
+  score     Float?
+  note      String?
+  source    String?
+  isManual  Boolean                  @default(false)
+  checkedAt DateTime                 @default(now())
+  checkedBy String?
 
   application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
@@ -776,12 +777,12 @@ model AgentRecommendation {
   applicationId String @unique @db.Uuid
   agentId       String @db.Uuid
 
-  agentName       String?
-  farmerKnown     Boolean @default(false)
-  farmVisited     Boolean @default(false)
-  visitDate       DateTime?
-  farmExists      Boolean?
-  cropConfirmed   Boolean?
+  agentName         String?
+  farmerKnown       Boolean   @default(false)
+  farmVisited       Boolean   @default(false)
+  visitDate         DateTime?
+  farmExists        Boolean?
+  cropConfirmed     Boolean?
   estimatedFarmSize Float?
 
   recommendation AGENT_RECOMMENDATION_TYPE
@@ -859,10 +860,10 @@ model LoanAuditLog {
   id            String @id @default(uuid()) @db.Uuid
   applicationId String @db.Uuid
 
-  action        String
-  performedById String?
+  action          String
+  performedById   String?
   performedByRole String?
-  details       Json?
+  details         Json?
 
   createdAt DateTime @default(now())
 
@@ -891,30 +892,30 @@ model AgentActivityLog {
 }
 
 model Fulfillment {
-  id            String @id @default(uuid()) @db.Uuid
-  applicationId String @unique @db.Uuid
+  id            String  @id @default(uuid()) @db.Uuid
+  applicationId String  @unique @db.Uuid
   supplierId    String? @db.Uuid
 
-  fulfillmentRef    String?
-  stockConfirmed    Boolean @default(false)
-  deliveryMethod    FULFILLMENT_METHOD?
-  pickupAddress     String?
-  deliveryAddress   String?
-  deliveryOfficer   String?
-  deliveryPhone     String?
-  receivedBy        String?
-  deliveryProofUrl  String?
-  deliveryNote      String?
-  dispatchedAt      DateTime?
-  deliveredAt       DateTime?
+  fulfillmentRef   String?
+  stockConfirmed   Boolean             @default(false)
+  deliveryMethod   FULFILLMENT_METHOD?
+  pickupAddress    String?
+  deliveryAddress  String?
+  deliveryOfficer  String?
+  deliveryPhone    String?
+  receivedBy       String?
+  deliveryProofUrl String?
+  deliveryNote     String?
+  dispatchedAt     DateTime?
+  deliveredAt      DateTime?
 
   status FULFILLMENT_STATUS @default(pending)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  application LoanApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    Supplier?         @relation(fields: [supplierId], references: [id])
   items       FulfillmentItem[]
 
   @@map("fulfillment")
@@ -940,16 +941,16 @@ model RepaymentPlan {
   id            String @id @default(uuid()) @db.Uuid
   applicationId String @unique @db.Uuid
 
-  principalEquivalent Float
-  serviceCharge       Float  @default(0)
+  principalEquivalent  Float
+  serviceCharge        Float     @default(0)
   totalRepaymentAmount Float
-  repaymentFrequency  String
+  repaymentFrequency   String
   numberOfInstallments Int
-  installmentAmount   Float
-  firstDueDate        DateTime
-  lastDueDate         DateTime?
+  installmentAmount    Float
+  firstDueDate         DateTime
+  lastDueDate          DateTime?
 
-  amountRepaid     Float @default(0)
+  amountRepaid       Float @default(0)
   outstandingBalance Float
 
   status REPAYMENT_STATUS @default(pending)
@@ -970,7 +971,7 @@ model Repayment {
   installmentNumber Int
   dueDate           DateTime
   amount            Float
-  amountPaid        Float   @default(0)
+  amountPaid        Float     @default(0)
   paidAt            DateTime?
   reference         String?
   note              String?
@@ -988,14 +989,14 @@ model Repayment {
 }
 
 model LoanPolicy {
-  id  String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  maxLoanAmount        Float  @default(500000)
-  maxItemQuantity      Float  @default(100)
-  requireAgentReco     Boolean @default(false)
-  allowResubmission    Boolean @default(true)
-  repaymentFrequency   String  @default("monthly")
-  defaultInstallments  Int     @default(6)
+  maxLoanAmount       Float   @default(500000)
+  maxItemQuantity     Float   @default(100)
+  requireAgentReco    Boolean @default(false)
+  allowResubmission   Boolean @default(true)
+  repaymentFrequency  String  @default("monthly")
+  defaultInstallments Int     @default(6)
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -1034,8 +1035,8 @@ model MarketplaceOrder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  application LoanApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  supplier    Supplier?            @relation(fields: [supplierId], references: [id])
+  application LoanApplication        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  supplier    Supplier?              @relation(fields: [supplierId], references: [id])
   items       MarketplaceOrderItem[]
 
   @@index([applicationId])
@@ -1064,7 +1065,6 @@ model MarketplaceOrderItem {
   @@index([orderId])
   @@map("marketplace_order_item")
 }
-
 
 model AgentInvitation {
   id          String            @id @default(uuid()) @db.Uuid
@@ -1150,25 +1150,25 @@ model Notification {
 }
 
 model Warehouse {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  address   String
-  state     String
-  lga       String?
-  
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String
+  address String
+  state   String
+  lga     String?
+
   latitude  Float
   longitude Float
-  
+
   capacity      Float?  @default(0)
   contactPerson String?
   contactPhone  String?
   contactEmail  String?
-  
-  isActive  Boolean  @default(true)
-  
+
+  isActive Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([state])
   @@index([isActive])
   @@map("warehouse")

@@ -20,6 +20,7 @@ import {
   CreateFulfillmentDto,
   CreateSupplierDto,
   DeliverFulfillmentDto,
+  ListFulfillmentsQueryDto,
 } from './dto';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/guards/roles.decorator';
@@ -40,11 +41,8 @@ export class FulfillmentController {
     status: HttpStatus.OK,
     example: fulfillmentResponse.listFulfillments,
   })
-  async list(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-  ) {
-    return this.service.listFulfillments(page, limit);
+  async list(@Query() query: ListFulfillmentsQueryDto) {
+    return this.service.listFulfillments(query);
   }
 
   @Post('loan-applications/:id/fulfillment')

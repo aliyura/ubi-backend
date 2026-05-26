@@ -23,6 +23,7 @@ import {
   SubmitLoanForFarmerDto,
   SubmitMarketplaceLoanForFarmerDto,
   QueryOnboardedFarmersDto,
+  UpdateHomeAddressDto,
 } from './dto';
 import {
   ACCOUNT_TYPE,
@@ -1189,5 +1190,28 @@ export class AgentService {
     }
 
     return farmer;
+  }
+
+  async updateHomeAddress(body: UpdateHomeAddressDto, agent: User) {
+    await this.prisma.user.update({
+      where: { id: agent.id },
+      data: {
+        address: body.address,
+        state: body.state,
+        city: body.city,
+        isAddressVerified: false,
+      },
+    });
+
+    await this.buildActivityLog({
+      agentId: agent.id,
+      action: AGENT_ACTION.UPDATE_HOME_ADDRESS,
+      description: 'Submitted home address for admin review',
+    });
+
+    return {
+      message: 'Home address submitted for review',
+      statusCode: HttpStatus.OK,
+    };
   }
 }

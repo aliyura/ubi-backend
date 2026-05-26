@@ -43,7 +43,25 @@ export const AGENT_ACTION = {
   UPDATE_FARMER_CART_ITEM: 'UPDATE_FARMER_CART_ITEM',
   REMOVE_FARMER_CART_ITEM: 'REMOVE_FARMER_CART_ITEM',
   CLEAR_FARMER_CART: 'CLEAR_FARMER_CART',
+  UPDATE_HOME_ADDRESS: 'UPDATE_HOME_ADDRESS',
 } as const;
+
+export class UpdateHomeAddressDto {
+  @ApiProperty({ example: '12 Adeola Odeku Street' })
+  @IsNotEmpty()
+  @IsString()
+  address: string;
+
+  @ApiProperty({ example: 'Lagos' })
+  @IsNotEmpty()
+  @IsString()
+  state: string;
+
+  @ApiProperty({ example: 'Victoria Island' })
+  @IsNotEmpty()
+  @IsString()
+  city: string;
+}
 
 export class SubmitVerificationDto {
   @ApiPropertyOptional()

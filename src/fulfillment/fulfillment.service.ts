@@ -11,6 +11,7 @@ import {
   CreateFulfillmentDto,
   CreateSupplierDto,
   DeliverFulfillmentDto,
+  ListFulfillmentsQueryDto,
 } from './dto';
 import {
   FULFILLMENT_STATUS,
@@ -197,7 +198,7 @@ export class FulfillmentService {
   ) {
     const fulfillment = await this.prisma.fulfillment.findUnique({
       where: { id: fulfillmentId },
-      include: { application: true },
+      include: { application: { include: { items: true } } },
     });
     if (!fulfillment) throw new NotFoundException('Fulfillment not found');
 
@@ -207,8 +208,25 @@ export class FulfillmentService {
       LOAN_APPLICATION_STATUS.Delivered,
     );
 
-    await this.prisma.$transaction([
-      this.prisma.fulfillment.update({
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of app.items) {
+        const qty = item.approvedQuantity ?? item.quantity;
+        const resource = await tx.loanResource.findUnique({
+          where: { id: item.resourceId },
+          select: { stockQuantity: true, name: true, unitOfMeasure: true },
+        });
+        if (!resource || resource.stockQuantity < qty) {
+          throw new ConflictException(
+            `Insufficient stock for "${item.itemName}". Available: ${resource?.stockQuantity ?? 0} ${item.unitOfMeasure}`,
+          );
+        }
+        await tx.loanResource.update({
+          where: { id: item.resourceId },
+          data: { stockQuantity: { decrement: qty } },
+        });
+      }
+
+      await tx.fulfillment.update({
         where: { id: fulfillmentId },
         data: {
           status: FULFILLMENT_STATUS.delivered,
@@ -217,13 +235,13 @@ export class FulfillmentService {
           deliveryProofUrl: body.deliveryProofUrl,
           deliveryNote: body.deliveryNote,
         },
-      }),
+      });
       // Transition through Delivered → Active in one atomic operation
-      this.prisma.loanApplication.update({
+      await tx.loanApplication.update({
         where: { id: app.id },
         data: { status: LOAN_APPLICATION_STATUS.Active },
-      }),
-      this.prisma.loanStatusHistory.create({
+      });
+      await tx.loanStatusHistory.create({
         data: {
           applicationId: app.id,
           fromStatus: app.status,
@@ -231,8 +249,8 @@ export class FulfillmentService {
           changedBy: admin.id,
           reason: 'Items delivered',
         },
-      }),
-      this.prisma.loanStatusHistory.create({
+      });
+      await tx.loanStatusHistory.create({
         data: {
           applicationId: app.id,
           fromStatus: LOAN_APPLICATION_STATUS.Delivered,
@@ -240,8 +258,8 @@ export class FulfillmentService {
           changedBy: admin.id,
           reason: 'Loan activated after delivery',
         },
-      }),
-      this.prisma.loanAuditLog.create({
+      });
+      await tx.loanAuditLog.create({
         data: {
           applicationId: app.id,
           action: 'FULFILLMENT_DELIVERED',
@@ -249,8 +267,8 @@ export class FulfillmentService {
           performedByRole: admin.role,
           details: { receivedBy: body.receivedBy },
         },
-      }),
-    ]);
+      });
+    });
 
     const farmer = await this.prisma.user.findUnique({
       where: { id: app.userId },
@@ -276,10 +294,14 @@ export class FulfillmentService {
     return { status: true, message: 'Delivery recorded', data: null };
   }
 
-  async listFulfillments(page = 1, limit = 20) {
+  async listFulfillments(query: ListFulfillmentsQueryDto) {
+    const { page = 1, limit = 20, status } = query;
     const skip = (Number(page) - 1) * Number(limit);
+    const where = status ? { status } : {};
+
     const [items, total] = await Promise.all([
       this.prisma.fulfillment.findMany({
+        where,
         include: {
           application: true,
           supplier: true,
@@ -289,7 +311,7 @@ export class FulfillmentService {
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.fulfillment.count(),
+      this.prisma.fulfillment.count({ where }),
     ]);
     return {
       status: true,

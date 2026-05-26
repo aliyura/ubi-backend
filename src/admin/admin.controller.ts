@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -23,6 +24,7 @@ import { AddPlanDto } from './dto/AddDataPlanDto';
 import { AdminService } from './admin.service';
 import { AddCablPlanDto } from './dto/AddCablPlanDto';
 import { InviteAgentDto } from './dto/InviteAgentDto';
+import { GetAgentsDto, VerifyAgentAddressDto } from './dto/AgentAddressDto';
 import { adminResponse } from './admin.response';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
@@ -177,5 +179,35 @@ export class AdminController {
     @Query('endDate') endDate?: string,
   ) {
     return this.adminService.getAgentFarmers(agentId, startDate, endDate);
+  }
+
+  @Get('agents')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.CUSTOMER_SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List agents — filter by addressStatus=pending|verified|all',
+  })
+  @ApiResponse({ status: HttpStatus.OK, example: adminResponse.getAgents })
+  async getAgents(@Query() query: GetAgentsDto) {
+    return this.adminService.getAgents(query);
+  }
+
+  @Patch('agents/:agentId/verify-address')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Approve or reject an agent's submitted home address" })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: adminResponse.verifyAgentAddress,
+  })
+  async verifyAgentAddress(
+    @Param('agentId', ParseUUIDPipe) agentId: string,
+    @Body() body: VerifyAgentAddressDto,
+  ) {
+    return this.adminService.verifyAgentAddress(agentId, body);
   }
 }

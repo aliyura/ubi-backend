@@ -189,6 +189,18 @@ export class UpdateResourceCategoryDto {
   isActive?: boolean;
 }
 
+export class ResourceInventoryQueryDto {
+  @ApiPropertyOptional({ description: 'Start date (ISO 8601)', example: '2026-01-01' })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'End date (ISO 8601)', example: '2026-12-31' })
+  @IsOptional()
+  @IsString()
+  to?: string;
+}
+
 export class QueryLoanResourceDto {
   @ApiPropertyOptional()
   @IsOptional()

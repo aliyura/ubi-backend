@@ -121,15 +121,11 @@ export class LoanApplicationService {
     });
 
     if (eligResult.eligible === 'fail') {
-      throw new BadRequestException({
+      return {
         status: false,
-        message: 'Eligibility check failed',
-        errors: eligResult.blockingIssues.map((issue) => ({
-          field: 'eligibility',
-          message: issue,
-        })),
+        message: 'You are not eligible to apply for a loan at this time',
         data: eligResult,
-      });
+      };
     }
 
     // Snapshot cart
@@ -299,7 +295,6 @@ export class LoanApplicationService {
 
     const where = {
       userId: user.id,
-      repaymentPlan: { isNot: null },
     };
 
     const [items, total] = await Promise.all([

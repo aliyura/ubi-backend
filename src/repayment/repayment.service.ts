@@ -7,7 +7,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanNotificationService } from 'src/loan-application/loan-notification.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { RecordRepaymentDto, AgentRepaymentQueryDto } from './dto';
+import { RecordRepaymentDto, AgentRepaymentQueryDto, AdminRepaymentQueryDto } from './dto';
 import {
   LOAN_APPLICATION_STATUS,
   NOTIFICATION_TYPE,
@@ -39,10 +39,11 @@ export class RepaymentService {
     };
   }
 
-  async adminListRepayments(page = 1, limit = 20, overdueOnly = false) {
+  async adminListRepayments(query: AdminRepaymentQueryDto) {
+    const { page = 1, limit = 20, status } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const where: any = {};
-    if (overdueOnly) where.status = REPAYMENT_STATUS.overdue;
+    if (status) where.status = status;
 
     const [items, total] = await Promise.all([
       this.prisma.repaymentPlan.findMany({

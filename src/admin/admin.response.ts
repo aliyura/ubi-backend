@@ -124,6 +124,33 @@ export const adminResponse = {
       twoFaEnabled: true,
     },
   },
+  getAgents: {
+    statusCode: 200,
+    message: 'Agents fetched successfully',
+    data: {
+      agents: [
+        {
+          id: 'agent-uuid-1',
+          fullname: 'Aminu Bello',
+          email: 'aminu@example.com',
+          phoneNumber: '08012345678',
+          address: '14 Kano Road',
+          state: 'Kano',
+          city: 'Kano Municipal',
+          isAddressVerified: false,
+          status: 'active',
+          createdAt: '2026-01-10T00:00:00.000Z',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+    },
+  },
+  verifyAgentAddress: {
+    statusCode: 200,
+    message: 'Agent home address verified successfully',
+  },
   getAgentFarmers: {
     statusCode: 200,
     message: 'Farmers fetched successfully',

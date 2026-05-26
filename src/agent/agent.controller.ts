@@ -12,6 +12,7 @@ import {
   Query,
   Req,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -27,6 +28,7 @@ import {
   SubmitLoanForFarmerDto,
   SubmitMarketplaceLoanForFarmerDto,
   QueryOnboardedFarmersDto,
+  UpdateHomeAddressDto,
 } from './dto';
 import { KycTier2Dto, KycTier3Dto } from 'src/user/dto';
 import { RolesGuard } from 'src/guards/role.guard';
@@ -40,6 +42,17 @@ import { agentResponse } from './agent.response';
 @Roles(USER_ROLE.AGENT, USER_ROLE.ADMIN)
 export class AgentController {
   constructor(private readonly service: AgentService) {}
+
+  @Put('profile/home-address')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Submit or update my home address for admin review' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: agentResponse.updateHomeAddress,
+  })
+  async updateHomeAddress(@Body() body: UpdateHomeAddressDto, @Req() req: Request) {
+    return this.service.updateHomeAddress(body, (req as any).user);
+  }
 
   @Get('loan-applications')
   @HttpCode(HttpStatus.OK)

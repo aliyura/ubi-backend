@@ -23,6 +23,7 @@ import {
   CreateLoanResourceDto,
   CreateResourceCategoryDto,
   QueryLoanResourceDto,
+  ResourceInventoryQueryDto,
   UpdateLoanResourceDto,
   UpdateResourceCategoryDto,
 } from './dto';
@@ -178,6 +179,27 @@ export class LoanResourceController {
       body.imageUrl = uploaded.data.url;
     }
     return this.service.createResource(body);
+  }
+
+  @Get('admin/loan-resources/inventory')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get inventory summary for all loan resources (admin)' })
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  async getInventorySummary(@Query() query: ResourceInventoryQueryDto) {
+    return this.service.getInventorySummary(query);
+  }
+
+  @Get('admin/loan-resources/:id/inventory')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get inventory stats for a single loan resource (admin)' })
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  async getResourceInventory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: ResourceInventoryQueryDto,
+  ) {
+    return this.service.getResourceInventory(id, query);
   }
 
   @Patch('admin/loan-resources/:id')

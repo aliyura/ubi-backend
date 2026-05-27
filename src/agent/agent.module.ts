@@ -7,6 +7,7 @@ import { LoanEligibilityModule } from 'src/loan-eligibility/loan-eligibility.mod
 import { NotificationModule } from 'src/notification/notification.module';
 import { UserModule } from 'src/user/user.module';
 import { LoanCartModule } from 'src/loan-cart/loan-cart.module';
+import { FileModule } from 'src/file/file.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LoanCartModule } from 'src/loan-cart/loan-cart.module';
     NotificationModule,
     UserModule,
     LoanCartModule,
+    FileModule,
   ],
   controllers: [AgentController],
   providers: [AgentService],

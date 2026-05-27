@@ -11,11 +11,15 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   Put,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { multerOptions } from 'src/config/multer.config';
 import { AgentService } from './agent.service';
 import {
   AddCartItemDto,
@@ -52,6 +56,29 @@ export class AgentController {
   })
   async updateHomeAddress(@Body() body: UpdateHomeAddressDto, @Req() req: Request) {
     return this.service.updateHomeAddress(body, (req as any).user);
+  }
+
+  @Post('police-report')
+  @UseInterceptors(
+    FileInterceptor('policeReport', multerOptions('agent-police-report')),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['policeReport'],
+      properties: {
+        policeReport: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Upload Police Report (Agent only)' })
+  async uploadPoliceReport(
+    @UploadedFile() policeReport: Express.Multer.File,
+    @Req() req: Request,
+  ) {
+    return this.service.uploadPoliceReport(policeReport, (req as any).user);
   }
 
   @Get('loan-applications')

@@ -58,6 +58,11 @@ export class LoanApplicationController {
     status: HttpStatus.CREATED,
     example: loanApplicationResponse.submitFromMarketplace,
   })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Eligibility check failed — application not created',
+    example: loanApplicationResponse.eligibilityCheckFailed,
+  })
   async submitFromMarketplace(
     @Body() body: CreateMarketplaceLoanApplicationDto,
     @Req() req: Request,

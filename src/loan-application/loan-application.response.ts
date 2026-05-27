@@ -33,21 +33,54 @@ export const loanApplicationResponse = {
     },
   },
   eligibilityCheckFailed: {
-    statusCode: 400,
-    message: 'Eligibility check failed',
-    errors: [
-      { field: 'eligibility', message: 'Please complete KYC tier 2 or higher' },
-      {
-        field: 'eligibility',
-        message:
-          'You have an active application UBI-2026-XYZ that must be resolved first',
-      },
-    ],
+    statusCode: 200,
+    status: false,
+    message: 'You are not eligible to apply for a loan at this time',
     data: {
       eligible: 'fail',
-      checks: [],
-      blockingIssues: ['Please complete KYC tier 2 or higher'],
+      blockingIssues: [
+        'Please complete KYC tier 2 or higher',
+        'You have an active application (UBI-2026-XYZ) that must be resolved first',
+      ],
       warnings: [],
+      checks: [
+        {
+          checkName: 'KYC Verification',
+          result: 'fail',
+          note: 'Please complete KYC tier 2 or higher',
+          source: 'system',
+        },
+        {
+          checkName: 'Active Loan Conflict',
+          result: 'fail',
+          note: 'You have an active application (UBI-2026-XYZ) that must be resolved first',
+          source: 'system',
+        },
+        {
+          checkName: 'Farm Exists',
+          result: 'pass',
+          note: 'Farm record found',
+          source: 'system',
+        },
+        {
+          checkName: 'Cart Not Empty',
+          result: 'pass',
+          note: 'Cart has items',
+          source: 'system',
+        },
+        {
+          checkName: 'Repayment History',
+          result: 'pass',
+          note: 'No overdue repayments',
+          source: 'system',
+        },
+        {
+          checkName: 'Contact Verification',
+          result: 'pass',
+          note: 'Phone and email are verified',
+          source: 'system',
+        },
+      ],
     },
   },
   submit: {

@@ -155,8 +155,10 @@ model User {
 
   profileImageFilename String?
   profileImageUrl      String?
-  policeReportFilename String?
-  policeReportUrl      String?
+  policeReportFilename      String?
+  policeReportUrl           String?
+  agentPoliceReportFilename String?
+  agentPoliceReportUrl      String?
 
   referralCode String?
   referredBy   String?

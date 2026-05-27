@@ -5,6 +5,8 @@ import {
   BadRequestException,
   HttpStatus,
 } from '@nestjs/common';
+import { FileService } from 'src/file/file.service';
+import { AGENT_POLICE_REPORT_UPLOAD_FOLDER_NAME } from 'src/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoanApplicationService } from 'src/loan-application/loan-application.service';
 import { LoanEligibilityService } from 'src/loan-eligibility/loan-eligibility.service';
@@ -50,7 +52,36 @@ export class AgentService {
     private readonly notificationService: NotificationService,
     private readonly userService: UserService,
     private readonly loanCartService: LoanCartService,
+    private readonly fileService: FileService,
   ) {}
+
+  async uploadPoliceReport(policeReport: Express.Multer.File, agent: User) {
+    if (!policeReport)
+      throw new BadRequestException('Police report file is required');
+
+    const uploadResponse = await this.fileService.uploadFile(policeReport, {
+      folder: AGENT_POLICE_REPORT_UPLOAD_FOLDER_NAME,
+      prefix: agent.id,
+    });
+
+    if (!uploadResponse.success || !uploadResponse.data)
+      throw new BadRequestException(
+        uploadResponse.message || 'Unable to upload police report',
+      );
+
+    await this.prisma.user.update({
+      where: { id: agent.id },
+      data: {
+        agentPoliceReportUrl: uploadResponse.data.url,
+        agentPoliceReportFilename: uploadResponse.data.fileName,
+      },
+    });
+
+    return {
+      message: 'Police report uploaded successfully',
+      statusCode: HttpStatus.OK,
+    };
+  }
 
   async submitVerification(
     id: string,

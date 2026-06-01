@@ -182,15 +182,17 @@ model User {
   tierLevel TIER_LEVEL @default(notSet)
 
   // relationships
-  wallet            Wallet[]
-  beneficiaries     Beneficiary[]
-  scamTicket        ScamTicket[]
-  agentInvitations  AgentInvitation[]
-  loanApplications  LoanApplication[]  @relation("UserLoanApplications")
-  agentApplications LoanApplication[]  @relation("AgentLoanApplications")
-  agentActivityLogs AgentActivityLog[]
-  notifications     Notification[]
-  farms             Farm[]
+  wallet                  Wallet[]
+  beneficiaries           Beneficiary[]
+  scamTicket              ScamTicket[]
+  agentInvitations        AgentInvitation[]
+  loanApplications        LoanApplication[]  @relation("UserLoanApplications")
+  agentApplications       LoanApplication[]  @relation("AgentLoanApplications")
+  agentActivityLogs       AgentActivityLog[]
+  notifications           Notification[]
+  farms                   Farm[]
+  documentRequests        DocumentRequest[]  @relation("UserDocumentRequests")
+  requestedDocuments      DocumentRequest[]  @relation("AdminDocumentRequests")
 
   // Agent onboarding relationships
   onboardedByAgent User?  @relation("AgentOnboardedFarmers", fields: [onboardedByAgentId], references: [id])
@@ -724,6 +726,7 @@ model LoanApplication {
   auditLogs           LoanAuditLog[]
   marketplaceOrders   MarketplaceOrder[]
   agentActivityLogs   AgentActivityLog[]
+  documentRequests    DocumentRequest[]
 
   @@index([userId])
   @@index([status])
@@ -1122,11 +1125,23 @@ enum NOTIFICATION_TYPE {
   ORDER_CANCELLED_BY_ADMIN
   KYC_TIER_UPGRADED
   AGENT_ASSIGNED_TO_APPLICATION
+  DOCUMENT_REQUESTED
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
 
   // Admin notifications
   NEW_LOAN_APPLICATION
   AGENT_VERIFICATION_SUBMITTED
   NEW_MARKETPLACE_ORDER
+  NEW_DOCUMENT_UPLOADED
+}
+
+enum DOCUMENT_REQUEST_STATUS {
+  pending
+  uploaded
+  approved
+  rejected
 }
 
 model Notification {
@@ -1174,4 +1189,30 @@ model Warehouse {
   @@index([state])
   @@index([isActive])
   @@map("warehouse")
+}
+
+model DocumentRequest {
+  id            String                   @id @default(uuid()) @db.Uuid
+  userId        String                   @db.Uuid
+  requestedById String                   @db.Uuid
+  documentName  String
+  description   String?
+  status        DOCUMENT_REQUEST_STATUS  @default(pending)
+  fileUrl       String?
+  fileName      String?
+  reviewNote    String?
+  loanApplicationId String?              @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user            User             @relation("UserDocumentRequests", fields: [userId], references: [id], onDelete: Cascade)
+  requestedBy     User             @relation("AdminDocumentRequests", fields: [requestedById], references: [id])
+  loanApplication LoanApplication? @relation(fields: [loanApplicationId], references: [id])
+
+  @@index([userId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([userId, status])
+  @@map("document_request")
 }

@@ -35,6 +35,7 @@ import { MarketplaceOrderModule } from './marketplace-order/marketplace-order.mo
 import { NotificationModule } from './notification/notification.module';
 import { StatementModule } from './statement/statement.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
+import { DocumentRequestModule } from './document-request/document-request.module';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { WarehouseModule } from './warehouse/warehouse.module';
     NotificationModule,
     StatementModule,
     WarehouseModule,
+    DocumentRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],

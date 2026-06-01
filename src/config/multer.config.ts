@@ -2,6 +2,7 @@ import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer
 import { memoryStorage } from 'multer';
 import {
   AGENT_POLICE_REPORT_UPLOAD_FOLDER_NAME,
+  DOCUMENT_REQUEST_UPLOAD_FOLDER_NAME,
   FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME,
   REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME,
   USER_FILE_UPLOAD_FOLDER_NAME,
@@ -12,7 +13,8 @@ export const multerOptions = (
     | 'profile'
     | 'report-scam'
     | 'farmer-police-report'
-    | 'agent-police-report',
+    | 'agent-police-report'
+    | 'document-request',
 ): MulterOptions => {
   const folder =
     type === 'profile'
@@ -21,7 +23,9 @@ export const multerOptions = (
         ? REPORT_SCAM_FILE_UPLOAD_FOLDER_NAME
         : type === 'agent-police-report'
           ? AGENT_POLICE_REPORT_UPLOAD_FOLDER_NAME
-          : FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME;
+          : type === 'document-request'
+            ? DOCUMENT_REQUEST_UPLOAD_FOLDER_NAME
+            : FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME;
 
   return {
     storage: memoryStorage(),
@@ -30,7 +34,9 @@ export const multerOptions = (
     },
     fileFilter: (_req, file, cb) => {
       const acceptedMimeType =
-        type === 'farmer-police-report' || type === 'agent-police-report'
+        type === 'farmer-police-report' ||
+        type === 'agent-police-report' ||
+        type === 'document-request'
           ? /^(image\/(jpg|jpeg|png|webp)|application\/pdf)$/
           : /^image\/(jpg|jpeg|png|webp)$/;
 

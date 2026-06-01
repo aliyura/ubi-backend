@@ -4,6 +4,7 @@ export const FARMER_POLICE_REPORT_UPLOAD_FOLDER_NAME =
   'ubi/farmer_police_reports';
 export const AGENT_POLICE_REPORT_UPLOAD_FOLDER_NAME =
   'ubi/agent_police_reports';
+export const DOCUMENT_REQUEST_UPLOAD_FOLDER_NAME = 'ubi/document_requests';
 export const REFERRAL_BONUS_PRICE = 500;
 export const GIFT_CARD_FEE = 0;
 export const CABLE_FEE = 50;

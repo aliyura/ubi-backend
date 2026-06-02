@@ -15,6 +15,8 @@ import {
 } from './dto';
 import {
   FULFILLMENT_STATUS,
+  INVENTORY_ACTION,
+  INVENTORY_ACTION_STATUS,
   LOAN_APPLICATION_STATUS,
   NOTIFICATION_TYPE,
   User,
@@ -198,7 +200,10 @@ export class FulfillmentService {
   ) {
     const fulfillment = await this.prisma.fulfillment.findUnique({
       where: { id: fulfillmentId },
-      include: { application: { include: { items: true } } },
+      include: {
+        supplier: { select: { name: true } },
+        application: { include: { items: true } },
+      },
     });
     if (!fulfillment) throw new NotFoundException('Fulfillment not found');
 
@@ -223,6 +228,17 @@ export class FulfillmentService {
         await tx.loanResource.update({
           where: { id: item.resourceId },
           data: { stockQuantity: { decrement: qty } },
+        });
+        await tx.inventoryActionLog.create({
+          data: {
+            resourceId: item.resourceId,
+            action: INVENTORY_ACTION.distributed,
+            amountMoved: qty,
+            warehouse: fulfillment.supplier?.name ?? item.supplier ?? null,
+            status: INVENTORY_ACTION_STATUS.completed,
+            referenceId: fulfillmentId,
+            referenceType: 'fulfillment',
+          },
         });
       }
 

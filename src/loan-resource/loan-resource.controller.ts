@@ -22,6 +22,7 @@ import { LoanResourceService } from './loan-resource.service';
 import {
   CreateLoanResourceDto,
   CreateResourceCategoryDto,
+  InventoryActivityLogQueryDto,
   QueryLoanResourceDto,
   ResourceInventoryQueryDto,
   UpdateLoanResourceDto,
@@ -200,6 +201,18 @@ export class LoanResourceController {
     @Query() query: ResourceInventoryQueryDto,
   ) {
     return this.service.getResourceInventory(id, query);
+  }
+
+  @Get('admin/loan-resources/:id/activity-log')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get inventory action log for a loan resource (admin)' })
+  @UseGuards(RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  async getInventoryActivityLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: InventoryActivityLogQueryDto,
+  ) {
+    return this.service.getInventoryActivityLog(id, query);
   }
 
   @Patch('admin/loan-resources/:id')

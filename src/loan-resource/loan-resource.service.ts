@@ -4,10 +4,16 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { MARKETPLACE_ORDER_STATUS, FULFILLMENT_STATUS } from '@prisma/client';
+import {
+  FULFILLMENT_STATUS,
+  INVENTORY_ACTION,
+  INVENTORY_ACTION_STATUS,
+  MARKETPLACE_ORDER_STATUS,
+} from '@prisma/client';
 import {
   CreateLoanResourceDto,
   CreateResourceCategoryDto,
+  InventoryActivityLogQueryDto,
   QueryLoanResourceDto,
   ResourceInventoryQueryDto,
   UpdateLoanResourceDto,
@@ -158,6 +164,20 @@ export class LoanResourceService {
     if (!category) throw new NotFoundException('Category not found');
 
     const resource = await this.prisma.loanResource.create({ data: body });
+
+    if (resource.stockQuantity > 0) {
+      await this.prisma.inventoryActionLog.create({
+        data: {
+          resourceId: resource.id,
+          action: INVENTORY_ACTION.added_stock,
+          amountMoved: resource.stockQuantity,
+          warehouse: resource.supplier ?? null,
+          status: INVENTORY_ACTION_STATUS.completed,
+          referenceType: 'manual',
+        },
+      });
+    }
+
     return { status: true, message: 'Resource created', data: resource };
   }
 
@@ -171,6 +191,23 @@ export class LoanResourceService {
       where: { id },
       data: body,
     });
+
+    if (body.stockQuantity !== undefined) {
+      const delta = body.stockQuantity - resource.stockQuantity;
+      if (delta !== 0) {
+        await this.prisma.inventoryActionLog.create({
+          data: {
+            resourceId: id,
+            action: delta > 0 ? INVENTORY_ACTION.added_stock : INVENTORY_ACTION.distributed,
+            amountMoved: Math.abs(delta),
+            warehouse: updated.supplier ?? resource.supplier ?? null,
+            status: INVENTORY_ACTION_STATUS.completed,
+            referenceType: 'manual',
+          },
+        });
+      }
+    }
+
     return { status: true, message: 'Resource updated', data: updated };
   }
 
@@ -275,6 +312,50 @@ export class LoanResourceService {
       message: 'Inventory summary retrieved',
       data,
       dateRange: { from: query.from ?? null, to: query.to ?? null },
+    };
+  }
+
+  async getInventoryActivityLog(id: string, query: InventoryActivityLogQueryDto) {
+    const resource = await this.prisma.loanResource.findUnique({ where: { id } });
+    if (!resource) throw new NotFoundException('Resource not found');
+
+    const { page = 1, limit = 20 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where: any = { resourceId: id };
+    if (query.from || query.to) {
+      where.createdAt = this.buildDateFilter(query);
+    }
+
+    const [logs, total] = await Promise.all([
+      this.prisma.inventoryActionLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Number(limit),
+      }),
+      this.prisma.inventoryActionLog.count({ where }),
+    ]);
+
+    const data = logs.map((log) => ({
+      date: log.createdAt,
+      warehouse: log.warehouse,
+      item: resource.name,
+      action: log.action,
+      amountMoved: log.amountMoved,
+      status: log.status,
+    }));
+
+    return {
+      status: true,
+      message: 'Inventory activity log retrieved',
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
     };
   }
 

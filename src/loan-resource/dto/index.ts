@@ -201,6 +201,32 @@ export class ResourceInventoryQueryDto {
   to?: string;
 }
 
+export class InventoryActivityLogQueryDto {
+  @ApiPropertyOptional({ description: 'Start date (ISO 8601)', example: '2026-01-01' })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: 'End date (ISO 8601)', example: '2026-12-31' })
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number = 20;
+}
+
 export class QueryLoanResourceDto {
   @ApiPropertyOptional()
   @IsOptional()

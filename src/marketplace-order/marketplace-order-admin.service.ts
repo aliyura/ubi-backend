@@ -14,6 +14,8 @@ import {
   QueryMarketplaceOrderDto,
 } from './dto';
 import {
+  INVENTORY_ACTION,
+  INVENTORY_ACTION_STATUS,
   MARKETPLACE_ORDER_STATUS,
   NOTIFICATION_TYPE,
   User,
@@ -150,6 +152,17 @@ export class MarketplaceOrderAdminService {
         await tx.loanResource.update({
           where: { id: item.resourceId },
           data: { stockQuantity: { decrement: item.quantity } },
+        });
+        await tx.inventoryActionLog.create({
+          data: {
+            resourceId: item.resourceId,
+            action: INVENTORY_ACTION.distributed,
+            amountMoved: item.quantity,
+            warehouse: item.supplier ?? null,
+            status: INVENTORY_ACTION_STATUS.approved,
+            referenceId: orderId,
+            referenceType: 'marketplace_order',
+          },
         });
       }
 
@@ -377,6 +390,17 @@ export class MarketplaceOrderAdminService {
           await tx.loanResource.update({
             where: { id: item.resourceId },
             data: { stockQuantity: { increment: item.quantity } },
+          });
+          await tx.inventoryActionLog.create({
+            data: {
+              resourceId: item.resourceId,
+              action: INVENTORY_ACTION.added_stock,
+              amountMoved: item.quantity,
+              warehouse: item.supplier ?? null,
+              status: INVENTORY_ACTION_STATUS.completed,
+              referenceId: orderId,
+              referenceType: 'marketplace_order_cancel',
+            },
           });
         }
       }

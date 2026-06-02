@@ -576,6 +576,7 @@ model LoanResource {
   cartItems             CartItem[]
   applicationItems      LoanApplicationItem[]
   marketplaceOrderItems MarketplaceOrderItem[]
+  inventoryActionLogs   InventoryActionLog[]
 
   @@index([categoryId])
   @@map("loan_resource")
@@ -1215,4 +1216,33 @@ model DocumentRequest {
   @@index([status])
   @@index([userId, status])
   @@map("document_request")
+}
+
+enum INVENTORY_ACTION {
+  added_stock
+  distributed
+}
+
+enum INVENTORY_ACTION_STATUS {
+  approved
+  completed
+}
+
+model InventoryActionLog {
+  id            String                  @id @default(uuid()) @db.Uuid
+  resourceId    String                  @db.Uuid
+  action        INVENTORY_ACTION
+  amountMoved   Float
+  warehouse     String?
+  status        INVENTORY_ACTION_STATUS
+  referenceId   String?
+  referenceType String?
+
+  createdAt DateTime @default(now())
+
+  resource LoanResource @relation(fields: [resourceId], references: [id])
+
+  @@index([resourceId])
+  @@index([resourceId, createdAt])
+  @@map("inventory_action_log")
 }

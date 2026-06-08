@@ -9,7 +9,10 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class ApiKeyMiddleware implements NestMiddleware {
   constructor(private readonly configService: ConfigService) {}
-  whitelistedUrls = ['/api/v1/webhook/bellmfb'];
+  whitelistedUrls = [
+    '/api/v1/webhook/bellmfb',
+    '/api/v1/webhook/kobo/farm-verification',
+  ];
 
   async use(req: Request, res: Response, next: NextFunction) {
     console.log('req:', req.baseUrl);

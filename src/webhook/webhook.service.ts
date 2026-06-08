@@ -113,7 +113,9 @@ export class WebhookService {
     }
 
     if (farm.isVerified) {
-      this.logger.log(`KoboToolbox: farm ${farmId} already verified — skipping`);
+      this.logger.log(
+        `KoboToolbox: farm ${farmId} already verified — skipping`,
+      );
       return;
     }
 
@@ -146,6 +148,6 @@ export class WebhookService {
       }
     }
 
-    this.logger.log(`KoboToolbox: farm ${farmId} marked as verified`);
+    this.logger.log(`KoboToolbox: farm ${farmId} marked as verified.`);
   }
 }

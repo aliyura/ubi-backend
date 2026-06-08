@@ -142,7 +142,7 @@ export class WebhookController {
     @Res() res: Response,
   ) {
     this.logger.log(
-      `KoboToolbox webhook received — farm_id: ${body?.answers?.farm_id ?? body?.farm_id}`,
+      `KoboToolbox webhook received — full body: ${JSON.stringify(body, null, 2)}`,
     );
 
     const username = this.configService.get<string>('KOBO_WEBHOOK_USERNAME');

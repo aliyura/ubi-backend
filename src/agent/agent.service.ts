@@ -1245,4 +1245,16 @@ export class AgentService {
       statusCode: HttpStatus.OK,
     };
   }
+
+  async getKoboFormUrl() {
+    const record = await this.prisma.koboFormUrl.findFirst();
+    if (!record) {
+      throw new NotFoundException('Kobo form URL has not been configured yet.');
+    }
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Kobo form URL retrieved successfully',
+      data: record,
+    };
+  }
 }

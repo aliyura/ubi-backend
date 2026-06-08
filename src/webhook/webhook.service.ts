@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { KoboFarmVerificationPayload } from './kobo.types';
 import { BellAccountService } from 'src/api-providers/providers/bellmfb.service';
 import { FlutterwaveService } from 'src/api-providers/providers/flutterwave.service';
 import { SafeHavenService } from 'src/api-providers/providers/safe-haven.service';
@@ -94,15 +95,13 @@ export class WebhookService {
     }
   }
 
-  async resolveKoboWebhook(body: any) {
-    // KoboToolbox wraps all form answers under body.answers (REST v2 format)
-    const answers = body?.answers ?? body;
-    const farmId: string | undefined = answers?.farm_id;
+  async resolveKoboWebhook(body: KoboFarmVerificationPayload) {
+    const farmId: string | undefined = body?.Farm_Id;
 
-    this.logger.log(`KoboToolbox submission received — farm_id: ${farmId}`);
+    this.logger.log(`KoboToolbox submission received — Farm_Id: ${farmId}`);
 
     if (!farmId) {
-      this.logger.warn('KoboToolbox submission missing farm_id — skipping');
+      this.logger.warn('KoboToolbox submission missing Farm_Id — skipping');
       return;
     }
 
@@ -119,11 +118,16 @@ export class WebhookService {
       return;
     }
 
-    // Optionally update coordinates if the agent captured GPS on the form
-    const latitude: number | undefined =
-      answers?.gps_latitude ?? answers?._geolocation?.[0];
-    const longitude: number | undefined =
-      answers?.gps_longitude ?? answers?._geolocation?.[1];
+    // Coordinates come as a single "lat lng alt accuracy" string or from _geolocation
+    let latitude: number | undefined = body?._geolocation?.[0];
+    let longitude: number | undefined = body?._geolocation?.[1];
+    if (body?.latitude_longitude) {
+      const parts = (body.latitude_longitude as string).trim().split(/\s+/);
+      if (parts.length >= 2) {
+        latitude = parseFloat(parts[0]);
+        longitude = parseFloat(parts[1]);
+      }
+    }
 
     await this.prisma.farm.update({
       where: { id: farmId },

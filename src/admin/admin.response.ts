@@ -203,4 +203,30 @@ export const adminResponse = {
       totalFarmers: 2,
     },
   },
+  setKoboFormUrl: {
+    statusCode: 201,
+    message: 'Kobo form URL saved successfully',
+    data: {
+      id: 'uuid-here',
+      url: 'https://ee.kobotoolbox.org/x/abc123',
+      label: 'Farm Verification Form',
+      createdAt: '2026-06-08T10:00:00.000Z',
+      updatedAt: '2026-06-08T10:00:00.000Z',
+    },
+  },
+  updateKoboFormUrl: {
+    statusCode: 200,
+    message: 'Kobo form URL updated successfully',
+    data: {
+      id: 'uuid-here',
+      url: 'https://ee.kobotoolbox.org/x/xyz789',
+      label: 'Farm Verification Form',
+      createdAt: '2026-06-08T10:00:00.000Z',
+      updatedAt: '2026-06-08T11:00:00.000Z',
+    },
+  },
+  deleteKoboFormUrl: {
+    statusCode: 200,
+    message: 'Kobo form URL deleted successfully',
+  },
 } as const;

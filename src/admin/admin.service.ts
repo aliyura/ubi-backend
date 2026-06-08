@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { SetKoboFormUrlDto, UpdateKoboFormUrlDto } from './dto/KoboFormUrlDto';
 import { VerifyAgentAddressDto, GetAgentsDto } from './dto/AgentAddressDto';
 import { AddPlanDto } from './dto/AddDataPlanDto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -588,6 +589,47 @@ export class AdminService {
         farmers,
         totalFarmers: farmers.length,
       },
+    };
+  }
+
+  async setKoboFormUrl(dto: SetKoboFormUrlDto) {
+    const existing = await this.prisma.koboFormUrl.findFirst();
+    if (existing) {
+      throw new ConflictException('A Kobo form URL already exists. Use PATCH to update it.');
+    }
+    const record = await this.prisma.koboFormUrl.create({ data: dto });
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Kobo form URL saved successfully',
+      data: record,
+    };
+  }
+
+  async updateKoboFormUrl(dto: UpdateKoboFormUrlDto) {
+    const existing = await this.prisma.koboFormUrl.findFirst();
+    if (!existing) {
+      throw new NotFoundException('No Kobo form URL found. Use POST to create one first.');
+    }
+    const record = await this.prisma.koboFormUrl.update({
+      where: { id: existing.id },
+      data: dto,
+    });
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Kobo form URL updated successfully',
+      data: record,
+    };
+  }
+
+  async deleteKoboFormUrl() {
+    const existing = await this.prisma.koboFormUrl.findFirst();
+    if (!existing) {
+      throw new NotFoundException('No Kobo form URL found.');
+    }
+    await this.prisma.koboFormUrl.delete({ where: { id: existing.id } });
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Kobo form URL deleted successfully',
     };
   }
 }

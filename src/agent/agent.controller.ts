@@ -386,4 +386,15 @@ export class AgentController {
   ) {
     return this.service.clearFarmerCart(farmerId, (req as any).user);
   }
+
+  @Get('kobo/form-url')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get the KoboToolbox farm verification form URL' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: agentResponse.getKoboFormUrl,
+  })
+  async getKoboFormUrl() {
+    return this.service.getKoboFormUrl();
+  }
 }

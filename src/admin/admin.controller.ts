@@ -25,6 +25,7 @@ import { AdminService } from './admin.service';
 import { AddCablPlanDto } from './dto/AddCablPlanDto';
 import { InviteAgentDto } from './dto/InviteAgentDto';
 import { GetAgentsDto, VerifyAgentAddressDto } from './dto/AgentAddressDto';
+import { SetKoboFormUrlDto, UpdateKoboFormUrlDto } from './dto/KoboFormUrlDto';
 import { adminResponse } from './admin.response';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
@@ -209,5 +210,47 @@ export class AdminController {
     @Body() body: VerifyAgentAddressDto,
   ) {
     return this.adminService.verifyAgentAddress(agentId, body);
+  }
+
+  @Post('kobo/form-url')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Set the KoboToolbox farm verification form URL' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    example: adminResponse.setKoboFormUrl,
+  })
+  async setKoboFormUrl(@Body() body: SetKoboFormUrlDto) {
+    return this.adminService.setKoboFormUrl(body);
+  }
+
+  @Patch('kobo/form-url')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update the KoboToolbox farm verification form URL' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: adminResponse.updateKoboFormUrl,
+  })
+  async updateKoboFormUrl(@Body() body: UpdateKoboFormUrlDto) {
+    return this.adminService.updateKoboFormUrl(body);
+  }
+
+  @Delete('kobo/form-url')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete the KoboToolbox farm verification form URL' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: adminResponse.deleteKoboFormUrl,
+  })
+  async deleteKoboFormUrl() {
+    return this.adminService.deleteKoboFormUrl();
   }
 }

@@ -597,4 +597,15 @@ export const agentResponse = {
     statusCode: 200,
     message: 'Home address submitted for review',
   },
+  getKoboFormUrl: {
+    statusCode: 200,
+    message: 'Kobo form URL retrieved successfully',
+    data: {
+      id: 'uuid-here',
+      url: 'https://ee.kobotoolbox.org/x/abc123',
+      label: 'Farm Verification Form',
+      createdAt: '2026-06-08T10:00:00.000Z',
+      updatedAt: '2026-06-08T10:00:00.000Z',
+    },
+  },
 } as const;

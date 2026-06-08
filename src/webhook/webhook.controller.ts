@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WebhookService } from './webhook.service';
+import { KoboFarmVerificationPayload } from './kobo.types';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { webhookResponse } from './webhook.response';
@@ -137,12 +138,12 @@ export class WebhookController {
     example: webhookResponse.unauthorizedWebhook,
   })
   async koboFarmVerificationHandler(
-    @Body() body: any,
+    @Body() body: KoboFarmVerificationPayload,
     @Headers('authorization') authHeader: string,
     @Res() res: Response,
   ) {
     this.logger.log(
-      `KoboToolbox webhook received — full body: ${JSON.stringify(body, null, 2)}`,
+      `KoboToolbox webhook received — Farm_Id: ${body?.Farm_Id}, Farm_Name: ${body?.Farm_Name}`,
     );
 
     const username = this.configService.get<string>('KOBO_WEBHOOK_USERNAME');

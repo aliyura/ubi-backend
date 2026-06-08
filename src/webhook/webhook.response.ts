@@ -15,6 +15,10 @@ export const webhookResponse = {
     statusCode: 200,
     message: 'Bell MFB webhook processed successfully',
   },
+  koboFarmVerification: {
+    statusCode: 200,
+    message: 'KoboToolbox farm verification processed successfully',
+  },
   unauthorizedWebhook: {
     statusCode: 401,
     message: 'Unauthorized webhook request',

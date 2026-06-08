@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   HttpStatus,
   Logger,
   Post,
@@ -122,6 +123,41 @@ export class WebhookController {
       `BellMFB webhook received — event: ${body?.event}, ref: ${body?.reference}`,
     );
     await this.webhookService.resolveBellBankWebhook(body);
+    return res.status(200).end();
+  }
+
+  @Post('kobo/farm-verification')
+  @ApiOperation({ summary: 'Handle KoboToolbox farm verification submission' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    example: webhookResponse.koboFarmVerification,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    example: webhookResponse.unauthorizedWebhook,
+  })
+  async koboFarmVerificationHandler(
+    @Body() body: any,
+    @Headers('authorization') authHeader: string,
+    @Res() res: Response,
+  ) {
+    this.logger.log(
+      `KoboToolbox webhook received — farm_id: ${body?.answers?.farm_id ?? body?.farm_id}`,
+    );
+
+    const username = this.configService.get<string>('KOBO_WEBHOOK_USERNAME');
+    const password = this.configService.get<string>('KOBO_WEBHOOK_PASSWORD');
+
+    // KoboToolbox Basic Auth sends: Authorization: Basic <base64(username:password)>
+    if (username && password) {
+      const expected = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+      if (authHeader !== expected) {
+        this.logger.warn('KoboToolbox webhook rejected — invalid Basic Auth credentials');
+        return res.status(401).end();
+      }
+    }
+
+    await this.webhookService.resolveKoboWebhook(body);
     return res.status(200).end();
   }
 }

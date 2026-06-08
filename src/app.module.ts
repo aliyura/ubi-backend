@@ -122,6 +122,7 @@ export class AppModule implements NestModule {
         { path: 'v1/webhook/VFD/payment', method: RequestMethod.POST },
         { path: 'v1/webhook/safehaven', method: RequestMethod.POST },
         { path: 'v1/webhook/bellmfb', method: RequestMethod.POST },
+        { path: 'v1/webhook/kobo/farm-verification', method: RequestMethod.POST },
       )
       .forRoutes('*');
 
@@ -147,6 +148,7 @@ export class AppModule implements NestModule {
         { path: 'v1/webhook/VFD/payment', method: RequestMethod.POST },
         { path: 'v1/webhook/safehaven', method: RequestMethod.POST },
         { path: 'v1/webhook/bellmfb', method: RequestMethod.POST },
+        { path: 'v1/webhook/kobo/farm-verification', method: RequestMethod.POST },
         { path: 'v1/contact-us', method: RequestMethod.POST },
       )
       .forRoutes('*');
